@@ -127,7 +127,6 @@ class WpActionschedulerLogs(models.Model):
 
 
 class WpBvFwRequests(models.Model):
-    id = models.BigAutoField(primary_key=True)
     ip = models.CharField(max_length=50)
     status = models.IntegerField()
     time = models.BigIntegerField()
@@ -150,7 +149,6 @@ class WpBvFwRequests(models.Model):
 
 
 class WpBvIpStore(models.Model):
-    id = models.BigAutoField(primary_key=True)
     start_ip_range = models.CharField(max_length=16)
     end_ip_range = models.CharField(max_length=16)
     is_fw = models.IntegerField()
@@ -163,7 +161,6 @@ class WpBvIpStore(models.Model):
 
 
 class WpBvLpRequests(models.Model):
-    id = models.BigAutoField(primary_key=True)
     ip = models.CharField(max_length=50)
     status = models.IntegerField()
     username = models.CharField(max_length=50)
@@ -178,7 +175,6 @@ class WpBvLpRequests(models.Model):
 
 
 class WpBwgAlbum(models.Model):
-    id = models.BigAutoField(primary_key=True)
     name = models.CharField(max_length=255)
     slug = models.CharField(max_length=255)
     description = models.TextField()
@@ -195,7 +191,6 @@ class WpBwgAlbum(models.Model):
 
 
 class WpBwgAlbumGallery(models.Model):
-    id = models.BigAutoField(primary_key=True)
     album_id = models.BigIntegerField()
     is_album = models.IntegerField()
     alb_gal_id = models.BigIntegerField()
@@ -207,7 +202,6 @@ class WpBwgAlbumGallery(models.Model):
 
 
 class WpBwgFilePaths(models.Model):
-    id = models.BigAutoField(primary_key=True)
     is_dir = models.IntegerField(blank=True, null=True)
     path = models.TextField(blank=True, null=True)
     type = models.CharField(max_length=5, blank=True, null=True)
@@ -235,7 +229,6 @@ class WpBwgFilePaths(models.Model):
 
 
 class WpBwgGallery(models.Model):
-    id = models.BigAutoField(primary_key=True)
     name = models.CharField(max_length=255)
     slug = models.CharField(max_length=255)
     description = models.TextField()
@@ -257,7 +250,6 @@ class WpBwgGallery(models.Model):
 
 
 class WpBwgImage(models.Model):
-    id = models.BigAutoField(primary_key=True)
     gallery_id = models.BigIntegerField()
     slug = models.TextField()
     filename = models.CharField(max_length=255)
@@ -287,7 +279,6 @@ class WpBwgImage(models.Model):
 
 
 class WpBwgImageComment(models.Model):
-    id = models.BigAutoField(primary_key=True)
     image_id = models.BigIntegerField()
     name = models.CharField(max_length=255)
     date = models.CharField(max_length=64)
@@ -302,7 +293,6 @@ class WpBwgImageComment(models.Model):
 
 
 class WpBwgImageRate(models.Model):
-    id = models.BigAutoField(primary_key=True)
     image_id = models.BigIntegerField()
     rate = models.FloatField()
     ip = models.CharField(max_length=64)
@@ -314,7 +304,6 @@ class WpBwgImageRate(models.Model):
 
 
 class WpBwgImageTag(models.Model):
-    id = models.BigAutoField(primary_key=True)
     tag_id = models.BigIntegerField()
     image_id = models.BigIntegerField()
     gallery_id = models.BigIntegerField()
@@ -334,7 +323,6 @@ class WpBwgShortcode(models.Model):
 
 
 class WpBwgTheme(models.Model):
-    id = models.BigAutoField(primary_key=True)
     name = models.CharField(max_length=255)
     options = models.TextField()
     default_theme = models.IntegerField()
@@ -345,7 +333,6 @@ class WpBwgTheme(models.Model):
 
 
 class WpCloudinaryRelationships(models.Model):
-    id = models.BigAutoField(primary_key=True)
     post_id = models.BigIntegerField(blank=True, null=True)
     public_id = models.CharField(max_length=1000, blank=True, null=True)
     parent_path = models.CharField(max_length=1000, blank=True, null=True)
@@ -400,7 +387,6 @@ class WpComments(models.Model):
 
 
 class WpEEvents(models.Model):
-    id = models.BigAutoField(primary_key=True)
     event_data = models.TextField(blank=True, null=True)
     created_at = models.DateTimeField()
 
@@ -410,7 +396,6 @@ class WpEEvents(models.Model):
 
 
 class WpENotes(models.Model):
-    id = models.BigAutoField(primary_key=True)
     route_url = models.TextField(blank=True, null=True, db_comment='Clean url where the note was created.')
     route_title = models.CharField(max_length=255, blank=True, null=True)
     route_post_id = models.PositiveBigIntegerField(blank=True, null=True, db_comment='The post id of the route that the note was created on.')
@@ -434,7 +419,6 @@ class WpENotes(models.Model):
 
 
 class WpENotesUsersRelations(models.Model):
-    id = models.BigAutoField(primary_key=True)
     type = models.CharField(max_length=60, db_comment='The relation type between user and note (e.g mention, watch, read).')
     note_id = models.PositiveBigIntegerField()
     user_id = models.PositiveBigIntegerField()
@@ -447,7 +431,6 @@ class WpENotesUsersRelations(models.Model):
 
 
 class WpESubmissions(models.Model):
-    id = models.BigAutoField(primary_key=True)
     type = models.CharField(max_length=60, blank=True, null=True)
     hash_id = models.CharField(unique=True, max_length=60)
     main_meta_id = models.PositiveBigIntegerField(db_comment='Id of main field. to represent the main meta field')
@@ -476,7 +459,6 @@ class WpESubmissions(models.Model):
 
 
 class WpESubmissionsActionsLog(models.Model):
-    id = models.BigAutoField(primary_key=True)
     submission_id = models.PositiveBigIntegerField()
     action_name = models.CharField(max_length=60)
     action_label = models.CharField(max_length=60, blank=True, null=True)
@@ -493,7 +475,6 @@ class WpESubmissionsActionsLog(models.Model):
 
 
 class WpESubmissionsValues(models.Model):
-    id = models.BigAutoField(primary_key=True)
     submission_id = models.PositiveBigIntegerField()
     key = models.CharField(max_length=60, blank=True, null=True)
     value = models.TextField(blank=True, null=True)
@@ -504,7 +485,6 @@ class WpESubmissionsValues(models.Model):
 
 
 class WpEwwwioImages(models.Model):
-    id = models.AutoField(unique=True)
     attachment_id = models.PositiveBigIntegerField(blank=True, null=True)
     gallery = models.CharField(max_length=10, blank=True, null=True)
     resize = models.CharField(max_length=75, blank=True, null=True)
@@ -555,7 +535,6 @@ class WpGgGalleries(models.Model):
 
 
 class WpGgGalleriesResources(models.Model):
-    id = models.AutoField(unique=True)
     resource_type = models.CharField(max_length=6)
     resource_id = models.IntegerField()
     gallery_id = models.IntegerField()
@@ -619,7 +598,7 @@ class WpGmedia(models.Model):
 
 class WpGmediaLog(models.Model):
     log = models.CharField(max_length=200)
-    id = models.PositiveBigIntegerField(db_column='ID')  # Field name made lowercase.
+    field_id = models.PositiveBigIntegerField(db_column='ID')  # Field name made lowercase.
     log_author = models.PositiveBigIntegerField()
     log_date = models.DateTimeField()
     log_data = models.TextField(blank=True, null=True)
@@ -784,7 +763,6 @@ class WpItsecTemp(models.Model):
 
 
 class WpJnewsPostLike(models.Model):
-    id = models.BigAutoField(primary_key=True)
     post_id = models.IntegerField()
     date_time = models.DateTimeField()
     value = models.IntegerField()
@@ -831,7 +809,6 @@ class WpNewRoyalsliders(models.Model):
 
 
 class WpNf3ActionMeta(models.Model):
-    id = models.AutoField(unique=True)
     parent_id = models.IntegerField()
     key = models.TextField()
     value = models.TextField(blank=True, null=True)
@@ -842,7 +819,6 @@ class WpNf3ActionMeta(models.Model):
 
 
 class WpNf3Actions(models.Model):
-    id = models.AutoField(unique=True)
     title = models.TextField(blank=True, null=True)
     key = models.TextField(blank=True, null=True)
     type = models.TextField(blank=True, null=True)
@@ -857,7 +833,6 @@ class WpNf3Actions(models.Model):
 
 
 class WpNf3Chunks(models.Model):
-    id = models.AutoField(unique=True)
     name = models.CharField(max_length=200, blank=True, null=True)
     value = models.TextField(blank=True, null=True)
 
@@ -867,7 +842,6 @@ class WpNf3Chunks(models.Model):
 
 
 class WpNf3FieldMeta(models.Model):
-    id = models.AutoField(unique=True)
     parent_id = models.IntegerField()
     key = models.TextField()
     value = models.TextField(blank=True, null=True)
@@ -878,7 +852,6 @@ class WpNf3FieldMeta(models.Model):
 
 
 class WpNf3Fields(models.Model):
-    id = models.AutoField(unique=True)
     label = models.TextField(blank=True, null=True)
     key = models.TextField(blank=True, null=True)
     type = models.TextField(blank=True, null=True)
@@ -892,7 +865,6 @@ class WpNf3Fields(models.Model):
 
 
 class WpNf3FormMeta(models.Model):
-    id = models.AutoField(unique=True)
     parent_id = models.IntegerField()
     key = models.TextField()
     value = models.TextField(blank=True, null=True)
@@ -905,7 +877,6 @@ class WpNf3FormMeta(models.Model):
 
 
 class WpNf3Forms(models.Model):
-    id = models.AutoField(unique=True)
     title = models.TextField(blank=True, null=True)
     key = models.TextField(blank=True, null=True)
     created_at = models.DateTimeField(blank=True, null=True)
@@ -926,7 +897,6 @@ class WpNf3Forms(models.Model):
 
 
 class WpNf3ObjectMeta(models.Model):
-    id = models.AutoField(unique=True)
     parent_id = models.IntegerField()
     key = models.TextField()
     value = models.TextField(blank=True, null=True)
@@ -937,7 +907,6 @@ class WpNf3ObjectMeta(models.Model):
 
 
 class WpNf3Objects(models.Model):
-    id = models.AutoField(unique=True)
     type = models.TextField(blank=True, null=True)
     title = models.TextField(blank=True, null=True)
     created_at = models.DateTimeField(blank=True, null=True)
@@ -949,7 +918,6 @@ class WpNf3Objects(models.Model):
 
 
 class WpNf3Relationships(models.Model):
-    id = models.AutoField(unique=True)
     child_id = models.IntegerField()
     child_type = models.TextField()
     parent_id = models.IntegerField()
@@ -973,7 +941,6 @@ class WpNf3Upgrades(models.Model):
 
 
 class WpNggAlbum(models.Model):
-    id = models.BigAutoField(primary_key=True)
     name = models.CharField(max_length=255)
     slug = models.CharField(max_length=255)
     previewpic = models.BigIntegerField()
@@ -1036,7 +1003,6 @@ class WpOptions(models.Model):
 
 
 class WpPmxeExports(models.Model):
-    id = models.BigAutoField(primary_key=True)
     parent_id = models.BigIntegerField()
     attch_id = models.BigIntegerField()
     options = models.TextField(blank=True, null=True)
@@ -1072,7 +1038,6 @@ class WpPmxeGoogleCats(models.Model):
 
 
 class WpPmxePosts(models.Model):
-    id = models.BigAutoField(primary_key=True)
     post_id = models.PositiveBigIntegerField()
     export_id = models.PositiveBigIntegerField()
     iteration = models.BigIntegerField()
@@ -1083,7 +1048,6 @@ class WpPmxePosts(models.Model):
 
 
 class WpPmxeTemplates(models.Model):
-    id = models.BigAutoField(primary_key=True)
     name = models.CharField(max_length=200)
     options = models.TextField(blank=True, null=True)
 
@@ -1093,7 +1057,6 @@ class WpPmxeTemplates(models.Model):
 
 
 class WpPmxiFiles(models.Model):
-    id = models.BigAutoField(primary_key=True)
     import_id = models.PositiveBigIntegerField()
     name = models.TextField(blank=True, null=True)
     path = models.TextField(blank=True, null=True)
@@ -1105,7 +1068,6 @@ class WpPmxiFiles(models.Model):
 
 
 class WpPmxiHistory(models.Model):
-    id = models.BigAutoField(primary_key=True)
     import_id = models.PositiveBigIntegerField()
     type = models.CharField(max_length=10)
     time_run = models.TextField(blank=True, null=True)
@@ -1118,7 +1080,6 @@ class WpPmxiHistory(models.Model):
 
 
 class WpPmxiImages(models.Model):
-    id = models.BigAutoField(primary_key=True)
     attachment_id = models.PositiveBigIntegerField()
     image_url = models.CharField(max_length=600)
     image_filename = models.CharField(max_length=600)
@@ -1129,7 +1090,6 @@ class WpPmxiImages(models.Model):
 
 
 class WpPmxiImports(models.Model):
-    id = models.BigAutoField(primary_key=True)
     parent_import_id = models.BigIntegerField()
     name = models.TextField(blank=True, null=True)
     friendly_name = models.CharField(max_length=255)
@@ -1165,7 +1125,6 @@ class WpPmxiImports(models.Model):
 
 
 class WpPmxiPosts(models.Model):
-    id = models.BigAutoField(primary_key=True)
     post_id = models.PositiveBigIntegerField()
     import_id = models.PositiveBigIntegerField()
     unique_key = models.TextField(blank=True, null=True)
@@ -1179,7 +1138,6 @@ class WpPmxiPosts(models.Model):
 
 
 class WpPmxiTemplates(models.Model):
-    id = models.BigAutoField(primary_key=True)
     options = models.TextField(blank=True, null=True)
     scheduled = models.CharField(max_length=64)
     name = models.CharField(max_length=200)
@@ -1260,7 +1218,6 @@ class WpPosts(models.Model):
 
 
 class WpRankMath404Logs(models.Model):
-    id = models.BigAutoField(primary_key=True)
     uri = models.CharField(max_length=255)
     accessed = models.DateTimeField()
     times_accessed = models.PositiveBigIntegerField()
@@ -1273,7 +1230,6 @@ class WpRankMath404Logs(models.Model):
 
 
 class WpRankMathAnalyticsGsc(models.Model):
-    id = models.BigAutoField(primary_key=True)
     created = models.DateTimeField()
     query = models.CharField(max_length=1000)
     page = models.CharField(max_length=500)
@@ -1288,7 +1244,6 @@ class WpRankMathAnalyticsGsc(models.Model):
 
 
 class WpRankMathAnalyticsInspections(models.Model):
-    id = models.BigAutoField(primary_key=True)
     page = models.CharField(max_length=500)
     created = models.DateTimeField()
     index_verdict = models.CharField(max_length=64)
@@ -1314,7 +1269,6 @@ class WpRankMathAnalyticsInspections(models.Model):
 
 
 class WpRankMathAnalyticsKeywordManager(models.Model):
-    id = models.BigAutoField(primary_key=True)
     keyword = models.CharField(max_length=1000)
     collection = models.CharField(max_length=200, blank=True, null=True)
     is_active = models.IntegerField()
@@ -1325,7 +1279,6 @@ class WpRankMathAnalyticsKeywordManager(models.Model):
 
 
 class WpRankMathAnalyticsObjects(models.Model):
-    id = models.BigAutoField(primary_key=True)
     created = models.DateTimeField()
     title = models.TextField()
     page = models.CharField(max_length=500)
@@ -1349,7 +1302,6 @@ class WpRankMathAnalyticsObjects(models.Model):
 
 
 class WpRankMathInternalLinks(models.Model):
-    id = models.BigAutoField(primary_key=True)
     url = models.CharField(max_length=255)
     post_id = models.PositiveBigIntegerField()
     target_post_id = models.PositiveBigIntegerField()
@@ -1372,7 +1324,6 @@ class WpRankMathInternalMeta(models.Model):
 
 
 class WpRankMathRedirections(models.Model):
-    id = models.BigAutoField(primary_key=True)
     sources = models.TextField(db_collation='utf8mb4_bin')
     url_to = models.TextField()
     header_code = models.PositiveSmallIntegerField()
@@ -1388,7 +1339,6 @@ class WpRankMathRedirections(models.Model):
 
 
 class WpRankMathRedirectionsCache(models.Model):
-    id = models.BigAutoField(primary_key=True)
     from_url = models.TextField(db_collation='utf8mb4_bin')
     redirection_id = models.PositiveBigIntegerField()
     object_id = models.PositiveBigIntegerField()
@@ -1401,7 +1351,6 @@ class WpRankMathRedirectionsCache(models.Model):
 
 
 class WpRevsliderCss(models.Model):
-    id = models.AutoField(unique=True)
     handle = models.TextField()
     settings = models.TextField(blank=True, null=True)
     hover = models.TextField(blank=True, null=True)
@@ -1414,7 +1363,6 @@ class WpRevsliderCss(models.Model):
 
 
 class WpRevsliderLayerAnimations(models.Model):
-    id = models.AutoField(unique=True)
     handle = models.TextField()
     params = models.TextField()
     settings = models.TextField(blank=True, null=True)
@@ -1425,7 +1373,6 @@ class WpRevsliderLayerAnimations(models.Model):
 
 
 class WpRevsliderNavigations(models.Model):
-    id = models.AutoField(unique=True)
     name = models.CharField(max_length=191)
     handle = models.CharField(max_length=191)
     css = models.TextField()
@@ -1438,7 +1385,6 @@ class WpRevsliderNavigations(models.Model):
 
 
 class WpRevsliderSliders(models.Model):
-    id = models.AutoField(unique=True)
     title = models.TextField()
     alias = models.TextField(blank=True, null=True)
     params = models.TextField()
@@ -1451,7 +1397,6 @@ class WpRevsliderSliders(models.Model):
 
 
 class WpRevsliderSlides(models.Model):
-    id = models.AutoField(unique=True)
     slider_id = models.IntegerField()
     slide_order = models.IntegerField()
     params = models.TextField()
@@ -1464,7 +1409,6 @@ class WpRevsliderSlides(models.Model):
 
 
 class WpRevsliderStaticSlides(models.Model):
-    id = models.AutoField(unique=True)
     slider_id = models.IntegerField()
     params = models.TextField()
     layers = models.TextField()
@@ -1570,7 +1514,6 @@ class WpShortpixelMeta(models.Model):
 
 
 class WpShortpixelPostmeta(models.Model):
-    id = models.BigAutoField(primary_key=True)
     attach_id = models.PositiveBigIntegerField()
     parent = models.PositiveBigIntegerField()
     image_type = models.IntegerField(blank=True, null=True)
@@ -1607,7 +1550,6 @@ class WpShortpixelQueue(models.Model):
 
 
 class WpSmushDirImages(models.Model):
-    id = models.AutoField(unique=True)
     path = models.TextField()
     path_hash = models.CharField(unique=True, max_length=32, blank=True, null=True)
     resize = models.CharField(max_length=55, blank=True, null=True)
@@ -1928,7 +1870,6 @@ class WpWfblockediplog(models.Model):
 
 
 class WpWfblocks7(models.Model):
-    id = models.BigAutoField(primary_key=True)
     type = models.PositiveIntegerField()
     ip = models.CharField(db_column='IP', max_length=16)  # Field name made lowercase.
     blockedtime = models.BigIntegerField(db_column='blockedTime')  # Field name made lowercase.
@@ -2147,7 +2088,6 @@ class WpWfsnipcache(models.Model):
 
 
 class WpWfsecurityevents(models.Model):
-    id = models.BigAutoField(primary_key=True)
     type = models.CharField(max_length=255)
     data = models.TextField()
     event_time = models.FloatField()
@@ -2160,7 +2100,6 @@ class WpWfsecurityevents(models.Model):
 
 
 class WpWfstatus(models.Model):
-    id = models.BigAutoField(primary_key=True)
     ctime = models.FloatField()
     level = models.PositiveIntegerField()
     type = models.CharField(max_length=5)
@@ -2237,7 +2176,6 @@ class WpWpfmBackup(models.Model):
 
 
 class WpWpfrontUreOptions(models.Model):
-    id = models.BigAutoField(unique=True)
     option_name = models.CharField(max_length=250, blank=True, null=True)
     option_value = models.TextField(blank=True, null=True)
 
@@ -2403,7 +2341,6 @@ class WpWplnstUrlsStatus(models.Model):
 
 
 class WpWpmcleaner(models.Model):
-    id = models.BigAutoField(unique=True)
     time = models.DateTimeField()
     type = models.IntegerField()
     postid = models.BigIntegerField(db_column='postId', blank=True, null=True)  # Field name made lowercase.
@@ -2521,7 +2458,6 @@ class WpYoastProminentWords(models.Model):
 
 
 class WpYoastSeoLinks(models.Model):
-    id = models.BigAutoField(primary_key=True)
     url = models.CharField(max_length=255)
     post_id = models.PositiveBigIntegerField()
     target_post_id = models.PositiveBigIntegerField()
