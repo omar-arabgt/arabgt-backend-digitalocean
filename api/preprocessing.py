@@ -1,7 +1,6 @@
 import re
 from bs4 import BeautifulSoup
 from news.models import WpPosts
-from concurrent.futures import ProcessPoolExecutor, as_completed
 import logging
 
 logger = logging.getLogger(__name__)
@@ -11,6 +10,17 @@ def extract_elements(element):
     elements = []
     text_buffer = []
 
+    def add_text_buffer_to_elements():
+        if text_buffer:
+            text = ' '.join(text_buffer).strip()
+            if text:  # Only add if the text is not empty
+                elements.append({
+                    "text": text,
+                    "media": {},
+                    "heading": ""
+                })
+            text_buffer.clear()
+
     for child in element.children:
         if isinstance(child, str):
             text_buffer.append(child.strip())
@@ -19,114 +29,112 @@ def extract_elements(element):
             attributes = child.attrs
             text = child.get_text(strip=True)
 
-            if tag_name in ['a', 'strong']:
-                if tag_name == 'strong' and (child.previous_sibling and '\n' in child.previous_sibling or child.next_sibling and '\n' in child.next_sibling):
+            if tag_name == 'strong' and (not child.previous_sibling or not child.next_sibling):
+                add_text_buffer_to_elements()
+                elements.append({
+                    "text": "",
+                    "media": {},
+                    "heading": text
+                })
+            elif tag_name in ['a', 'strong']:
+                if tag_name == 'strong' and (
+                    (child.previous_sibling and '\n' in child.previous_sibling) or 
+                    (child.next_sibling and '\n' in child.next_sibling)
+                ):
+                    add_text_buffer_to_elements()
                     elements.append({
-                        "media": "",
-                        "text": text,
-                        "heading": "",
-                        "bold": True
+                        "media": {},
+                        "heading": text,
+                        "text": "",
                     })
                 else:
                     text_buffer.append(text)
             else:
-                if text_buffer:
-                    elements.append({
-                        "text": ' '.join(text_buffer),
-                        "media": "",
-                        "heading": ""
-                    })
-                    text_buffer = []
-
+                add_text_buffer_to_elements()
                 if tag_name in ['h1', 'h2', 'h3', 'h4', 'h5', 'h6']:
-                    element_data = {
+                    elements.append({
                         "text": "",
-                        "media": "",
+                        "media": {},
                         "heading": text
-                    }
+                    })
                 elif tag_name == 'strong':
-                    element_data = {
+                    elements.append({
                         "text": text,
-                        "media": "",
+                        "media": {},
                         "heading": "",
                         "bold": True
-                    }
+                    })
                 elif tag_name in ['ul', 'ol']:
                     bullets = "\n".join([f"• {li.get_text(strip=True)}" for li in child.find_all('li')])
-                    element_data = {
+                    elements.append({
                         "text": bullets,
-                        "media": "",
+                        "media": {},
                         "heading": ""
-                    }
+                    })
                 elif tag_name == 'iframe':
                     src = attributes.get('src', '')
                     if 'youtube' in src:
                         youtube_id = re.search(r"embed/([^?]+)", src).group(1)
-                        element_data = {
+                        elements.append({
                             "text": "",
-                            "media": f"https://www.youtube.com/watch?v={youtube_id}",
+                            "media": {"youtube": f"https://www.youtube.com/watch?v={youtube_id}"},
                             "heading": ""
-                        }
+                        })
                     else:
-                        element_data = {
+                        elements.append({
                             "text": "",
-                            "media": f"iframe {src}",
+                            "media": {"iframe": src},
                             "heading": ""
-                        }
+                        })
                 elif tag_name == 'img':
                     src = attributes.get('src', '')
-                    element_data = {
+                    elements.append({
                         "text": "",
-                        "media": f"[Image: {src}]",
+                        "media": {"image": src},
                         "heading": ""
-                    }
+                    })
                 else:
-                    element_data = {
+                    elements.append({
                         "text": text,
-                        "media": "",
+                        "media": {},
                         "heading": ""
-                    }
-                elements.append(element_data)
+                    })
 
-    if text_buffer:
-        elements.append({
-            "text": ' '.join(text_buffer),
-            "media": "",
-            "heading": ""
-        })
+    add_text_buffer_to_elements()
+
+    # Remove any empty dictionary items
+    elements = [element for element in elements if element['text'] or element['media'] or element['heading']]
 
     return elements
-
 def handle_galleries(text):
     elements = []
     parts = re.split(r'(\[gallery[^\]]*\])', text)
     for part in parts:
         if part.startswith('[gallery'):
-            elements.append({"text": "", "media": part, "heading": ""})
+            gallery_ids_match = re.search(r'ids="([\d,]+)"', part)
+            if gallery_ids_match:
+                gallery_ids = gallery_ids_match.group(1).split(',')
+                elements.append({"text": "", "media": {"gallery": gallery_ids}, "heading": ""})
         else:
             if part.strip():
-                elements.append({"text": part.strip(), "media": "", "heading": ""})
+                elements.append({"text": part.strip(), "media": {}, "heading": ""})
     return elements
 
 def replace_gallery_ids_with_links(elements):
     gallery_ids = []
     for element in elements:
-        if element['media'].startswith('[gallery'):
-            gallery_ids_match = re.search(r'ids="([\d,]+)"', element['media'])
-            if gallery_ids_match:
-                gallery_ids.extend(gallery_ids_match.group(1).split(','))
+        if 'gallery' in element['media']:
+            gallery_ids.extend(element['media']['gallery'])
 
     wp_posts = WpPosts.objects.filter(post_type="attachment", id__in=gallery_ids)
     wp_posts_dict = {str(post.id): post.guid for post in wp_posts}
 
     updated_elements = []
     for element in elements:
-        if element['media'].startswith('[gallery'):
-            gallery_ids_match = re.search(r'ids="([\d,]+)"', element['media'])
-            if gallery_ids_match:
-                ids = gallery_ids_match.group(1).split(',')
-                links = [wp_posts_dict.get(id, '') for id in ids]
-                element['media'] = f'[gallery link="file" ids="{",".join(links)}"]'
+        if 'gallery' in element['media']:
+            ids = element['media']['gallery']
+            links = [wp_posts_dict.get(id, '') for id in ids]
+            element['media'] = {"gallery": links}
         updated_elements.append(element)
     return updated_elements
 
