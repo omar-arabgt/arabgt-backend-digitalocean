@@ -21,7 +21,7 @@ class FetchAndProcessWpPostsView(APIView):
     def get(self, request):
         try:
             start_time = time.time()
-            wp_posts = WpPosts.objects.filter(post_type="post", post_status='publish').values("id", "post_content", "post_date", "post_title", "post_modified", "post_author")
+            wp_posts = WpPosts.objects.filter(post_type="post", post_status='publish').order_by('-id')[:50].values("id", "post_content", "post_date", "post_title", "post_modified", "post_author")
 
             if not wp_posts:
                 return Response({"error": "No posts found."}, status=status.HTTP_404_NOT_FOUND)
@@ -35,8 +35,9 @@ class FetchAndProcessWpPostsView(APIView):
                 "done": True,
                 "response_time_seconds": response_time,
                 "processed_posts": len(new_posts),
+                "saved_posts": [post.id for post in new_posts]
             }
-            return Response(response_data, status=status.HTTP_201_CREATED)
+            return Response(response_data, status=status.HTTP_200_OK)
 
         except Exception as e:
             logger.error(f"An error occurred: {e}")
@@ -61,7 +62,7 @@ class FetchAndProcessWpPostByIdView(APIView):
                 "response_time_seconds": response_time,
                 "processed_post": new_posts[0].id if new_posts else None,
             }
-            return Response(response_data, status=status.HTTP_201_CREATED)
+            return Response(response_data, status=status.HTTP_200_OK)
 
         except Exception as e:
             logger.error(f"An error occurred: {e}")
