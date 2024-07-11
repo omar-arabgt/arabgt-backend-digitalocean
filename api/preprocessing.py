@@ -165,7 +165,7 @@ def preprocess_article(article):
     thumbnail_url = get_thumbnail(post_id)
     if thumbnail_url:
         final_elements.append({
-            "thumbnail": thumbnail_url
+            "thumbnail": f'https://arabgt.com/wp-content/uploads/{thumbnail_url}'
         })
 
     output_data = {
