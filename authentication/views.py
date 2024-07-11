@@ -1,3 +1,4 @@
+from django.views.generic.base import TemplateView
 from allauth.socialaccount.providers.facebook.views import FacebookOAuth2Adapter
 from allauth.socialaccount.providers.google.views import GoogleOAuth2Adapter
 from allauth.socialaccount.providers.apple.views import AppleOAuth2Adapter
@@ -19,3 +20,7 @@ class GoogleLogin(SocialLoginView):
 
 class AppleLogin(SocialLoginView):
     adapter_class = AppleOAuth2Adapter
+
+
+class EmailConfirmed(TemplateView):
+    template_name = "email_confirmed.html"
