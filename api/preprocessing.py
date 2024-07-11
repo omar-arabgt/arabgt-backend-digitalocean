@@ -1,10 +1,6 @@
 import re
 from bs4 import BeautifulSoup
 from news.models import WpPosts
-import logging
-
-logger = logging.getLogger(__name__)
-logging.basicConfig(level=logging.DEBUG)
 
 def extract_elements(element):
     elements = []
@@ -36,11 +32,10 @@ def extract_elements(element):
                     "media": {},
                     "heading": text
                 })
-            elif tag_name in ['a', 'strong']:
-                if tag_name == 'strong' and (
-                    (child.previous_sibling and '\n' in child.previous_sibling) or 
-                    (child.next_sibling and '\n' in child.next_sibling)
-                ):
+            elif tag_name == 'a':
+                text_buffer.append(text)
+            elif tag_name == 'strong':
+                if (child.previous_sibling and '\n' in child.previous_sibling) or (child.next_sibling and '\n' in child.next_sibling):
                     add_text_buffer_to_elements()
                     elements.append({
                         "media": {},
@@ -106,6 +101,7 @@ def extract_elements(element):
     elements = [element for element in elements if element['text'] or element['media'] or element['heading']]
 
     return elements
+
 def handle_galleries(text):
     elements = []
     parts = re.split(r'(\[gallery[^\]]*\])', text)
@@ -118,6 +114,7 @@ def handle_galleries(text):
         else:
             if part.strip():
                 elements.append({"text": part.strip(), "media": {}, "heading": ""})
+    
     return elements
 
 def replace_gallery_ids_with_links(elements):
@@ -136,6 +133,7 @@ def replace_gallery_ids_with_links(elements):
             links = [wp_posts_dict.get(id, '') for id in ids]
             element['media'] = {"gallery": links}
         updated_elements.append(element)
+    
     return updated_elements
 
 def preprocess_article(article):
@@ -163,5 +161,5 @@ def preprocess_article(article):
         "post_id": post_id,
         "content": final_elements
     }
-
+    
     return output_data
