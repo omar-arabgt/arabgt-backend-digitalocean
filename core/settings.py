@@ -167,3 +167,5 @@ CELERY_BEAT_SCHEDULE = {
         'schedule': 600,  # seconds
     },
 }
+
+CSRF_TRUSTED_ORIGINS = ["https://localhost", "https://localhost", 'https://dev_arabgt.audteye.com', 'http://dev_arabgt.audteye.com']
