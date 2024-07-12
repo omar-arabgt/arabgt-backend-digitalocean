@@ -1,10 +1,15 @@
 import re
 from bs4 import BeautifulSoup
 from news.models import WpPosts, WpPostmeta
+from .models import Post
+import ast
+import urllib.parse
+from django.forms.models import model_to_dict
 
 def extract_elements(element):
     elements = []
     text_buffer = []
+    external_links = []
 
     def add_text_buffer_to_elements():
         if text_buffer:
@@ -33,6 +38,9 @@ def extract_elements(element):
                     "heading": text
                 })
             elif tag_name == 'a':
+                href = attributes.get('href', '')
+                if href:
+                    external_links.append(href)
                 text_buffer.append(text)
             elif tag_name == 'strong':
                 if (child.previous_sibling and '\n' in child.previous_sibling) or (child.next_sibling and '\n' in child.next_sibling):
@@ -100,7 +108,7 @@ def extract_elements(element):
     # Remove any empty dictionary items
     elements = [element for element in elements if element['text'] or element['media'] or element['heading']]
 
-    return elements
+    return elements, external_links
 
 def handle_galleries(text):
     elements = []
@@ -144,6 +152,50 @@ def get_thumbnail(post_id):
     
     return thumbnail_url
 
+def process_external_links(external_links):
+    related_articles = []
+    cleaned_external_links = []
+    
+    for link in external_links:
+        if "arabgt.com" in link:
+            decoded_link = urllib.parse.unquote(link)
+            parts = decoded_link.split('/')
+            if len(parts) > 0:
+                wp_post_link_name = parts[-2]
+                formatted_part = wp_post_link_name.replace('-', ' ')
+                related_articles.append({"link": decoded_link, "title": formatted_part})
+        else:
+            cleaned_external_links.append(link)
+    
+    return related_articles, cleaned_external_links
+
+def update_related_article_ids(post):
+    try:
+        content = ast.literal_eval(post.content)
+    except (SyntaxError, ValueError) as e:
+        return post, []
+
+    updated = False
+    missing_titles = [] 
+    for element in content:
+        if isinstance(element, dict) and 'related_articles' in element:
+            related_articles = element.get("related_articles", [])
+            for related_article in related_articles:
+                title = related_article.get('title')
+                if title:
+                    related_post = Post.objects.filter(title__iexact=title).first()
+                    if related_post:
+                        related_article['id'] = related_post.id
+                        updated = True
+                    else:
+                        missing_titles.append(title)
+
+    if updated:
+        post.content = str(content)
+
+    return post, missing_titles
+
+
 def preprocess_article(article):
     post_content = article['post_content']
     post_id = article['id']
@@ -151,7 +203,7 @@ def preprocess_article(article):
     post_title = article['post_title']
 
     soup = BeautifulSoup(post_content, "html.parser")
-    structured_data = extract_elements(soup.body if soup.body else soup)
+    structured_data, external_links = extract_elements(soup.body if soup.body else soup)
 
     final_elements = []
     for element in structured_data:
@@ -162,11 +214,21 @@ def preprocess_article(article):
 
     final_elements = replace_gallery_ids_with_links(final_elements)
     
+    related_articles, cleaned_external_links = process_external_links(external_links)
+
+    if related_articles:
+        final_elements.append({
+            "related_articles": related_articles
+        })
+
+    if cleaned_external_links:
+        final_elements.append({
+            "external_links": cleaned_external_links
+        })
+        
     thumbnail_url = get_thumbnail(post_id)
     if thumbnail_url:
-        final_elements.append({
-            "thumbnail": f'https://arabgt.com/wp-content/uploads/{thumbnail_url}'
-        })
+        final_elements.append({"thumbnail": f'https://arabgt.com/wp-content/uploads/{thumbnail_url}})
 
     output_data = {
         "post_date": post_date,
