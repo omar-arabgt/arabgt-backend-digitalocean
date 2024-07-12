@@ -44,14 +44,12 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'django.contrib.sites',
     'passlib.ext.django',
     'rest_framework',
     'rest_framework.authtoken',
     'django_filters',
     'dj_rest_auth',
     'dj_rest_auth.registration',
-    'allauth',
     'allauth.account',
     'allauth.socialaccount',
     'allauth.socialaccount.providers.facebook',
@@ -154,9 +152,12 @@ REST_AUTH = {
     'USE_JWT': True,
     'JWT_AUTH_HTTPONLY': False,
     'OLD_PASSWORD_FIELD_ENABLED': True,
+    'PASSWORD_RESET_SERIALIZER': 'authentication.serializers.CustomPasswordResetSerializer',
+    'LOGIN_SERIALIZER': 'authentication.serializers.CustomLoginSerializer',
 }
 
 AUTHENTICATION_BACKENDS = (
+    'django.contrib.auth.backends.ModelBackend',
     'allauth.account.auth_backends.AuthenticationBackend',
 )
 
