@@ -4,7 +4,6 @@ from news.models import WpPosts, WpPostmeta
 from .models import Post
 import ast
 import urllib.parse
-from django.forms.models import model_to_dict
 
 def extract_elements(element):
     elements = []
@@ -13,7 +12,7 @@ def extract_elements(element):
 
     def add_text_buffer_to_elements():
         if text_buffer:
-            text = ' '.join(text_buffer).strip()
+            text = ''.join(text_buffer).strip()
             if text:  # Only add if the text is not empty
                 elements.append({
                     "text": text,
@@ -22,86 +21,90 @@ def extract_elements(element):
                 })
             text_buffer.clear()
 
+    def handle_strong_tag(child):
+        text = child.get_text(strip=True)
+        if (child.previous_sibling and '\n' in child.previous_sibling) or (child.next_sibling and '\n' in child.next_sibling):
+            add_text_buffer_to_elements()
+            elements.append({
+                "media": {},
+                "heading": text,
+                "text": "",
+            })
+        else:
+            text_buffer.append(text)
+
     for child in element.children:
         if isinstance(child, str):
-            text_buffer.append(child.strip())
+            text_buffer.append(child)
         else:
             tag_name = child.name
             attributes = child.attrs
             text = child.get_text(strip=True)
 
-            if tag_name == 'strong' and (not child.previous_sibling or not child.next_sibling):
+            if tag_name == 'strong':
+                handle_strong_tag(child)
+            elif tag_name == 'a':
+                href = attributes.get('href', '')
+                if href:
+                    external_links.append(href)
+                if child.find('strong') and (
+                    (child.previous_sibling is None or (isinstance(child.previous_sibling, str) and child.previous_sibling.strip() == "")) or
+                    (child.next_sibling is None or (isinstance(child.next_sibling, str) and child.next_sibling.strip() == ""))
+                ):
+                    add_text_buffer_to_elements()
+                    elements.append({
+                        "text": "",
+                        "media": {},
+                        "heading": text
+                    })
+                else:
+                    text_buffer.append(child.get_text())  # Append the text directly
+            elif tag_name in ['h1', 'h2', 'h3', 'h4', 'h5', 'h6']:
                 add_text_buffer_to_elements()
                 elements.append({
                     "text": "",
                     "media": {},
                     "heading": text
                 })
-            elif tag_name == 'a':
-                href = attributes.get('href', '')
-                if href:
-                    external_links.append(href)
-                text_buffer.append(text)
-            elif tag_name == 'strong':
-                if (child.previous_sibling and '\n' in child.previous_sibling) or (child.next_sibling and '\n' in child.next_sibling):
-                    add_text_buffer_to_elements()
+            elif tag_name in ['ul', 'ol']:
+                add_text_buffer_to_elements()
+                bullets = "\n".join([f"• {li.get_text(strip=True)}" for li in child.find_all('li')])
+                elements.append({
+                    "text": bullets,
+                    "media": {},
+                    "heading": ""
+                })
+            elif tag_name == 'iframe':
+                add_text_buffer_to_elements()
+                src = attributes.get('src', '')
+                if 'youtube' in src:
+                    youtube_id = re.search(r"embed/([^?]+)", src).group(1)
                     elements.append({
-                        "media": {},
-                        "heading": text,
                         "text": "",
+                        "media": {"youtube": f"https://www.youtube.com/watch?v={youtube_id}"},
+                        "heading": ""
                     })
                 else:
-                    text_buffer.append(text)
+                    elements.append({
+                        "text": "",
+                        "media": {"iframe": src},
+                        "heading": ""
+                    })
+            elif tag_name == 'img':
+                add_text_buffer_to_elements()
+                src = attributes.get('src', '')
+                elements.append({
+                    "text": "",
+                    "media": {"image": src},
+                    "heading": ""
+                })
             else:
                 add_text_buffer_to_elements()
-                if tag_name in ['h1', 'h2', 'h3', 'h4', 'h5', 'h6']:
-                    elements.append({
-                        "text": "",
-                        "media": {},
-                        "heading": text
-                    })
-                elif tag_name == 'strong':
-                    elements.append({
-                        "text": text,
-                        "media": {},
-                        "heading": "",
-                        "bold": True
-                    })
-                elif tag_name in ['ul', 'ol']:
-                    bullets = "\n".join([f"• {li.get_text(strip=True)}" for li in child.find_all('li')])
-                    elements.append({
-                        "text": bullets,
-                        "media": {},
-                        "heading": ""
-                    })
-                elif tag_name == 'iframe':
-                    src = attributes.get('src', '')
-                    if 'youtube' in src:
-                        youtube_id = re.search(r"embed/([^?]+)", src).group(1)
-                        elements.append({
-                            "text": "",
-                            "media": {"youtube": f"https://www.youtube.com/watch?v={youtube_id}"},
-                            "heading": ""
-                        })
-                    else:
-                        elements.append({
-                            "text": "",
-                            "media": {"iframe": src},
-                            "heading": ""
-                        })
-                elif tag_name == 'img':
-                    src = attributes.get('src', '')
-                    elements.append({
-                        "text": "",
-                        "media": {"image": src},
-                        "heading": ""
-                    })
-                else:
-                    elements.append({
-                        "text": text,
-                        "media": {},
-                        "heading": ""
-                    })
+                elements.append({
+                    "text": text,
+                    "media": {},
+                    "heading": ""
+                })
 
     add_text_buffer_to_elements()
 
@@ -228,7 +231,9 @@ def preprocess_article(article):
         
     thumbnail_url = get_thumbnail(post_id)
     if thumbnail_url:
-        final_elements.append({"thumbnail": f'https://arabgt.com/wp-content/uploads/{thumbnail_url}})
+        final_elements.append({
+            "thumbnail": f'https://arabgt.com/wp-content/uploads/{thumbnail_url}'
+        })
 
     output_data = {
         "post_date": post_date,
