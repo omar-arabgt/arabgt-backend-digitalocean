@@ -3,7 +3,7 @@ import time
 from django.db import DatabaseError, IntegrityError
 from news.models import WpPosts, WpTermRelationships, WpTermTaxonomy, WpTerms, WpUsers
 from .models import Post
-from .preprocessing import preprocess_article
+from .preprocessing import preprocess_article, update_related_article_ids
 
 logger = logging.getLogger(__name__)
 
@@ -109,3 +109,59 @@ def fetch_and_process_wp_post_by_id(post_id):
     except Exception as e:
         logger.error(f"An error occurred: {e}")
         return {"error": "An internal error occurred."}
+
+def fetch_and_update_related_articles_ids():
+    try:
+        posts = Post.objects.all()
+
+        if not posts:
+            return {"error": "No posts found."}
+        
+        updated_posts = []
+        missing_titles = []
+
+        for post in posts:
+            updated_post, missing = update_related_article_ids(post)
+            post.content = updated_post.content
+            post.save()
+            updated_posts.append(post.id)
+            if missing:
+                missing_titles.extend(missing)
+
+        response_data = {
+            "done": True,
+            "processed_posts": len(updated_posts),
+            "missing_titles": missing_titles
+        }
+        return response_data
+    
+    except Exception as e:
+        return {"error": f"An internal error occurred: {e}"}
+
+
+def fetch_and_update_related_articles_ids_by_id(id):
+    try:
+        start_time = time.time()
+        
+        post = Post.objects.filter(id=id).first()
+        
+        if not post:
+            return {"error": "Post not found."}
+
+        updated_post, missing_titles = update_related_article_ids(post)
+        post.content = updated_post.content
+        post.save()
+
+        end_time = time.time()
+        response_time = end_time - start_time
+
+        response_data = {
+            "done": True,
+            "response_time_seconds": response_time,
+            "processed_posts": 1,
+            "missing_titles": missing_titles,
+        }
+        return response_data
+    
+    except Exception as e:
+        return {"error": f"An internal error occurred: {e}"}
