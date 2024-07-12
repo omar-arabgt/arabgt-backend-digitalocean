@@ -1,6 +1,6 @@
 import re
 from bs4 import BeautifulSoup
-from news.models import WpPosts
+from news.models import WpPosts, WpPostmeta
 from .models import Post
 import ast
 import urllib.parse
@@ -144,6 +144,14 @@ def replace_gallery_ids_with_links(elements):
     
     return updated_elements
 
+def get_thumbnail(post_id):
+    thumbnail_id = WpPostmeta.objects.filter(post_id=post_id, meta_key='_thumbnail_id').values_list('meta_value', flat=True).first()
+    thumbnail_url = None
+    if thumbnail_id:
+        thumbnail_url = WpPostmeta.objects.filter(post_id=thumbnail_id, meta_key='_wp_attached_file').values_list('meta_value', flat=True).first()
+    
+    return thumbnail_url
+
 def process_external_links(external_links):
     related_articles = []
     cleaned_external_links = []
@@ -217,6 +225,10 @@ def preprocess_article(article):
         final_elements.append({
             "external_links": cleaned_external_links
         })
+        
+    thumbnail_url = get_thumbnail(post_id)
+    if thumbnail_url:
+        final_elements.append({"thumbnail": f'https://arabgt.com/wp-content/uploads/{thumbnail_url}})
 
     output_data = {
         "post_date": post_date,
