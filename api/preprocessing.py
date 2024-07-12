@@ -4,6 +4,7 @@ from news.models import WpPosts, WpPostmeta
 from .models import Post
 import ast
 import urllib.parse
+from django.db.models import Q
 
 def extract_elements(element):
     elements = []
@@ -172,6 +173,13 @@ def process_external_links(external_links):
     
     return related_articles, cleaned_external_links
 
+def normalize_title(title):
+    title = title.lower()
+    title = re.sub(r'[\-\–]', ' ', title)
+    title = re.sub(r'[^\w\s]', '', title)
+    title = re.sub(r'\s+', ' ', title).strip()
+    return title
+
 def update_related_article_ids(post):
     try:
         content = ast.literal_eval(post.content)
@@ -186,7 +194,12 @@ def update_related_article_ids(post):
             for related_article in related_articles:
                 title = related_article.get('title')
                 if title:
-                    related_post = Post.objects.filter(title__iexact=title).first()
+                    normalized_title = normalize_title(title)
+                    words = normalized_title.split()
+                    query = Q()
+                    for word in words:
+                        query &= Q(title__icontains=word)
+                    related_post = Post.objects.filter(query).first()
                     if related_post:
                         related_article['id'] = related_post.id
                         updated = True
