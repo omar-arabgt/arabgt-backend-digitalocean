@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<body>
+    <h1>Confirm E-mail Address</h1>
+
+    {% if confirmation %}
+    
+    
+    <p>Please confirm that <a href="mailto:{{ email }}">{{ email }}</a> is an e-mail address for user {{ user_display }}.</p>
+    
+    <form method="post" action="{% url 'account_confirm_email' confirmation.key %}">
+    {% csrf_token %}
+        <button type="submit">Confirm</button>
+    </form>
+    
+    {% else %}
+        
+    <p>This e-mail confirmation link expired or is invalid.</p>
+    
+    {% endif %}
+</body>
+</html>
