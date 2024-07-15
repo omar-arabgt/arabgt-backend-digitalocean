@@ -32,7 +32,11 @@ SECRET_KEY = env("SECRET_KEY")
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = env("DEBUG", default=False)
 
-ALLOWED_HOSTS = ["*"]
+# ALLOWED_HOSTS = ["*"]
+# ALLOWED_HOSTS = ['dev-arabgt.audteye.com', 'www.dev-arabgt.audteye.com', 'localhost', '127.0.0.1']
+ALLOWED_HOSTS = ["*", "dev-arabgt.audteye.com", "www.dev-arabgt.audteye.com"]
+
+SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
 
 
 # Application definition
@@ -259,3 +263,6 @@ CELERY_BEAT_SCHEDULE = {
         'schedule': 600,  # seconds
     },
 }
+
+CSRF_TRUSTED_ORIGINS = ["https://localhost", "https://localhost", 'https://dev-arabgt.audteye.com', 'http://dev-arabgt.audteye.com']
+# CSRF_TRUSTED_ORIGINS = ["*"]
