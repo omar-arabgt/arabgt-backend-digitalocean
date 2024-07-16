@@ -22,9 +22,10 @@ from django.conf import settings
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('api/', include("api.urls")),
+    path('accounts/', include('allauth.urls')),
+    path('api/', include('api.urls')),
     path('auth/', include('authentication.urls')),
-    path('news/', include("news.urls")),
+    path('news/', include('news.urls')),
 ]
 
 urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
