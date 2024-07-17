@@ -1,10 +1,11 @@
 import re
+import unicodedata
+import ast
 from bs4 import BeautifulSoup
 from news.models import WpPosts, WpPostmeta
 from .models import Post
-import ast
-import urllib.parse
 from django.db.models import Q
+import urllib.parse
 
 def extract_elements(element):
     elements = []
@@ -14,7 +15,7 @@ def extract_elements(element):
     def add_text_buffer_to_elements():
         if text_buffer:
             text = ''.join(text_buffer).strip()
-            if text:  # Only add if the text is not empty
+            if text:
                 elements.append({
                     "text": text,
                     "media": {},
@@ -59,7 +60,7 @@ def extract_elements(element):
                         "heading": text
                     })
                 else:
-                    text_buffer.append(child.get_text())  # Append the text directly
+                    text_buffer.append(child.get_text())
             elif tag_name in ['h1', 'h2', 'h3', 'h4', 'h5', 'h6']:
                 add_text_buffer_to_elements()
                 elements.append({
@@ -108,10 +109,7 @@ def extract_elements(element):
                 })
 
     add_text_buffer_to_elements()
-
-    # Remove any empty dictionary items
     elements = [element for element in elements if element['text'] or element['media'] or element['heading']]
-
     return elements, external_links
 
 def handle_galleries(text):
@@ -187,7 +185,7 @@ def update_related_article_ids(post):
         return post, []
 
     updated = False
-    missing_titles = [] 
+    missing_titles = []
     for element in content:
         if isinstance(element, dict) and 'related_articles' in element:
             related_articles = element.get("related_articles", [])
@@ -204,13 +202,12 @@ def update_related_article_ids(post):
                         related_article['id'] = related_post.id
                         updated = True
                     else:
-                        missing_titles.append(title)
+                        missing_titles.append({"title": title, "id": post.id})
 
     if updated:
         post.content = str(content)
 
     return post, missing_titles
-
 
 def preprocess_article(article):
     post_content = article['post_content']
@@ -243,16 +240,14 @@ def preprocess_article(article):
         })
         
     thumbnail_url = get_thumbnail(post_id)
-    if thumbnail_url:
-        final_elements.append({
-            "thumbnail": f'https://arabgt.com/wp-content/uploads/{thumbnail_url}'
-        })
+    thumbnail_url_with_base = f'https://arabgt.com/wp-content/uploads/{thumbnail_url}'
 
     output_data = {
         "post_date": post_date,
         "post_content": post_content,
         "post_title": post_title,
         "post_id": post_id,
+        "thumbnail": thumbnail_url_with_base,
         "content": final_elements
     }
     
