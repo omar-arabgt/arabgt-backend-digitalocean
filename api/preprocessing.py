@@ -165,7 +165,7 @@ def process_external_links(external_links):
             if len(parts) > 0:
                 wp_post_link_name = parts[-2]
                 formatted_part = wp_post_link_name.replace('-', ' ')
-                related_articles.append({"link": decoded_link, "title": formatted_part})
+                related_articles.append(decoded_link)
         else:
             cleaned_external_links.append(link)
     
@@ -186,26 +186,26 @@ def update_related_article_ids(post):
 
     updated = False
     missing_titles = []
-    for element in content:
-        if isinstance(element, dict) and 'related_articles' in element:
-            related_articles = element.get("related_articles", [])
-            for related_article in related_articles:
-                title = related_article.get('title')
-                if title:
-                    normalized_title = normalize_title(title)
-                    words = normalized_title.split()
-                    query = Q()
-                    for word in words:
-                        query &= Q(title__icontains=word)
-                    related_post = Post.objects.filter(query).first()
-                    if related_post:
-                        related_article['id'] = related_post.id
-                        updated = True
-                    else:
-                        missing_titles.append({"title": title, "id": post.id})
+
+    related_articles_in_content = post.related_articles
+
+    for related_article_link in related_articles_in_content:
+        title = related_article_link.split('/')[-2].replace('-', ' ')
+        normalized_title = normalize_title(title)
+        words = normalized_title.split()
+        query = Q()
+        for word in words:
+            query &= Q(title__icontains=word)
+        related_post = Post.objects.filter(query).first()
+        if related_post:
+            related_articles_in_content[related_articles_in_content.index(related_article_link)] = related_post.id
+            updated = True
+        else:
+            missing_titles.append({"title": title, "id": post.id})
 
     if updated:
-        post.content = str(content)
+        post.related_articles = related_articles_in_content
+        post.save()
 
     return post, missing_titles
 
@@ -229,11 +229,6 @@ def preprocess_article(article):
     
     related_articles, cleaned_external_links = process_external_links(external_links)
 
-    if related_articles:
-        final_elements.append({
-            "related_articles": related_articles
-        })
-
     if cleaned_external_links:
         final_elements.append({
             "external_links": cleaned_external_links
@@ -248,7 +243,8 @@ def preprocess_article(article):
         "post_title": post_title,
         "post_id": post_id,
         "thumbnail": thumbnail_url_with_base,
-        "content": final_elements
+        "content": final_elements,
+        "related_articles": related_articles
     }
     
     return output_data

@@ -11,5 +11,4 @@ class Post(models.Model):
     tag = ArrayField(models.CharField(max_length=255), blank=True, default=list)
     related_articles = ArrayField(models.CharField(max_length=255), blank=True, default=list)
     thumbnail = models.CharField(max_length=255)
-    tag = ArrayField(models.CharField(max_length=255), blank=True, default=list)
     content = models.TextField()
