@@ -8,6 +8,20 @@ from .preprocessing import preprocess_article, update_related_article_ids
 logger = logging.getLogger(__name__)
 
 def fetch_and_process_posts(posts, override_existing=False):
+    """
+    Fetches and processes a list of posts.
+
+    Input:
+    - posts: A list of dictionaries representing the WordPress posts to be processed.
+    - override_existing: A boolean flag indicating whether to override existing posts in the database.
+
+    Functionality:
+    - Iterates over each post, preprocesses the content, and fetches related data from WordPress models.
+    - Creates or updates the Post object in the database.
+
+    Output:
+    - Returns a list of saved Post objects.
+    """
     saved_posts = []
     for post in posts:
         processed_article = preprocess_article(post)
@@ -78,6 +92,23 @@ def fetch_and_process_posts(posts, override_existing=False):
     return saved_posts
 
 def fetch_and_process_all_wp_posts():
+    """
+    Fetches and processes all published WordPress posts.
+
+    Input:
+    - None.
+
+    Functionality:
+    - Fetches all published WordPress posts.
+    - Processes each post and saves it to the database.
+
+    Output:
+    - Returns a dictionary containing:
+      - done: A boolean indicating the operation completion status.
+      - response_time_seconds: The time taken to process the posts.
+      - processed_posts: The number of processed posts.
+      - saved_posts: A list of IDs of the saved posts.
+    """
     try:
         start_time = time.time()
         wp_posts = WpPosts.objects.filter(post_type="post", post_status='publish').values("id", "post_content", "post_date", "post_title", "post_modified", "post_author")
@@ -104,6 +135,22 @@ def fetch_and_process_all_wp_posts():
         return {"error": "An internal error occurred."}
 
 def fetch_and_process_wp_post_by_id(post_id):
+    """
+    Fetches and processes a single WordPress post by its ID.
+
+    Input:
+    - post_id: An integer representing the ID of the WordPress post to be processed.
+
+    Functionality:
+    - Fetches the WordPress post with the given ID.
+    - Processes the post and saves it to the database.
+
+    Output:
+    - Returns a dictionary containing:
+      - done: A boolean indicating the operation completion status.
+      - response_time_seconds: The time taken to process the post.
+      - processed_post: The ID of the processed post, if any.
+    """
     try:
         start_time = time.time()
         wp_post = WpPosts.objects.filter(id=post_id, post_type="post", post_status='publish').values("id", "post_content", "post_date", "post_title", "post_modified", "post_author").first()
@@ -129,6 +176,22 @@ def fetch_and_process_wp_post_by_id(post_id):
         return {"error": "An internal error occurred."}
 
 def fetch_and_update_related_articles_ids():
+    """
+    Updates related article IDs for all posts in the database.
+
+    Input:
+    - None.
+
+    Functionality:
+    - Fetches all posts in the database.
+    - Updates related article IDs for each post.
+
+    Output:
+    - Returns a dictionary containing:
+      - done: A boolean indicating the operation completion status.
+      - processed_posts: The number of processed posts.
+      - missing_titles: A list of missing titles and corresponding post IDs.
+    """
     try:
         posts = Post.objects.all()
 
@@ -157,6 +220,23 @@ def fetch_and_update_related_articles_ids():
         return {"error": f"An internal error occurred: {e}"}
 
 def fetch_and_update_related_articles_ids_by_id(id):
+    """
+    Updates related article IDs for a specific post by its ID.
+
+    Input:
+    - id: An integer representing the ID of the post to update.
+
+    Functionality:
+    - Fetches the post with the given ID.
+    - Updates related article IDs for the post.
+
+    Output:
+    - Returns a dictionary containing:
+      - done: A boolean indicating the operation completion status.
+      - response_time_seconds: The time taken to update the post.
+      - processed_posts: The number of processed posts (1 if successful).
+      - missing_titles: A list of missing titles and corresponding post IDs.
+    """
     try:
         start_time = time.time()
         

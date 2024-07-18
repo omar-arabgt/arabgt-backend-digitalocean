@@ -6,6 +6,21 @@ from django.db.models import Q
 import urllib.parse
 
 def extract_elements(element):
+    """
+    Extracts structured elements from HTML content.
+
+    Input:
+    - element: A BeautifulSoup element representing the HTML content to be parsed.
+
+    Functionality:
+    - Parses the HTML content to extract text, headings, media elements (such as images, iframes, YouTube videos), and external links.
+    - Processes various HTML tags (<strong>, <a>, <h1> to <h6>, <ul>, <ol>, <iframe>, and <img>) to structure the content into elements.
+
+    Output:
+    - Returns a tuple:
+      - elements: A list of dictionaries representing structured content elements.
+      - external_links: A list of external links found in the content.
+    """
     elements = []
     text_buffer = []
     external_links = []
@@ -111,6 +126,19 @@ def extract_elements(element):
     return elements, external_links
 
 def handle_galleries(text):
+    """
+    Handles gallery shortcodes in the text.
+
+    Input:
+    - text: A string containing the post content with possible gallery shortcodes.
+
+    Functionality:
+    - Splits the text by gallery shortcodes.
+    - Extracts gallery IDs from the shortcodes and creates elements for them.
+
+    Output:
+    - Returns a list of elements with gallery information replaced.
+    """
     elements = []
     parts = re.split(r'(\[gallery[^\]]*\])', text)
     for part in parts:
@@ -126,6 +154,19 @@ def handle_galleries(text):
     return elements
 
 def replace_gallery_ids_with_links(elements):
+    """
+    Replaces gallery IDs with actual image URLs.
+
+    Input:
+    - elements: A list of elements containing gallery IDs.
+
+    Functionality:
+    - Fetches image URLs for the given gallery IDs from the database.
+    - Replaces gallery IDs with the corresponding image URLs.
+
+    Output:
+    - Returns an updated list of elements with image URLs.
+    """
     gallery_ids = []
     for element in elements:
         if 'gallery' in element['media']:
@@ -145,6 +186,19 @@ def replace_gallery_ids_with_links(elements):
     return updated_elements
 
 def get_thumbnail(post_id):
+    """
+    Retrieves the thumbnail URL for a given post.
+
+    Input:
+    - post_id: An integer representing the ID of the post.
+
+    Functionality:
+    - Fetches the thumbnail ID from the post metadata.
+    - Retrieves the corresponding thumbnail URL.
+
+    Output:
+    - Returns the thumbnail URL as a string.
+    """
     thumbnail_id = WpPostmeta.objects.filter(post_id=post_id, meta_key='_thumbnail_id').values_list('meta_value', flat=True).first()
     thumbnail_url = None
     if thumbnail_id:
@@ -153,6 +207,21 @@ def get_thumbnail(post_id):
     return thumbnail_url
 
 def process_external_links(external_links):
+    """
+    Processes external links to categorize them.
+
+    Input:
+    - external_links: A list of external links found in the content.
+
+    Functionality:
+    - Categorizes links that belong to 'arabgt.com' as related articles.
+    - Cleans and separates other external links.
+
+    Output:
+    - Returns a tuple:
+      - related_articles: A list of related article links.
+      - cleaned_external_links: A list of cleaned external links.
+    """
     related_articles = []
     cleaned_external_links = []
     
@@ -168,6 +237,21 @@ def process_external_links(external_links):
     return related_articles, cleaned_external_links
 
 def normalize_title(title):
+    """
+    Normalizes a given title string.
+
+    Input:
+    - title: A string representing the title to be normalized.
+
+    Functionality:
+    - Converts the title to lowercase.
+    - Replaces dashes and other special characters with spaces.
+    - Removes non-alphanumeric characters.
+    - Trims extra whitespace.
+
+    Output:
+    - Returns the normalized title as a string.
+    """
     title = title.lower()
     title = re.sub(r'[\-\–]', ' ', title)
     title = re.sub(r'[^\w\s]', '', title)
@@ -175,6 +259,22 @@ def normalize_title(title):
     return title
 
 def update_related_article_ids(post):
+    """
+    Updates related article IDs based on links in the content.
+
+    Input:
+    - post: A Post object representing the current post.
+
+    Functionality:
+    - Extracts titles from related article links.
+    - Normalizes the titles and searches for matching posts in the database.
+    - Updates related article links with the corresponding post IDs.
+
+    Output:
+    - Returns a tuple:
+      - post: The updated Post object.
+      - missing_titles: A list of missing titles and corresponding post IDs.
+    """
     updated = False
     missing_titles = []
     related_articles_in_content = post.related_articles.copy()
@@ -205,6 +305,29 @@ def update_related_article_ids(post):
     return post, missing_titles
 
 def preprocess_article(article):
+    """
+    Preprocesses an article to extract and structure its content.
+
+    Input:
+    - article: A dictionary containing the article data with keys 'post_content', 'id', 'post_date', and 'post_title'.
+
+    Functionality:
+    - Parses the article content using BeautifulSoup.
+    - Extracts structured data and external links from the content.
+    - Handles gallery shortcodes and replaces them with actual image URLs.
+    - Processes external links to separate related articles.
+    - Retrieves the thumbnail URL for the article.
+
+    Output:
+    - Returns a dictionary containing:
+      - post_date: The date of the post.
+      - post_content: The original content of the post.
+      - post_title: The title of the post.
+      - post_id: The ID of the post.
+      - thumbnail: The thumbnail URL of the post.
+      - content: A list of structured content elements.
+      - related_articles: A list of related article links.
+    """
     post_content = article['post_content']
     post_id = article['id']
     post_date = article['post_date']
