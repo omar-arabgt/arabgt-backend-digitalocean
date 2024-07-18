@@ -7,7 +7,7 @@ from .preprocessing import preprocess_article, update_related_article_ids
 
 logger = logging.getLogger(__name__)
 
-def fetch_and_process_posts(posts):
+def fetch_and_process_posts(posts, override_existing=False):
     saved_posts = []
     for post in posts:
         processed_article = preprocess_article(post)
@@ -32,19 +32,35 @@ def fetch_and_process_posts(posts):
                 elif term_taxonomy.taxonomy == 'post_tag':
                     tags.append(term.name)
 
-            new_post = Post(
-                post_id=wp_post.id,
-                title=processed_article['post_title'],
-                content=processed_article['content'],
-                publish_date=processed_article['post_date'],
-                thumbnail=processed_article['thumbnail'],
-                related_articles=processed_article['related_articles'],
-                edit_date=wp_post.post_modified,
-                author=author,
-                category=categories,
-                tag=tags
-            )
-            new_post.save()
+            if override_existing:
+                new_post, created = Post.objects.update_or_create(
+                    post_id=wp_post.id,
+                    defaults={
+                        'title': processed_article['post_title'],
+                        'content': processed_article['content'],
+                        'publish_date': processed_article['post_date'],
+                        'thumbnail': processed_article['thumbnail'],
+                        'related_articles': processed_article['related_articles'],
+                        'edit_date': wp_post.post_modified,
+                        'author': author,
+                        'category': categories,
+                        'tag': tags
+                    }
+                )
+            else:
+                new_post = Post(
+                    post_id=wp_post.id,
+                    title=processed_article['post_title'],
+                    content=processed_article['content'],
+                    publish_date=processed_article['post_date'],
+                    thumbnail=processed_article['thumbnail'],
+                    related_articles=processed_article['related_articles'],
+                    edit_date=wp_post.post_modified,
+                    author=author,
+                    category=categories,
+                    tag=tags
+                )
+                new_post.save()
             saved_posts.append(new_post)
         except WpPosts.DoesNotExist:
             logger.error(f"Post with ID {wp_post_id} does not exist.")
@@ -96,7 +112,7 @@ def fetch_and_process_wp_post_by_id(post_id):
             logger.error("Post not found.")
             return {"error": "Post not found."}
 
-        new_posts = fetch_and_process_posts([wp_post])
+        new_posts = fetch_and_process_posts([wp_post], True)
 
         end_time = time.time()
         response_time = end_time - start_time
@@ -139,7 +155,6 @@ def fetch_and_update_related_articles_ids():
     
     except Exception as e:
         return {"error": f"An internal error occurred: {e}"}
-
 
 def fetch_and_update_related_articles_ids_by_id(id):
     try:

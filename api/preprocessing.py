@@ -1,6 +1,4 @@
 import re
-import unicodedata
-import ast
 from bs4 import BeautifulSoup
 from news.models import WpPosts, WpPostmeta
 from .models import Post
@@ -163,8 +161,6 @@ def process_external_links(external_links):
             decoded_link = urllib.parse.unquote(link)
             parts = decoded_link.split('/')
             if len(parts) > 0:
-                wp_post_link_name = parts[-2]
-                formatted_part = wp_post_link_name.replace('-', ' ')
                 related_articles.append(decoded_link)
         else:
             cleaned_external_links.append(link)
@@ -179,18 +175,17 @@ def normalize_title(title):
     return title
 
 def update_related_article_ids(post):
-    try:
-        content = ast.literal_eval(post.content)
-    except (SyntaxError, ValueError) as e:
-        return post, []
-
     updated = False
     missing_titles = []
-
-    related_articles_in_content = post.related_articles
-
-    for related_article_link in related_articles_in_content:
-        title = related_article_link.split('/')[-2].replace('-', ' ')
+    related_articles_in_content = post.related_articles.copy()
+    for index, related_article_link in enumerate(related_articles_in_content):
+        if related_article_link.isdigit():
+            continue
+        try:
+            title = related_article_link.split('/')[-2].replace('-', ' ')
+        except IndexError:
+            missing_titles.append({"title": "Invalid URL", "id": post.id})
+            continue
         normalized_title = normalize_title(title)
         words = normalized_title.split()
         query = Q()
@@ -198,7 +193,7 @@ def update_related_article_ids(post):
             query &= Q(title__icontains=word)
         related_post = Post.objects.filter(query).first()
         if related_post:
-            related_articles_in_content[related_articles_in_content.index(related_article_link)] = related_post.id
+            related_articles_in_content[index] = str(related_post.id)
             updated = True
         else:
             missing_titles.append({"title": title, "id": post.id})
