@@ -1,5 +1,5 @@
 from django_filters import rest_framework as filters
-from django.db.models import ArrayField
+from django.contrib.postgres.fields import ArrayField
 from django_filters.filters import BaseInFilter, CharFilter
 from .models import Post
 
