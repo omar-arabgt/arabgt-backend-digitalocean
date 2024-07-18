@@ -1,10 +1,11 @@
 import re
+import unicodedata
+import ast
 from bs4 import BeautifulSoup
 from news.models import WpPosts, WpPostmeta
 from .models import Post
-import ast
-import urllib.parse
 from django.db.models import Q
+import urllib.parse
 
 def extract_elements(element):
     elements = []
@@ -14,7 +15,7 @@ def extract_elements(element):
     def add_text_buffer_to_elements():
         if text_buffer:
             text = ''.join(text_buffer).strip()
-            if text:  # Only add if the text is not empty
+            if text:
                 elements.append({
                     "text": text,
                     "media": {},
@@ -59,7 +60,7 @@ def extract_elements(element):
                         "heading": text
                     })
                 else:
-                    text_buffer.append(child.get_text())  # Append the text directly
+                    text_buffer.append(child.get_text())
             elif tag_name in ['h1', 'h2', 'h3', 'h4', 'h5', 'h6']:
                 add_text_buffer_to_elements()
                 elements.append({
@@ -108,10 +109,7 @@ def extract_elements(element):
                 })
 
     add_text_buffer_to_elements()
-
-    # Remove any empty dictionary items
     elements = [element for element in elements if element['text'] or element['media'] or element['heading']]
-
     return elements, external_links
 
 def handle_galleries(text):
@@ -167,7 +165,7 @@ def process_external_links(external_links):
             if len(parts) > 0:
                 wp_post_link_name = parts[-2]
                 formatted_part = wp_post_link_name.replace('-', ' ')
-                related_articles.append({"link": decoded_link, "title": formatted_part})
+                related_articles.append(decoded_link)
         else:
             cleaned_external_links.append(link)
     
@@ -187,30 +185,29 @@ def update_related_article_ids(post):
         return post, []
 
     updated = False
-    missing_titles = [] 
-    for element in content:
-        if isinstance(element, dict) and 'related_articles' in element:
-            related_articles = element.get("related_articles", [])
-            for related_article in related_articles:
-                title = related_article.get('title')
-                if title:
-                    normalized_title = normalize_title(title)
-                    words = normalized_title.split()
-                    query = Q()
-                    for word in words:
-                        query &= Q(title__icontains=word)
-                    related_post = Post.objects.filter(query).first()
-                    if related_post:
-                        related_article['id'] = related_post.id
-                        updated = True
-                    else:
-                        missing_titles.append(title)
+    missing_titles = []
+
+    related_articles_in_content = post.related_articles
+
+    for related_article_link in related_articles_in_content:
+        title = related_article_link.split('/')[-2].replace('-', ' ')
+        normalized_title = normalize_title(title)
+        words = normalized_title.split()
+        query = Q()
+        for word in words:
+            query &= Q(title__icontains=word)
+        related_post = Post.objects.filter(query).first()
+        if related_post:
+            related_articles_in_content[related_articles_in_content.index(related_article_link)] = related_post.id
+            updated = True
+        else:
+            missing_titles.append({"title": title, "id": post.id})
 
     if updated:
-        post.content = str(content)
+        post.related_articles = related_articles_in_content
+        post.save()
 
     return post, missing_titles
-
 
 def preprocess_article(article):
     post_content = article['post_content']
@@ -232,28 +229,22 @@ def preprocess_article(article):
     
     related_articles, cleaned_external_links = process_external_links(external_links)
 
-    if related_articles:
-        final_elements.append({
-            "related_articles": related_articles
-        })
-
     if cleaned_external_links:
         final_elements.append({
             "external_links": cleaned_external_links
         })
         
     thumbnail_url = get_thumbnail(post_id)
-    if thumbnail_url:
-        final_elements.append({
-            "thumbnail": f'https://arabgt.com/wp-content/uploads/{thumbnail_url}'
-        })
+    thumbnail_url_with_base = f'https://arabgt.com/wp-content/uploads/{thumbnail_url}'
 
     output_data = {
         "post_date": post_date,
         "post_content": post_content,
         "post_title": post_title,
         "post_id": post_id,
-        "content": final_elements
+        "thumbnail": thumbnail_url_with_base,
+        "content": final_elements,
+        "related_articles": related_articles
     }
     
     return output_data

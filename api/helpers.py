@@ -37,6 +37,8 @@ def fetch_and_process_posts(posts):
                 title=processed_article['post_title'],
                 content=processed_article['content'],
                 publish_date=processed_article['post_date'],
+                thumbnail=processed_article['thumbnail'],
+                related_articles=processed_article['related_articles'],
                 edit_date=wp_post.post_modified,
                 author=author,
                 category=categories,
