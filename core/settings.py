@@ -194,8 +194,10 @@ SOCIALACCOUNT_PROVIDERS = {
     },
     'apple': {
         'APP': {
-            'client_id': env("SOCIAL_AUTH_APPLE_KEY"),
-            'secret': env("SOCIAL_AUTH_APPLE_SECRET"),
+            'client_id': env("SOCIAL_AUTH_APPLE_CLIENT_ID"),
+            'secret': env("SOCIAL_AUTH_APPLE_CLIENT_SECRET"),
+            'key': env("SOCIAL_AUTH_APPLE_KEY_ID"),
+            'settings': {"certificate_key": env("SOCIAL_AUTH_APPLE_CERTIFICATE_KEY") },
         }
     }
 }
