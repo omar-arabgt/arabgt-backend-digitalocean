@@ -6,6 +6,7 @@ from .models import *
 from .serializers import *
 from .filters import *
 from .choices import *
+from .pagination import *
 
 
 class UserUpdateView(UpdateAPIView):
@@ -27,8 +28,9 @@ class FavoriteShowListView(ListAPIView):
 
 class PostListView(ListAPIView):
     serializer_class = PostListSerializer
-    queryset = Post.objects.all()
+    queryset = Post.objects.all().order_by('-publish_date')
     filterset_class = PostFilter
+    pagination_class = CustomPagination
 
 
 class PostRetrieveView(RetrieveAPIView):
