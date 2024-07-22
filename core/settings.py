@@ -54,6 +54,7 @@ INSTALLED_APPS = [
     'django_filters',
     'dj_rest_auth',
     'dj_rest_auth.registration',
+    'social_django',
     'allauth.account',
     'allauth.socialaccount',
     'allauth.socialaccount.providers.facebook',
