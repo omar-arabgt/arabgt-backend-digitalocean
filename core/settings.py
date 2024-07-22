@@ -61,6 +61,7 @@ INSTALLED_APPS = [
     'allauth.socialaccount.providers.apple',
     'news',
     'api',
+    'web',
 ]
 
 MIDDLEWARE = [
@@ -269,3 +270,6 @@ CELERY_BEAT_SCHEDULE = {
 
 CSRF_TRUSTED_ORIGINS = ["https://localhost", "https://localhost", 'https://dev-arabgt.audteye.com', 'http://dev-arabgt.audteye.com']
 # CSRF_TRUSTED_ORIGINS = ["*"]
+
+LOGIN_REDIRECT_URL="home"
+LOGIN_URL="web-login"
