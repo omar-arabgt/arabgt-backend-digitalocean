@@ -4,12 +4,39 @@
   box-sizing: border-box;
 }
 
-body {
-    font-family: 'Cairo', sans-serif;
-    min-height: 100vh;
+html, body {
+  font-family: 'Cairo', sans-serif;
+  min-height: 100vh;
+  max-height: 100vh;
+  overflow: hidden;
+}
+
+.main-content {
+  height: 100vh;
 }
 
 .sidebar {
-    height: 100vh;
+  height: 100vh;
 }
 
+.sidebar.open {
+  right: -100%;
+}
+
+
+@media (max-width: 1024px) {
+  .page-wrapper{
+    flex-direction: column;
+  }
+
+  .sidebar {
+    height: 100vh;
+    position: absolute;
+    right: 0;
+    top: 0;
+  }
+
+  .sidebar.close {
+    right: -100%;
+  }
+}
