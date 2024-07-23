@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html dir="rtl" lang="ar">
+{% include 'web/partials/head.html' %}
+<body class="flex">
+    {% include 'web/partials/sidebar.html' %}
+    <div class="flex-1 px-4 bg-gray-100">
+        {% block content %}
+        {% endblock %}
+    </div>
+    <script>
+        function toggleSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            sidebar.classList.toggle('-translate-x-full');
+        }
+    </script>
+</body>
+</html>
