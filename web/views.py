@@ -70,6 +70,37 @@ class UserUpdateView(LoginRequiredMixin, UpdateView):
         return context
 
 
+class NewsletterListView(LoginRequiredMixin, ListView):
+    """
+    Displays a paginated list of newsletter subscriptions with optional search functionality.
+
+    Input:
+    - Optional query parameter 'q' for searching newsletter subscriptions by email.
+
+    Functionality:
+    - Retrieves and lists newsletter subscriptions, optionally filtered by the search query.
+
+    Output:
+    - Renders the 'web/newsletter/list.html' template with the newsletter list and search context.
+    """
+    model = Newsletter
+    template_name = 'web/newsletter/list.html'
+    context_object_name = 'newsletter_list'
+    paginate_by = 10
+
+    def get_queryset(self):
+        query = self.request.GET.get('q')
+        if query:
+            return Newsletter.objects.filter(Q(email__icontains=query))
+        return Newsletter.objects.all()
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['page_name'] = 'قائمة النشرة البريدية'
+        context['search_query'] = self.request.GET.get('q', '')
+        return context
+
+
 def download_newsletter_excel(request):
     """
     Downloads an Excel file containing the newsletter subscriptions.
