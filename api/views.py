@@ -1,6 +1,6 @@
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from rest_framework.generics import ListAPIView, UpdateAPIView, RetrieveAPIView
+from rest_framework.generics import ListAPIView, UpdateAPIView, RetrieveAPIView, CreateAPIView
 from django.core.mail import EmailMessage
 from django.template.loader import render_to_string
 from rest_framework import status
@@ -39,6 +39,23 @@ class PostListView(ListAPIView):
 class PostRetrieveView(RetrieveAPIView):
     serializer_class = PostSerializer
     queryset = Post.objects.all()
+
+
+class SubscribeNewsletter(CreateAPIView):
+    queryset = Newsletter.objects.all()
+    serializer_class = NewsletterSerializer
+
+    def create(self, request):
+        email = request.GET.get('email')
+        if not email:
+            return Response({'error': 'Email is required.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        data = {'email': email}
+        serializer = self.get_serializer(data=data)
+        serializer.is_valid(raise_exception=True)
+        self.perform_create(serializer)
+        headers = self.get_success_headers(serializer.data)
+        return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
 
 
 class ChoicesView(APIView):

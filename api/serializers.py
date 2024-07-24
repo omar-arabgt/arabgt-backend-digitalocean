@@ -47,3 +47,9 @@ class PostListSerializer(ModelSerializer):
     class Meta:
         model = Post
         fields = ["title", "tag", "category", "thumbnail", "id"]
+
+class NewsletterSerializer(ModelSerializer):
+    class Meta:
+        model = Newsletter
+        fields = ['email', 'created_at']
+        read_only_fields = ['created_at']

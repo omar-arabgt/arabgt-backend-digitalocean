@@ -4,6 +4,9 @@ from django.contrib.postgres.fields import ArrayField
 
 from .choices import *
 
+class Newsletter(models.Model):
+    email = models.EmailField(unique=True)
+    created_at = models.DateTimeField(auto_now_add=True)
 
 class User(AbstractUser):
     nick_name = models.CharField(max_length=255, blank=True)
