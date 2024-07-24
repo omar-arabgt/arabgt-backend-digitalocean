@@ -20,7 +20,7 @@ class CustomAccountAdapter(DefaultAccountAdapter):
         }
 
         subject = "Confirm your email"
-        email_template = "email_confirmation_message.html"
+        email_template = "authentication/email_confirmation_message.html"
         email_body = render_to_string(email_template, context)
 
         mail = EmailMessage(subject, email_body, to=[receiver])
@@ -51,7 +51,7 @@ class CustomPasswordResetForm(PasswordResetForm):
         context["reset_url"] = build_absolute_uri(context["request"], reset_url)
 
         subject = "Reset Password"
-        email_template = "password_reset_email.html"
+        email_template = "authentication/password_reset_email.html"
         email_body = render_to_string(email_template, context)
 
         mail = EmailMessage(subject, email_body, to=[to_email])
