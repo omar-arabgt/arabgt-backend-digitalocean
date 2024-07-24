@@ -60,6 +60,7 @@ class ChoicesView(APIView):
 class ContactUsView(APIView):
     def send_contact_email(self, name, email, message_content):
         subject = 'Contact Us message From ArabGT Mobile App'
+        # DEV ONLY
         to_emails = ['basheer@audteye.com', 'zeyad@audteye.com']
         context = {
             'name': name,
