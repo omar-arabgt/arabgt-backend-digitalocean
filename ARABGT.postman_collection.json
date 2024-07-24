@@ -1,0 +1,476 @@
+{
+	"info": {
+		"_postman_id": "e71192f0-7397-4b91-a547-cb6a51ca1221",
+		"name": "ARABGT",
+		"description": "Collection for ARABGT API endpoints",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "36328950"
+	},
+	"item": [
+		{
+			"name": "Register",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"email\": \"you-email\",\n    \"password1\": \"your-password\",\n    \"password2\": \"your-password\"\n}"
+				},
+				"url": {
+					"raw": "{{BASE}}/auth/register/",
+					"host": [
+						"{{BASE}}"
+					],
+					"path": [
+						"auth",
+						"register",
+						""
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Login",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"email\": \"your-email\",\n    \"password\": \"your-password\"\n}"
+				},
+				"url": {
+					"raw": "{{BASE}}/auth/login/",
+					"host": [
+						"{{BASE}}"
+					],
+					"path": [
+						"auth",
+						"login",
+						""
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Password Reset",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"email\": \"your-email@example.com\"\n}"
+				},
+				"url": {
+					"raw": "{{BASE}}/auth/password/reset/",
+					"host": [
+						"{{BASE}}"
+					],
+					"path": [
+						"auth",
+						"password",
+						"reset",
+						""
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Password Change",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"new_password1\": \"your-new-password\",\n    \"new_password2\": \"your-new-password\"\n}"
+				},
+				"url": {
+					"raw": "{{BASE}}/auth/password/change/",
+					"host": [
+						"{{BASE}}"
+					],
+					"path": [
+						"auth",
+						"password",
+						"change",
+						""
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Logout",
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "",
+							"type": "string"
+						}
+					]
+				},
+				"method": "POST",
+				"header": [],
+				"url": {
+					"raw": "{{BASE}}/auth/logout/",
+					"host": [
+						"{{BASE}}"
+					],
+					"path": [
+						"auth",
+						"logout",
+						""
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "User Details",
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "",
+							"type": "string"
+						}
+					]
+				},
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{BASE}}/auth/user/",
+					"host": [
+						"{{BASE}}"
+					],
+					"path": [
+						"auth",
+						"user",
+						""
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Token Verify",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"token\": \"your-token\"\n}"
+				},
+				"url": {
+					"raw": "{{BASE}}/auth/token/verify/",
+					"host": [
+						"{{BASE}}"
+					],
+					"path": [
+						"auth",
+						"token",
+						"verify",
+						""
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Token Refresh",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"refresh\": \"your-refresh-token\"\n}"
+				},
+				"url": {
+					"raw": "{{BASE}}/auth/token/refresh/",
+					"host": [
+						"{{BASE}}"
+					],
+					"path": [
+						"auth",
+						"token",
+						"refresh",
+						""
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Apple Login",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\"access_token\": \"your-apple-access-token\"}"
+				},
+				"url": {
+					"raw": "{{BASE}}/auth/apple/",
+					"host": [
+						"{{BASE}}"
+					],
+					"path": [
+						"auth",
+						"apple",
+						""
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Facebook Login",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\"access_token\": \"your-facebook-access-token\"}"
+				},
+				"url": {
+					"raw": "{{BASE}}/auth/facebook/",
+					"host": [
+						"{{BASE}}"
+					],
+					"path": [
+						"auth",
+						"facebook",
+						""
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Google Login",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\"access_token\": \"your-google-access-token\"}"
+				},
+				"url": {
+					"raw": "{{BASE}}/auth/google/",
+					"host": [
+						"{{BASE}}"
+					],
+					"path": [
+						"auth",
+						"google",
+						""
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "POST LISTS",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{BASE}}/api/posts/",
+					"host": [
+						"{{BASE}}"
+					],
+					"path": [
+						"api",
+						"posts",
+						""
+					],
+					"query": [
+						{
+							"key": "tag",
+							"value": "mini",
+							"disabled": true
+						},
+						{
+							"key": "categories",
+							"value": "متفرقات",
+							"disabled": true
+						},
+						{
+							"key": "page_size",
+							"value": "3",
+							"disabled": true
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "POST DETAILS",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{BASE}}/api/posts/1/",
+					"host": [
+						"{{BASE}}"
+					],
+					"path": [
+						"api",
+						"posts",
+						"1",
+						""
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "CHOICES",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{BASE}}/api/choices/",
+					"host": [
+						"{{BASE}}"
+					],
+					"path": [
+						"api",
+						"choices",
+						""
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "FAVORITE SHOWS",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{BASE}}/api/favorite_shows/",
+					"host": [
+						"{{BASE}}"
+					],
+					"path": [
+						"api",
+						"favorite_shows",
+						""
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "FAVORITE PRESENTERS",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{BASE}}/api/favorite_presenters/",
+					"host": [
+						"{{BASE}}"
+					],
+					"path": [
+						"api",
+						"favorite_presenters",
+						""
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Contact Us",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \n    \"name\": \"your-name\",\n    \"email\": \"your-email@email.com\",\n    \"message_content\": \"message\"\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{BASE}}/api/contact-us/",
+					"host": [
+						"{{BASE}}"
+					],
+					"path": [
+						"api",
+						"contact-us",
+						""
+					]
+				}
+			},
+			"response": []
+		}
+	],
+	"variable": [
+		{
+			"key": "BASE",
+			"value": "https://dev-arabgt.audteye.com"
+		},
+		{
+			"key": "TOKEN",
+			"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzIxNDYyNjk5LCJpYXQiOjE3MjEzNzYyOTksImp0aSI6ImY3YzE3OTU5OWE3NDQzNzBhYzhmNDVjN2FiZmY4MzA3IiwidXNlcl9pZCI6Mn0.gQeqaqME1E3Wih6VAQs5rGdn98A1_u3Qt9zKro69JOA"
+		}
+	]
+}
