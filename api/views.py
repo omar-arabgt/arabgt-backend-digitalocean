@@ -58,6 +58,21 @@ class SubscribeNewsletter(CreateAPIView):
         return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
 
 
+class UnsubscribeNewsletter(DestroyAPIView):
+    queryset = Newsletter.objects.all()
+    serializer_class = NewsletterSerializer
+
+    def get_object(self):
+        email = self.request.GET.get('email')
+        if not email:
+            raise ValidationError({'error': 'Email is required.'})
+
+        try:
+            return Newsletter.objects.get(email=email)
+        except Newsletter.DoesNotExist:
+            raise NotFound({'error': 'Subscription not found.'})
+
+
 class ChoicesView(APIView):
 
     def get(self, request, *args, **kwargs):
