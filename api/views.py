@@ -1,9 +1,11 @@
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.generics import ListAPIView, UpdateAPIView, RetrieveAPIView, ListCreateAPIView
+from rest_framework import status
+from rest_framework.filters import SearchFilter
+from django_filters.rest_framework import DjangoFilterBackend
 from django.core.mail import EmailMessage
 from django.template.loader import render_to_string
-from rest_framework import status
 from django.views.decorators.cache import cache_page
 from django.utils.decorators import method_decorator
 
@@ -35,6 +37,8 @@ class PostListView(ListAPIView):
     serializer_class = PostListSerializer
     queryset = Post.objects.all().order_by('-publish_date')
     filterset_class = PostFilter
+    filter_backends = [DjangoFilterBackend, SearchFilter]
+    search_fields = ["title"]
     pagination_class = CustomPagination
 
 
