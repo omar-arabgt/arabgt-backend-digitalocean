@@ -55,6 +55,7 @@ INSTALLED_APPS = [
     'django_filters',
     'dj_rest_auth',
     'dj_rest_auth.registration',
+    'social_django',
     'allauth.account',
     'allauth.socialaccount',
     'allauth.socialaccount.providers.facebook',
@@ -166,6 +167,9 @@ REST_AUTH = {
 AUTHENTICATION_BACKENDS = (
     'django.contrib.auth.backends.ModelBackend',
     'allauth.account.auth_backends.AuthenticationBackend',
+    'social_core.backends.facebook.FacebookOAuth2',
+    'social_core.backends.google.GoogleOAuth2',
+    'social_core.backends.apple.AppleIdAuth',
 )
 
 SOCIALACCOUNT_PROVIDERS = {
