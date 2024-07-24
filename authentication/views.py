@@ -23,4 +23,4 @@ class AppleLogin(SocialLoginView):
 
 
 class EmailConfirmed(TemplateView):
-    template_name = "email_confirmed.html"
+    template_name = "authentication/email_confirmed.html"

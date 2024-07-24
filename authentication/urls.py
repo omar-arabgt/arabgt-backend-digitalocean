@@ -8,17 +8,17 @@ urlpatterns = [
     path("", include("dj_rest_auth.urls")),
     path(
         "password_reset/<uidb64>/<token>/",
-        PasswordResetConfirmView.as_view(template_name="password_reset.html"),
+        PasswordResetConfirmView.as_view(template_name="authentication/password_reset.html"),
         name="password_reset_confirm"
     ),
     path(
         "password_reset/done/",
-        PasswordResetCompleteView.as_view(template_name="password_reset_complete.html"),
+        PasswordResetCompleteView.as_view(template_name="authentication/password_reset_complete.html"),
         name="password_reset_complete"
     ),
     path(
         "register/account-confirm-email/<key>/",
-        ConfirmEmailView.as_view(template_name="confirm_email.html"),
+        ConfirmEmailView.as_view(template_name="authentication/confirm_email.html"),
         name="account_confirm_email"
     ),
     path("register/", include("dj_rest_auth.registration.urls")),
