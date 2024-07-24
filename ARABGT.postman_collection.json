@@ -461,6 +461,72 @@
 				}
 			},
 			"response": []
+		},
+		{
+			"name": "Unsubscribe Newsletter",
+			"request": {
+				"method": "DELETE",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{BASE}}/api/unsubscribe_newsletter?email=your@email.com",
+					"host": [
+						"{{BASE}}"
+					],
+					"path": [
+						"api",
+						"unsubscribe_newsletter"
+					],
+					"query": [
+						{
+							"key": "email",
+							"value": "your@email.com"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Subscribe Newsletter",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{BASE}}/api/subscribe_newsletter?email=your@email.com",
+					"host": [
+						"{{BASE}}"
+					],
+					"path": [
+						"api",
+						"subscribe_newsletter"
+					],
+					"query": [
+						{
+							"key": "email",
+							"value": "your@email.com"
+						}
+					]
+				}
+			},
+			"response": []
 		}
 	],
 	"variable": [
