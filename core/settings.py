@@ -51,6 +51,7 @@ INSTALLED_APPS = [
     'passlib.ext.django',
     'rest_framework',
     'rest_framework.authtoken',
+    'rest_framework_simplejwt.token_blacklist',
     'django_filters',
     'dj_rest_auth',
     'dj_rest_auth.registration',
