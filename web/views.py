@@ -10,7 +10,20 @@ from .forms import *
 import openpyxl
 from django.utils.timezone import localtime
 
+
 class UserListView(LoginRequiredMixin, ListView):
+    """
+    Displays a paginated list of users with optional search functionality.
+
+    Input:
+    - Optional query parameter 'q' for searching users by username.
+
+    Functionality:
+    - Retrieves and lists users, optionally filtered by the search query.
+
+    Output:
+    - Renders the 'web/users/list.html' template with the user list and search context.
+    """
     model = User
     template_name = 'web/users/list.html'
     context_object_name = 'users'
@@ -28,7 +41,21 @@ class UserListView(LoginRequiredMixin, ListView):
         context['search_query'] = self.request.GET.get('q', '')
         return context
 
+
 class UserUpdateView(LoginRequiredMixin, UpdateView):
+    """
+    Updates the details of a specific user.
+
+    Input:
+    - User ID in the URL and form data for updating the user.
+
+    Functionality:
+    - Retrieves the user by ID and updates their details using the provided form data.
+
+    Output:
+    - Renders the 'web/users/edit.html' template with the user data.
+    - Redirects to the user list view upon successful update.
+    """
     model = User
     form_class = UserForm
     template_name = 'web/users/edit.html'
@@ -42,7 +69,20 @@ class UserUpdateView(LoginRequiredMixin, UpdateView):
         context['page_name'] = 'تعديل المستخدم'
         return context
 
+
 def download_newsletter_excel(request):
+    """
+    Downloads an Excel file containing the newsletter subscriptions.
+
+    Input:
+    - No specific input required.
+
+    Functionality:
+    - Retrieves all newsletter subscriptions and writes them to an Excel file.
+
+    Output:
+    - Returns the Excel file as an HTTP response for download.
+    """
     wb = openpyxl.Workbook()
     ws = wb.active
     ws.title = "Newsletter"
@@ -52,7 +92,6 @@ def download_newsletter_excel(request):
 
     newsletters = Newsletter.objects.all().values_list('id', 'email', 'created_at')
     for newsletter in newsletters:
-        # Convert the timezone-aware datetime to naive datetime
         id, email, created_at = newsletter
         if created_at:
             created_at = localtime(created_at).replace(tzinfo=None)
@@ -66,6 +105,18 @@ def download_newsletter_excel(request):
 
 
 class LoginView(auth_views.LoginView):
+    """
+    Handles user login.
+
+    Input:
+    - Form data containing username and password.
+
+    Functionality:
+    - Authenticates and logs in the user.
+
+    Output:
+    - Renders the 'web/login.html' template with the login form.
+    """
     template_name = "web/login.html"
     form_class = CustomAuthenticationForm
 
@@ -74,7 +125,20 @@ class LoginView(auth_views.LoginView):
         context['page_name'] = 'تسجيل الدخول'
         return context
 
+
 class HomeView(LoginRequiredMixin, TemplateView):
+    """
+    Displays the home/dashboard page for logged-in users.
+
+    Input:
+    - No specific input required.
+
+    Functionality:
+    - Renders the home page for authenticated users.
+
+    Output:
+    - Renders the 'web/home.html' template.
+    """
     template_name = "web/home.html"
 
     def get_context_data(self, **kwargs):
