@@ -42,3 +42,16 @@ class Post(models.Model):
     related_articles = ArrayField(models.CharField(max_length=255), blank=True, default=list)
     thumbnail = models.CharField(max_length=255)
     content = models.TextField()
+
+
+class PostManager(models.Manager):
+    def get_queryset(self):
+        return super().get_queryset().filter(unsaved=False)
+
+
+class SavedPost(models.Model):
+    post = models.ForeignKey(Post, on_delete=models.CASCADE)
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    unsaved = models.BooleanField(default=False)
+
+    objects = PostManager()
