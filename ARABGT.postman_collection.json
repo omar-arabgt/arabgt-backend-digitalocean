@@ -461,6 +461,39 @@
 				}
 			},
 			"response": []
+		},
+		{
+			"name": "Advertisement Request",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \n    \"name\": \"your-name\",\n    \"email\": \"your-email@email.com\",\n    \"phone_number\": \"+901013123\",\n    \"company\":\"company\",\n    \"message_content\": \"message\"\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{BASE}}/api/ads-request?email=your@email.com",
+					"host": [
+						"{{BASE}}"
+					],
+					"path": [
+						"api",
+						"ads-request"
+					],
+					"query": [
+						{
+							"key": "email",
+							"value": "your@email.com"
+						}
+					]
+				}
+			},
+			"response": []
 		}
 	],
 	"variable": [
@@ -470,7 +503,7 @@
 		},
 		{
 			"key": "TOKEN",
-			"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzIxNDYyNjk5LCJpYXQiOjE3MjEzNzYyOTksImp0aSI6ImY3YzE3OTU5OWE3NDQzNzBhYzhmNDVjN2FiZmY4MzA3IiwidXNlcl9pZCI6Mn0.gQeqaqME1E3Wih6VAQs5rGdn98A1_u3Qt9zKro69JOA"
+			"value": ""
 		}
 	]
 }
