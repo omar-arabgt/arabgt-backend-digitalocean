@@ -10,4 +10,5 @@ urlpatterns = [
     path("favorite_shows/", FavoriteShowListView.as_view(), name="favorite-show-list"),
     path("choices/", ChoicesView.as_view(), name="choices"),
     path('contact-us/', ContactUsView.as_view(), name='contact-us'),
+    path('ads-request/', AdvertisementRequest.as_view(), name='ads-request'),
 ]
