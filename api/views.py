@@ -4,6 +4,8 @@ from rest_framework.generics import ListAPIView, UpdateAPIView, RetrieveAPIView
 from django.core.mail import EmailMessage
 from django.template.loader import render_to_string
 from rest_framework import status
+from django.views.decorators.cache import cache_page
+from django.utils.decorators import method_decorator
 
 from .models import *
 from .serializers import *
@@ -90,3 +92,31 @@ class ContactUsView(APIView):
             return Response({'success': 'Email sent successfully.'}, status=status.HTTP_200_OK)
         except Exception as e:
             return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+class HomePageView(ListAPIView):
+    serializer_class = PostListSerializer
+
+    @method_decorator(cache_page(60 * 60 * 24))
+    def get(self, request, *args, **kwargs):
+        return super().get(request, *args, **kwargs)
+
+    def get_queryset(self):
+        categories = [
+            "اختيارات المحررين",
+            "أحدث أخبار السيارات",
+            "تصفح بحسب ماركة السيارة",
+            "تكنولوجيا السيارات",
+            "برامج عرب جي تي",
+            "مقالات",
+            "فيديو",
+            "مواصفات وأسعار السيارات",
+            "وكلاء وبيانات",      
+        ]
+
+        queryset = []
+        for category in categories:
+            posts = list(Post.objects.filter(category__contains=[category]).order_by("-publish_date")[:3])
+            queryset += posts
+
+        return queryset
