@@ -1,9 +1,11 @@
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from rest_framework.generics import ListAPIView, UpdateAPIView, RetrieveAPIView
+from rest_framework.generics import ListAPIView, UpdateAPIView, RetrieveAPIView, ListCreateAPIView
 from django.core.mail import EmailMessage
 from django.template.loader import render_to_string
 from rest_framework import status
+from django.views.decorators.cache import cache_page
+from django.utils.decorators import method_decorator
 
 from .models import *
 from .serializers import *
@@ -39,6 +41,23 @@ class PostListView(ListAPIView):
 class PostRetrieveView(RetrieveAPIView):
     serializer_class = PostSerializer
     queryset = Post.objects.all()
+
+
+class SavedPostListCreateView(ListCreateAPIView):
+
+    def get_serializer_class(self):
+        if self.request.method == "GET":
+            return SavedPostReadSerializer
+        return SavedPostWriteSerializer
+
+    def get_queryset(self):
+        querset = SavedPost.objects.filter(user=self.request.user).select_related("post")
+        return querset
+
+
+class SavedPostUpdateView(UpdateAPIView):
+    serializer_class = SavedPostWriteSerializer
+    queryset = SavedPost.objects.all()
 
 
 class ChoicesView(APIView):
@@ -140,3 +159,31 @@ class AdvertisementRequest(APIView):
             return Response({'success': 'Email sent successfully.'}, status=status.HTTP_200_OK)
         except Exception as e:
             return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+class HomePageView(ListAPIView):
+    serializer_class = PostListSerializer
+
+    @method_decorator(cache_page(60 * 60 * 24))
+    def get(self, request, *args, **kwargs):
+        return super().get(request, *args, **kwargs)
+
+    def get_queryset(self):
+        categories = [
+            "اختيارات المحررين",
+            "أحدث أخبار السيارات",
+            "تصفح بحسب ماركة السيارة",
+            "تكنولوجيا السيارات",
+            "برامج عرب جي تي",
+            "مقالات",
+            "فيديو",
+            "مواصفات وأسعار السيارات",
+            "وكلاء وبيانات",      
+        ]
+
+        queryset = []
+        for category in categories:
+            posts = list(Post.objects.filter(category__contains=[category]).order_by("-publish_date")[:3])
+            queryset += posts
+
+        return queryset
