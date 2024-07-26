@@ -89,6 +89,10 @@ def extract_elements(element):
                     "media": {},
                     "heading": ""
                 })
+                for li in child.find_all('li'):
+                    a_tag = li.find('a')
+                    if a_tag and 'href' in a_tag.attrs:
+                        external_links.append(a_tag['href'])
             elif tag_name == 'iframe':
                 add_text_buffer_to_elements()
                 src = attributes.get('src', '')
