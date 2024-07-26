@@ -72,3 +72,9 @@ class SavedPostWriteSerializer(ModelSerializer):
 
         validated_data["user"] = user
         return super().create(validated_data)
+
+class NewsletterSerializer(ModelSerializer):
+    class Meta:
+        model = Newsletter
+        fields = ['email', 'created_at']
+        read_only_fields = ['created_at']

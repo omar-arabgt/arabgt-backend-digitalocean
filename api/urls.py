@@ -14,4 +14,6 @@ urlpatterns = [
     path("choices/", ChoicesView.as_view(), name="choices"),
     path('contact-us/', ContactUsView.as_view(), name='contact-us'),
     path('ads-request/', AdvertisementRequest.as_view(), name='ads-request'),
+    path('subscribe_newsletter', SubscribeNewsletter.as_view(), name='subscribe-newsletter'),
+    path('unsubscribe_newsletter', UnsubscribeNewsletter.as_view(), name='unsubscribe-newsletter'),
 ]

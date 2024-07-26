@@ -41,6 +41,36 @@ html, body {
   }
 }
 
+.action-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 16px;
+}
+.card {
+  background-color: white;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  padding: 20px;
+  text-align: center;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+.card h3 {
+  margin: 0 0 10px;
+}
+.card button,
+.card a {
+  background-color: #d9232d;
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  cursor: pointer;
+  display: inline-block;
+  border-radius: 4px;
+  transition: background-color 0.3s ease;
+}
+.card button:hover {
+  background-color: #a91a20;
+}
 
 .custom-select {
   -webkit-appearance: none;
