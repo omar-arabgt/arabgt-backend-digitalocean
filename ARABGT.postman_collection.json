@@ -527,6 +527,39 @@
 				}
 			},
 			"response": []
+		},
+		{
+			"name": "Advertisement Request",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \n    \"name\": \"your-name\",\n    \"email\": \"your-email@email.com\",\n    \"phone_number\": \"+901013123\",\n    \"company\":\"company\",\n    \"message_content\": \"message\"\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{BASE}}/api/ads-request?email=your@email.com",
+					"host": [
+						"{{BASE}}"
+					],
+					"path": [
+						"api",
+						"ads-request"
+					],
+					"query": [
+						{
+							"key": "email",
+							"value": "your@email.com"
+						}
+					]
+				}
+			},
+			"response": []
 		}
 	],
 	"variable": [
