@@ -1,6 +1,6 @@
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from rest_framework.generics import ListAPIView, UpdateAPIView, RetrieveAPIView
+from rest_framework.generics import ListAPIView, UpdateAPIView, RetrieveAPIView, ListCreateAPIView
 from django.core.mail import EmailMessage
 from django.template.loader import render_to_string
 from rest_framework import status
@@ -41,6 +41,23 @@ class PostListView(ListAPIView):
 class PostRetrieveView(RetrieveAPIView):
     serializer_class = PostSerializer
     queryset = Post.objects.all()
+
+
+class SavedPostListCreateView(ListCreateAPIView):
+
+    def get_serializer_class(self):
+        if self.request.method == "GET":
+            return SavedPostReadSerializer
+        return SavedPostWriteSerializer
+
+    def get_queryset(self):
+        querset = SavedPost.objects.filter(user=self.request.user).select_related("post")
+        return querset
+
+
+class SavedPostUpdateView(UpdateAPIView):
+    serializer_class = SavedPostWriteSerializer
+    queryset = SavedPost.objects.all()
 
 
 class ChoicesView(APIView):
