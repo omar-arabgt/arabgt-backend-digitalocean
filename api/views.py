@@ -115,23 +115,21 @@ class SubscribeNewsletter(CreateAPIView):
     Output:
     - Returns the created subscription details or an error message if email is not provided.
     """
-    queryset = Newsletter.objects.all()
-    serializer_class = NewsletterSerializer
-
-    def create(self, request):
+    def post(self, request):
         email = request.GET.get('email')
         if not email:
             return Response({'error': 'Email is required.'}, status=status.HTTP_400_BAD_REQUEST)
-
+        if Newsletter.objects.filter(email=email).exists():
+            return Response({'error': 'Email is already subscribed.'}, status=status.HTTP_400_BAD_REQUEST)
         data = {'email': email}
-        serializer = self.get_serializer(data=data)
+        serializer = NewsletterSerializer(data=data)
         serializer.is_valid(raise_exception=True)
-        self.perform_create(serializer)
-        headers = self.get_success_headers(serializer.data)
-        return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
+        serializer.save()
+        
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
+    
 
-
-class UnsubscribeNewsletter(DestroyAPIView):
+class UnsubscribeNewsletter(APIView):
     """ 
     Unsubscribes a user from the newsletter.
 
@@ -144,18 +142,19 @@ class UnsubscribeNewsletter(DestroyAPIView):
     Output:
     - Returns a success message or an error message if email is not provided or subscription is not found.
     """
-    queryset = Newsletter.objects.all()
-    serializer_class = NewsletterSerializer
 
-    def get_object(self):
-        email = self.request.GET.get('email')
+    def post(self, request):
+        email = request.GET.get('email')
         if not email:
-            raise ValidationError({'error': 'Email is required.'})
-
+            return Response({'error': 'Email is required.'}, status=status.HTTP_400_BAD_REQUEST)
         try:
-            return Newsletter.objects.get(email=email)
+            subscription = Newsletter.objects.get(email=email)
         except Newsletter.DoesNotExist:
-            raise NotFound({'error': 'Subscription not found.'})
+            return Response({'error': 'Subscription not found.'}, status=status.HTTP_404_NOT_FOUND)
+        
+        subscription.delete()
+        return Response({'message': 'Successfully unsubscribed.'}, status=status.HTTP_200_OK)
+
 
 
 class ChoicesView(APIView):
