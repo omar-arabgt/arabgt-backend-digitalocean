@@ -1,4 +1,4 @@
-from rest_framework.serializers import ModelSerializer
+from rest_framework.serializers import ModelSerializer, ValidationError
 
 from .models import *
 
@@ -47,6 +47,31 @@ class PostListSerializer(ModelSerializer):
     class Meta:
         model = Post
         fields = ["title", "tag", "category", "thumbnail", "id"]
+
+
+class SavedPostReadSerializer(ModelSerializer):
+    post = PostListSerializer()
+
+    class Meta:
+        model = SavedPost
+        fields = "__all__"
+
+
+class SavedPostWriteSerializer(ModelSerializer):
+
+    class Meta:
+        model = SavedPost
+        fields = ["post", "unsaved"]
+
+    def create(self, validated_data):
+        user = self.context["request"].user
+        post_id = validated_data["post"]
+
+        if SavedPost.objects.filter(user=user, post=post_id).exists():
+            raise ValidationError("This post is already saved!")
+
+        validated_data["user"] = user
+        return super().create(validated_data)
 
 class NewsletterSerializer(ModelSerializer):
     class Meta:
