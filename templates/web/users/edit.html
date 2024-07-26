@@ -5,14 +5,7 @@
 
 {% block content %}
 <div class="container mx-auto p-4">
-    <div class="flex justify-between items-center mb-6">
-        <h2 class="text-2xl font-bold text-red-600">تعديل المستخدم</h2>
-        <button class="lg:hidden" onclick="toggleSidebar()">
-            <svg class="w-8 h-8 text-red-800" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
-            </svg>
-        </button>
-    </div>
+    {% include "web/partials/heading.html" with title="تعديل المستخدم" %}
     <form method="post" class="w-full p-6 rounded-lg bg-white shadow-md">
         {% csrf_token %}
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">

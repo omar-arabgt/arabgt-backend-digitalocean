@@ -15,6 +15,18 @@ from .pagination import *
 
 
 class UserUpdateView(UpdateAPIView):
+    """
+    Updates the currently authenticated user's information.
+
+    Input:
+    - Uses the UserSerializer to update user details.
+
+    Functionality:
+    - Retrieves the current user from the request and updates their information.
+
+    Output:
+    - Returns the updated user information.
+    """
     serializer_class = UserSerializer
 
     def get_object(self):
@@ -22,16 +34,52 @@ class UserUpdateView(UpdateAPIView):
 
 
 class FavoritePresenterListView(ListAPIView):
+    """
+    Lists all favorite presenters.
+
+    Input:
+    - No specific input required.
+
+    Functionality:
+    - Retrieves and lists all favorite presenters from the database.
+
+    Output:
+    - Returns a list of favorite presenters using the FavoritePresenterSerializer.
+    """
     serializer_class = FavoritePresenterSerializer
     queryset = FavoritePresenter.objects.all()
 
 
 class FavoriteShowListView(ListAPIView):
+    """
+    Lists all favorite shows.
+
+    Input:
+    - No specific input required.
+
+    Functionality:
+    - Retrieves and lists all favorite shows from the database.
+
+    Output:
+    - Returns a list of favorite shows using the FavoriteShowSerializer.
+    """
     serializer_class = FavoriteShowSerializer
     queryset = FavoriteShow.objects.all()
 
 
 class PostListView(ListAPIView):
+    """
+    Lists all posts with pagination and filtering.
+
+    Input:
+    - Supports filtering via PostFilter and pagination via CustomPagination.
+
+    Functionality:
+    - Retrieves and lists all posts, ordered by publish date in descending order.
+
+    Output:
+    - Returns a paginated list of posts using the PostListSerializer.
+    """
     serializer_class = PostListSerializer
     queryset = Post.objects.all().order_by('-publish_date')
     filterset_class = PostFilter
@@ -39,6 +87,18 @@ class PostListView(ListAPIView):
 
 
 class PostRetrieveView(RetrieveAPIView):
+    """
+    Retrieves a specific post by its ID.
+
+    Input:
+    - Post ID in the URL.
+
+    Functionality:
+    - Retrieves the details of a specific post.
+
+    Output:
+    - Returns the post details using the PostSerializer.
+    """
     serializer_class = PostSerializer
     queryset = Post.objects.all()
 
@@ -60,8 +120,74 @@ class SavedPostUpdateView(UpdateAPIView):
     queryset = SavedPost.objects.all()
 
 
-class ChoicesView(APIView):
+class SubscribeNewsletter(APIView):
+    """
+    Subscribes a user to the newsletter.
 
+    Input:
+    - Email address in the GET request parameters.
+
+    Functionality:
+    - Validates and creates a new newsletter subscription.
+
+    Output:
+    - Returns the created subscription details or an error message if email is not provided.
+    """
+    def post(self, request):
+        email = request.GET.get('email')
+        if not email:
+            return Response({'error': 'Email is required.'}, status=status.HTTP_400_BAD_REQUEST)
+        if Newsletter.objects.filter(email=email).exists():
+            return Response({'error': 'Email is already subscribed.'}, status=status.HTTP_400_BAD_REQUEST)
+        data = {'email': email}
+        serializer = NewsletterSerializer(data=data)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
+    
+
+class UnsubscribeNewsletter(APIView):
+    """ 
+    Unsubscribes a user from the newsletter.
+
+    Input:
+    - Email address in the GET request parameters.
+
+    Functionality:
+    - Validates and deletes an existing newsletter subscription.
+
+    Output:
+    - Returns a success message or an error message if email is not provided or subscription is not found.
+    """
+
+    def post(self, request):
+        email = request.GET.get('email')
+        if not email:
+            return Response({'error': 'Email is required.'}, status=status.HTTP_400_BAD_REQUEST)
+        try:
+            subscription = Newsletter.objects.get(email=email)
+        except Newsletter.DoesNotExist:
+            return Response({'error': 'Subscription not found.'}, status=status.HTTP_404_NOT_FOUND)
+        
+        subscription.delete()
+        return Response({'message': 'Successfully unsubscribed.'}, status=status.HTTP_200_OK)
+
+
+
+class ChoicesView(APIView):
+    """
+    Provides various choice lists based on the requested type.
+
+    Input:
+    - Choice type in the GET request parameters (e.g., gender, country, car).
+
+    Functionality:
+    - Retrieves and returns the specified choice list.
+
+    Output:
+    - Returns the requested choice list or an empty list if the type is not recognized.
+    """
     def get(self, request, *args, **kwargs):
         choice_type = request.GET.get("type")
         
@@ -76,7 +202,20 @@ class ChoicesView(APIView):
 
         return Response(choices)
 
+
 class ContactUsView(APIView):
+    """
+    Handles 'Contact Us' form submissions.
+
+    Input:
+    - Name, email, and message content in the POST request data.
+
+    Functionality:
+    - Sends an email with the provided contact information and message.
+
+    Output:
+    - Returns a success message if the email is sent, or an error message if required fields are missing or email sending fails.
+    """
     def send_contact_email(self, name, email, message_content):
         subject = 'Contact Us message From ArabGT Mobile App'
         # DEV ONLY

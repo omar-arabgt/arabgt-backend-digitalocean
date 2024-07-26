@@ -1,0 +1,58 @@
+{% extends "web/partials/base.html" %}
+{% load static %}
+{% block title %}قائمة المشتركين في النشرة{% endblock %}
+{% block content %}
+<div class="container mx-auto p-4">
+    {% include "web/partials/heading.html" with title="قائمة المشتركين في النشرة"%}
+    {% include "web/partials/search_form.html" with placeholder="بحث عن المشتركين في النشرة ..." %}
+    
+    <div class="overflow-y-auto">
+        <table class="w-full border-collapse border border-gray-300">
+            <thead>
+                <tr class="bg-gray-200">
+                    <th class="border border-gray-300 px-4 py-2">البريد الإلكتروني</th>
+                    <th class="border border-gray-300 px-4 py-2">تاريخ الاشتراك</th>
+                    <th class="border border-gray-300 px-4 py-2">الإجراءات</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for newsletter in newsletter_list %}
+                <tr class="hover:bg-gray-100" data-email="{{ newsletter.email }}">
+                    <td class="border border-gray-300 px-4 py-2">{{ newsletter.email }}</td>
+                    <td class="border border-gray-300 px-4 py-2">{{ newsletter.created_at|date:"F j, Y, g:i A" }}</td>
+                    <td class="border border-gray-300 px-4 py-2">
+                        <div class="flex gap-4 justify-center">
+                            <button class="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded" onclick="unsubscribeNewsletter('{{ newsletter.email }}')">إلغاء الاشتراك</button>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% include "web/partials/pagination.html" %}
+</div>
+
+<script>
+    function unsubscribeNewsletter(email) {
+        const csrfToken = '{{ csrf_token }}';
+        
+        fetch("{% url 'unsubscribe-newsletter' %}?email=" + email, {
+            method: 'DELETE',
+            headers: {
+                'X-CSRFToken': csrfToken,
+            }
+        })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Network response was not ok');
+            }
+            location.reload();
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('An error occurred. Please try again.');
+        });
+    }
+</script>
+{% endblock %}

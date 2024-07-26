@@ -461,6 +461,72 @@
 				}
 			},
 			"response": []
+		},
+		{
+			"name": "Subscribe Newsletter",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{BASE}}/api/subscribe_newsletter?email=your@email.com",
+					"host": [
+						"{{BASE}}"
+					],
+					"path": [
+						"api",
+						"subscribe_newsletter"
+					],
+					"query": [
+						{
+							"key": "email",
+							"value": "your@email.com"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Unsubscribe Newsletter",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{BASE}}/api/unsubscribe_newsletter?email=your@email.com",
+					"host": [
+						"{{BASE}}"
+					],
+					"path": [
+						"api",
+						"unsubscribe_newsletter"
+					],
+					"query": [
+						{
+							"key": "email",
+							"value": "your@email.com"
+						}
+					]
+				}
+			},
+			"response": []
 		}
 	],
 	"variable": [
@@ -470,7 +536,7 @@
 		},
 		{
 			"key": "TOKEN",
-			"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzIxNDYyNjk5LCJpYXQiOjE3MjEzNzYyOTksImp0aSI6ImY3YzE3OTU5OWE3NDQzNzBhYzhmNDVjN2FiZmY4MzA3IiwidXNlcl9pZCI6Mn0.gQeqaqME1E3Wih6VAQs5rGdn98A1_u3Qt9zKro69JOA"
+			"value": ""
 		}
 	]
 }
