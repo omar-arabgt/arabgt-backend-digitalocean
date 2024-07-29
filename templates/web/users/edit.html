@@ -26,9 +26,34 @@
             </div>
             {% endfor %}
         </div>
-        <div class="flex justify-end mt-4">
+        <div class="flex justify-end gap-4 mt-4">
+            <button type="button" class="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded" onclick="openModal()">حذف المستخدم</button>
             <button type="submit" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">حفظ التغييرات</button>
         </div>
     </form>
 </div>
+
+<div id="confirmationModal" class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 hidden">
+    <div class="bg-white rounded-lg p-6 shadow-lg">
+        <h2 class="text-xl mb-4">تأكيد الحذف</h2>
+        <p>هل أنت متأكد أنك تريد حذف هذا المستخدم؟</p>
+        <div class="flex gap-4 justify-end mt-4">
+            <button class="bg-gray-500 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded mr-2" onclick="closeModal()">إلغاء</button>
+            <form method="post" action="#">
+                {% csrf_token %}
+                <button type="submit" class="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded">تأكيد</button>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+    function openModal() {
+        document.getElementById('confirmationModal').classList.remove('hidden');
+    }
+
+    function closeModal() {
+        document.getElementById('confirmationModal').classList.add('hidden');
+    }
+</script>
 {% endblock %}
