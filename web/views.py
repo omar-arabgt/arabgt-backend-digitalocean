@@ -23,37 +23,15 @@ class UserListView(LoginRequiredMixin, ListView):
 
     def get_queryset(self):
         query = self.request.GET.get('q', '')
-        nationality = self.request.GET.get('nationality')
-        country = self.request.GET.get('country')
-        birthdate = self.request.GET.get('birthdate')
-
         filters = Q(is_staff=False, is_superuser=False)
-
         if query:
             filters &= Q(username__icontains=query)
-        if nationality:
-            filters &= Q(nationality=nationality)
-        if country:
-            filters &= Q(country=country)
-        if birthdate:
-            try:
-                date = parse_date(birthdate)
-                if date:
-                    filters &= Q(birth_date__gt=date)
-            except ValueError:
-                pass
 
         return User.objects.filter(filters)
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['page_name'] = 'قائمة المستخدمين'
-        context['search_query'] = self.request.GET.get('q', '')
-        context['nationality_filter'] = self.request.GET.get('nationality', '')
-        context['country_filter'] = self.request.GET.get('country', '')
-        context['birthdate_filter'] = self.request.GET.get('birthdate', '')
-        context['car_brand_filter'] = self.request.GET.get('car_brand', '')
-        context['COUNTRIES'] = COUNTRIES
         return context
 
 
