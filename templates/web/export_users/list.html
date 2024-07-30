@@ -1,0 +1,78 @@
+{% extends "web/partials/base.html" %}
+{% load static %}
+{% load custom_filters %}
+{% block title %}قائمة استخراج بيانات المستخدمين{% endblock %}
+{% block content %}
+<style>
+    .tom-select > .ts-control {
+        background-color: transparent;
+        border: 0;
+    }
+    .darker-background {
+        background-color: #eaeaea;
+    }
+</style>
+<div class="container mx-auto p-4">
+    {% include "web/partials/heading.html" with title="قائمة استخراج بيانات المستخدمين" %}
+    
+    <form method="get" class="mb-4">
+        <div class="flex gap-4 justify-between items-center">
+            <div class="flex gap-4">
+                <input type="text" name="q" value="{{ search_query }}" placeholder="بحث عن المستخدمين..." class="border px-2 py-1 w-72">
+                <select name="nationality" class="w-48 border bg-white px-2 py-1 tom-select">
+                    <option value="">اختر الجنسية</option>
+                    {% for code, name in COUNTRIES %}
+                    <option value="{{ code }}" {% if code == nationality_filter %}selected{% endif %}>{{ name }}</option>
+                    {% endfor %}
+                </select>
+                <select name="country" class="w-48 border bg-white px-2 py-1 tom-select">
+                    <option value="">اختر دولة الإقامة</option>
+                    {% for code, name in COUNTRIES %}
+                    <option value="{{ code }}" {% if code == country_filter %}selected{% endif %}>{{ name }}</option>
+                    {% endfor %}
+                </select>
+                <input type="date" name="birthdate" value="{{ birthdate_filter }}" class="border px-2 py-1">
+            </div>
+            <button type="submit" class="rounded bg-blue-500 text-white px-4 py-2">بحث</button>
+            <button formaction="{% url 'export_users_excel' %}" class="rounded bg-green-500 text-white px-4 py-2 ml-2">excel</button>
+        </div>
+    </form>
+    
+    <div class="overflow-y-auto">
+        <table class="w-full border-collapse border border-gray-300 text-sm">
+            <thead>
+                <tr class="bg-gray-200">
+                    <th class="border border-gray-300 px-4 py-2">رقم المستخدم</th>
+                    <th class="border border-gray-300 px-4 py-2">البريد الإلكتروني</th>
+                    <th class="border border-gray-300 px-4 py-2">اسم المستخدم</th>
+                    <th class="border border-gray-300 px-4 py-2">الاسم الاخير</th>
+                    <th class="border border-gray-300 px-4 py-2">الهاتف</th>
+                    <th class="border border-gray-300 px-4 py-2">تاريخ الميلاد</th>
+                    <th class="border border-gray-300 px-4 py-2">الجنسية</th>
+                    <th class="border border-gray-300 px-4 py-2">دولة الإقامة</th>
+                    <th class="border border-gray-300 px-4 py-2">الجنس</th>
+                    <th class="border border-gray-300 px-4 py-2">؟محزوف</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for user in merged_list %}
+                <tr class="hover:bg-gray-200 {% if not user.is_user %}darker-background{% endif %}">
+                    <td class="border border-gray-300 px-4 py-2">{{ user.id }}</td>
+                    <td class="border border-gray-300 px-4 py-2">{{ user.email }}</td>
+                    <td class="border border-gray-300 px-4 py-2">{{ user.username }}</td>
+                    <td class="border border-gray-300 px-4 py-2">{{ user.last_name }}</td>
+                    <td class="border border-gray-300 px-4 py-2">{{ user.phone_number }}</td>
+                    <td class="border border-gray-300 px-4 py-2">{{ user.birth_date|date:"Y/m/d" }}</td>
+                    <td class="border w-48 border-gray-300 px-4 py-2">{{ user.get_nationality_display }}</td>
+                    <td class="border w-48 border-gray-300 px-4 py-2">{{ user.get_country_display }}</td>
+                    <td class="border border-gray-300 px-4 py-2">{{ user.gender|gender_translation }}</td>
+                    <td class="border border-gray-300 px-4 py-2">{{ user.is_user|yesno:"لا,نعم" }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    {% include "web/partials/pagination.html" %}
+</div>
+{% endblock %}
