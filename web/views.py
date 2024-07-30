@@ -3,7 +3,8 @@ from django.views.generic import ListView, UpdateView, TemplateView, DeleteView
 from django.urls import reverse_lazy
 from django.shortcuts import get_object_or_404, redirect
 from django.contrib.auth.mixins import LoginRequiredMixin
-from api.models import User, Newsletter
+from django.utils.timezone import localtime
+from django.utils.dateparse import parse_date
 from django.http import HttpResponse
 from django.db.models import Q
 from django.utils.timezone import localtime
@@ -16,33 +17,22 @@ from .forms import *
 
 
 class UserListView(LoginRequiredMixin, ListView):
-    """
-    Displays a paginated list of users with optional search functionality.
-
-    Input:
-    - Optional query parameter 'q' for searching users by username.
-
-    Functionality:
-    - Retrieves and lists users, optionally filtered by the search query.
-
-    Output:
-    - Renders the 'web/users/list.html' template with the user list and search context.
-    """
     model = User
     template_name = 'web/users/list.html'
     context_object_name = 'users'
     paginate_by = 10
 
     def get_queryset(self):
-        query = self.request.GET.get('q')
+        query = self.request.GET.get('q', '')
+        filters = Q(is_staff=False, is_superuser=False)
         if query:
-            return User.objects.filter(Q(username__icontains=query))
-        return User.objects.all()
+            filters &= Q(username__icontains=query)
+
+        return User.objects.filter(filters)
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['page_name'] = 'قائمة المستخدمين'
-        context['search_query'] = self.request.GET.get('q', '')
         return context
 
 

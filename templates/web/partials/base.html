@@ -7,6 +7,7 @@
         {% block content %}
         {% endblock %}
     </div>
+    <script src="https://cdn.jsdelivr.net/npm/tom-select@2.0.3/dist/js/tom-select.complete.min.js"></script>
     <script>
         function toggleSidebar() {
             if (window.innerWidth < 1024) {
@@ -26,6 +27,17 @@
             } else {
                 sidebar.classList.add('close');
             }
+        });
+        document.addEventListener('DOMContentLoaded', function() {
+            const elements = document.querySelectorAll('.tom-select');
+            elements.forEach(el => {
+                new TomSelect(el, {
+                    allowEmptyOption: true,
+                    searchField: ['text'],
+                    rtl: true,
+                    plugins: ['dropdown_input'],
+                });
+            });
         });
     </script>
 
