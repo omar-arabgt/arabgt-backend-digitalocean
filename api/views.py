@@ -1,7 +1,8 @@
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from rest_framework.generics import ListAPIView, UpdateAPIView, RetrieveAPIView, ListCreateAPIView
+from rest_framework.generics import ListAPIView, UpdateAPIView, RetrieveAPIView, ListCreateAPIView, DestroyAPIView
 from rest_framework import status
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.filters import SearchFilter
 from django_filters.rest_framework import DjangoFilterBackend
 from django.core.mail import EmailMessage
@@ -33,6 +34,63 @@ class UserUpdateView(UpdateAPIView):
 
     def get_object(self):
         return self.request.user
+
+class UserDeleteAPIView(DestroyAPIView):
+    """
+    Delete a specific user's information.
+
+    Input:
+    - User ID is passed in the URL.
+    - Confirmation Input that has to be typed before deleting
+
+    Functionality:
+    - Retrieves the user by ID and deletes their information.
+
+    Output:
+    - Returns a confirmation message upon successful deletion.
+    """
+    queryset = User.objects.all()
+    serializer_class = UserSerializer
+    permission_classes = [IsAuthenticated]
+
+    def perform_destroy(self, instance):
+        if instance.is_superuser or instance.is_staff:
+            raise Response({
+                'error': 'You cannot delete a superuser or staff member.'},
+                status=status.HTTP_403_FORBIDDEN
+            )
+        
+        DeletedUser.objects.create(
+            username=instance.username,
+            email=instance.email,
+            first_name=instance.first_name,
+            last_name=instance.last_name,
+            nick_name=instance.nick_name,
+            phone_number=instance.phone_number,
+            birth_date=instance.birth_date,
+            gender=instance.gender,
+            nationality=instance.nationality,
+            country=instance.country,
+            has_business=instance.has_business,
+            has_car=instance.has_car,
+            car_type=instance.car_type,
+            hobbies=instance.hobbies,
+            favorite_presenter=str(instance.favorite_presenter) if instance.favorite_presenter else '',
+            favorite_show=str(instance.favorite_show) if instance.favorite_show else '',
+        )
+
+        instance.delete()
+
+    def delete(self, request, *args, **kwargs):
+        confirmation = request.data.get('confirmation')
+        if confirmation != "تأكيد حذف الحساب":
+            return Response({
+                'error': 'The confirmation text does not match.'
+            }, status=status.HTTP_400_BAD_REQUEST)
+        instance = self.get_object()
+        self.perform_destroy(instance)
+
+        return Response({'message': 'User deleted successfully'}, status=status.HTTP_200_OK)
 
 
 class FavoritePresenterListView(ListAPIView):

@@ -9,6 +9,7 @@ urlpatterns = [
     path("saved_posts/", SavedPostListCreateView.as_view(), name="saved-post-list-create"),
     path("saved_posts/<int:pk>/", SavedPostUpdateView.as_view(), name="saved-post-update"),
     path("profile/", UserUpdateView.as_view(), name="user-update"),
+    path('user/<int:pk>/delete', UserDeleteAPIView.as_view(), name='user_delete'),
     path("favorite_presenters/", FavoritePresenterListView.as_view(), name="favorite-presenter-list"),
     path("favorite_shows/", FavoriteShowListView.as_view(), name="favorite-show-list"),
     path("choices/", ChoicesView.as_view(), name="choices"),
