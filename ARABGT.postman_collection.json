@@ -322,6 +322,45 @@
 			"response": []
 		},
 		{
+			"name": "Delete User",
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzIyMzQxOTAwLCJpYXQiOjE3MjIyNTU1MDAsImp0aSI6IjI3MDk4NGU4MzQ2ZTRjNTk4N2JiMzhkYzFjNTI5NmM0IiwidXNlcl9pZCI6MzF9.faowT2b1cSFN1iN35WaOmkqkpwaIPAtsaAVFM2CWjMI",
+							"type": "string"
+						}
+					]
+				},
+				"method": "DELETE",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"confirmation\": \"تأكيد حذف الحساب\"\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{BASE}}/api/user/13/delete",
+					"host": [
+						"{{BASE}}"
+					],
+					"path": [
+						"api",
+						"user",
+						"13",
+						"delete"
+					]
+				}
+			},
+			"response": []
+		},
+		{
 			"name": "POST LISTS",
 			"request": {
 				"method": "GET",
