@@ -319,7 +319,7 @@ class HomePageView(APIView):
         for section in sections:
             section_name = list(section.keys())[0]
             categories = section[section_name]
-            posts = Post.objects.filter(Q(category__overlap=categories)).order_by('-publish_date')[:10]
+            posts = Post.objects.filter(Q(category__overlap=categories)).order_by('-publish_date')[:3]
             
             section_data = {
                 'section_name': section_name,
