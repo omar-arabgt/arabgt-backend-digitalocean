@@ -1,10 +1,9 @@
 import logging
-from django.db import DatabaseError, IntegrityError
 from celery import shared_task
 
 from api.models import Post
 from .models import WpPosts, WpTermRelationships, WpTermTaxonomy, WpTerms, WpUsers
-from .preprocessing import preprocess_article, update_related_article_ids
+from .preprocessing import preprocess_article, get_related_article_ids
 
 logger = logging.getLogger(__name__)
 
@@ -54,7 +53,6 @@ def fetch_and_process_post(post, override_existing=False):
                     'content': processed_article['content'],
                     'publish_date': processed_article['post_date'],
                     'thumbnail': processed_article['thumbnail'],
-                    'related_articles': processed_article['related_articles'],
                     'edit_date': post["post_modified"],
                     'author': author,
                     'category': categories,
@@ -62,19 +60,20 @@ def fetch_and_process_post(post, override_existing=False):
                 }
             )
         else:
-            new_post = Post(
+            new_post = Post.objects.create(
                 post_id=wp_post_id,
                 title=processed_article['post_title'],
                 content=processed_article['content'],
                 publish_date=processed_article['post_date'],
                 thumbnail=processed_article['thumbnail'],
-                related_articles=processed_article['related_articles'],
                 edit_date=post["post_modified"],
                 author=author,
                 category=categories,
                 tag=tags
             )
-            new_post.save()
+
+        related_ids = get_related_article_ids(processed_article['related_articles'])
+        new_post.related_articles.add(*related_ids)
         logger.info(f"Post {new_post.id} - {new_post.post_id} processed succesfully!")
     except Exception as e:
         logger.error(f"Error while processing post {wp_post_id}: {str(e)}")
@@ -124,53 +123,3 @@ def fetch_and_process_wp_posts(post_id=None):
         fetch_and_process_post.delay(wp_post, override_existing)
 
     return {"success": f"Processing {len(wp_posts)} posts..."}
-
-
-@shared_task
-def fetch_and_update_related_articles_ids(id=None):
-    """
-    Updates related article IDs for posts in the database.
-
-    Input:
-    - id: An integer representing the ID of the post to update.
-          It process all posts if post_id is None
-
-    Functionality:
-    - Fetches all posts in the database.
-    - Updates related article IDs for each post.
-
-    Output:
-    - Returns a dictionary containing:
-      - done: A boolean indicating the operation completion status.
-      - processed_posts: The number of processed posts.
-      - missing_titles: A list of missing titles and corresponding post IDs.
-    """
-    try:
-        if id:
-            posts = Post.objects.filter(id=id)
-        else:
-            posts = Post.objects.all()
-
-        if not posts:
-            return {"error": "No posts found."}
-        
-        updated_posts = []
-        missing_titles = []
-
-        for post in posts:
-            updated_post, missing = update_related_article_ids(post)
-            post.content = updated_post.content
-            post.save()
-            updated_posts.append(post.id)
-            if missing:
-                missing_titles.extend(missing)
-
-        response_data = {
-            "done": True,
-            "processed_posts": len(updated_posts),
-            "missing_titles": missing_titles
-        }
-        return response_data
-    
-    except Exception as e:
-        return {"error": f"An internal error occurred: {e}"}

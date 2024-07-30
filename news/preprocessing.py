@@ -271,34 +271,29 @@ def normalize_title(title):
     return title
 
 
-def update_related_article_ids(post):
+def get_related_article_ids(related_articles):
     """
-    Updates related article IDs based on links in the content.
+    Get post IDs from related article links in the content.
 
     Input:
-    - post: A Post object representing the current post.
+    - related_articles: A list of related article links
 
     Functionality:
     - Extracts titles from related article links.
     - Normalizes the titles and searches for matching posts in the database.
-    - Updates related article links with the corresponding post IDs.
 
     Output:
-    - Returns a tuple:
-      - post: The updated Post object.
-      - missing_titles: A list of missing titles and corresponding post IDs.
+    - Returns a list of corresponding post IDs:
     """
-    updated = False
-    missing_titles = []
-    related_articles_in_content = post.related_articles.copy()
-    for index, related_article_link in enumerate(related_articles_in_content):
+    result = []
+    for related_article_link in related_articles.copy():
         if related_article_link.isdigit():
             continue
         try:
             title = related_article_link.split('/')[-2].replace('-', ' ')
         except IndexError:
-            missing_titles.append({"title": "Invalid URL", "id": post.id})
             continue
+
         normalized_title = normalize_title(title)
         words = normalized_title.split()
         query = Q()
@@ -306,16 +301,9 @@ def update_related_article_ids(post):
             query &= Q(title__icontains=word)
         related_post = Post.objects.filter(query).first()
         if related_post:
-            related_articles_in_content[index] = str(related_post.id)
-            updated = True
-        else:
-            missing_titles.append({"title": title, "id": post.id})
+            result.append(related_post.id)
 
-    if updated:
-        post.related_articles = related_articles_in_content
-        post.save()
-
-    return post, missing_titles
+    return result
 
 
 def preprocess_article(article):
