@@ -3,15 +3,7 @@
 {% load custom_filters %}
 {% block title %}قائمة استخراج بيانات المستخدمين{% endblock %}
 {% block content %}
-<style>
-    .tom-select > .ts-control {
-        background-color: transparent;
-        border: 0;
-    }
-    .darker-background {
-        background-color: #eaeaea;
-    }
-</style>
+
 <div class="container mx-auto p-4">
     {% include "web/partials/heading.html" with title="قائمة استخراج بيانات المستخدمين" %}
     
@@ -80,7 +72,7 @@
             </thead>
             <tbody>
                 {% for user in merged_list %}
-                <tr class="hover:bg-gray-200 {% if user.status == 'deleted' %}darker-background{% endif %}">
+                <tr class="hover:bg-gray-200 {% if user.status == 'deleted' %} bg-gray-200/50 {% endif %}">
                     <td class="border border-gray-300 px-4 py-2">{{ user.id }}</td>
                     <td class="border border-gray-300 px-4 py-2">{{ user.email }}</td>
                     <td class="border border-gray-300 px-4 py-2">{{ user.username }}</td>

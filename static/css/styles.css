@@ -16,6 +16,7 @@ html, body {
 }
 
 .sidebar {
+  z-index: 999;
   height: 100vh;
 }
 
@@ -31,7 +32,7 @@ html, body {
 
   .sidebar {
     height: 100vh;
-    position: absolute;
+    position: absolute !important;
     right: 0;
     top: 0;
   }
@@ -80,4 +81,9 @@ html, body {
   background-repeat: no-repeat;
   background-position: left 0.75rem center;
   background-size: 1rem;
+}
+
+.tom-select > .ts-control {
+    background-color: transparent;
+    border: 0;
 }
