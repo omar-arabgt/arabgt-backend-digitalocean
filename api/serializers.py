@@ -38,16 +38,20 @@ class FavoriteShowSerializer(serializers.ModelSerializer):
         fields = "__all__"
 
 
-class PostSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Post
-        fields = "__all__"
 
 
 class PostListSerializer(serializers.ModelSerializer):
     class Meta:
         model = Post
         fields = ["title", "tag", "category", "thumbnail", "id"]
+
+
+
+class PostSerializer(serializers.ModelSerializer):
+    related_articles = PostListSerializer(many=True)
+    class Meta:
+        model = Post
+        fields = "__all__"
 
 class HomepageSectionSerializer(serializers.Serializer):
     section_name = serializers.CharField()

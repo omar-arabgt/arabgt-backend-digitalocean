@@ -267,7 +267,7 @@ CELERY_TIMEZONE = 'UTC'
 
 CELERY_BEAT_SCHEDULE = {
     'initialize_slots': {
-        'task': 'news.tasks.scheduled_task',
+        'task': 'news.tasks.fetch_and_process_wp_posts',
         'schedule': 600,  # seconds
     },
 }

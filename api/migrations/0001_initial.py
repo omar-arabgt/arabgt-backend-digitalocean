@@ -38,7 +38,7 @@ class Migration(migrations.Migration):
             name='Post',
             fields=[
                 ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('post_id', models.IntegerField(unique=True)),
+                ('post_id', models.IntegerField(unique=True, db_index=True)),
                 ('title', models.CharField(max_length=255)),
                 ('author', models.CharField(max_length=255)),
                 ('publish_date', models.DateTimeField()),
