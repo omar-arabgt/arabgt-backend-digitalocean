@@ -7,14 +7,13 @@ from django.utils.timezone import localtime
 from django.utils.dateparse import parse_date
 from django.http import HttpResponse
 from django.utils.dateparse import parse_date
-from django.db.models import Q, Value, BooleanField
+from django.db.models import Q
 from django.utils.timezone import localtime
-
-from itertools import chain
 import openpyxl
 
 from api.models import User, Newsletter, DeletedUser
-from api.choices import COUNTRIES
+from .utils import get_merged_user_data
+from api.choices import COUNTRIES, GENDERS, STATUS
 from .forms import *
 
 
@@ -66,18 +65,6 @@ class UserUpdateView(LoginRequiredMixin, UpdateView):
         return context
 
 class ExportUserListView(LoginRequiredMixin, ListView):
-    """
-    Displays a merged and sorted list of User and DeletedUser entries with filtering options.
-
-    Input:
-    - Optional query parameters 'q', 'nationality', 'country', and 'birthdate' for filtering.
-
-    Functionality:
-    - Retrieves and lists entries from User and DeletedUser models, merged and sorted by ID, with filtering.
-
-    Output:
-    - Renders the 'web/export_users/list.html' template with the merged list and search context.
-    """
     template_name = 'web/export_users/list.html'
     context_object_name = 'merged_list'
     paginate_by = 10
@@ -87,70 +74,10 @@ class ExportUserListView(LoginRequiredMixin, ListView):
         nationality = self.request.GET.get('nationality')
         country = self.request.GET.get('country')
         birthdate = self.request.GET.get('birthdate')
+        gender = self.request.GET.get('gender')
+        status = self.request.GET.get('status')
 
-        user_filters = Q(is_staff=False, is_superuser=False)
-        if query:
-            user_filters &= Q(username__icontains=query)
-        if nationality:
-            user_filters &= Q(nationality=nationality)
-        if country:
-            user_filters &= Q(country=country)
-        if birthdate:
-            try:
-                date = parse_date(birthdate)
-                if date:
-                    user_filters &= Q(birth_date__gt=date)
-            except ValueError:
-                pass
-
-        users = User.objects.filter(user_filters)
-        user_list = users.values(
-            'id', 'username', 'email', 'nick_name', 'phone_number', 'birth_date', 'gender', 'nationality', 'country',
-            'has_business', 'has_car', 'car_type', 'hobbies', 'favorite_presenter', 'favorite_show'
-        ).annotate(
-            is_user=Value(True, output_field=BooleanField())
-        )
-        # this part add the get get_nationality_display and get_country_display to the list so it can be used
-        user_data = [
-            dict(user, get_nationality_display=users.get(pk=user['id']).get_nationality_display(),
-                 get_country_display=users.get(pk=user['id']).get_country_display())
-            for user in user_list
-        ]
-
-        deleted_user_filters = Q()
-        if query:
-            deleted_user_filters &= Q(username__icontains=query)
-        if nationality:
-            deleted_user_filters &= Q(nationality=nationality)
-        if country:
-            deleted_user_filters &= Q(country=country)
-        if birthdate:
-            try:
-                date = parse_date(birthdate)
-                if date:
-                    deleted_user_filters &= Q(birth_date__gt=date)
-            except ValueError:
-                pass
-
-        deleted_users = DeletedUser.objects.filter(deleted_user_filters)
-        deleted_user_list = deleted_users.values(
-            'id', 'username', 'email', 'nick_name', 'phone_number', 'birth_date', 'gender', 'nationality', 'country',
-            'has_business', 'has_car', 'car_type', 'hobbies', 'favorite_presenter', 'favorite_show'
-        ).annotate(
-            is_user=Value(False, output_field=BooleanField())
-        )
-        # this part add the get get_nationality_display and get_country_display to the list so it can be used
-        deleted_user_data = [
-            dict(user, get_nationality_display=deleted_users.get(pk=user['id']).get_nationality_display(),
-                 get_country_display=deleted_users.get(pk=user['id']).get_country_display())
-            for user in deleted_user_list
-        ]
-
-        combined_queryset = sorted(
-            chain(user_data, deleted_user_data),
-            key=lambda instance: instance['id']
-        )
-        return combined_queryset
+        return get_merged_user_data(query, nationality, country, birthdate, gender, status)
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -159,91 +86,21 @@ class ExportUserListView(LoginRequiredMixin, ListView):
         context['nationality_filter'] = self.request.GET.get('nationality', '')
         context['country_filter'] = self.request.GET.get('country', '')
         context['birthdate_filter'] = self.request.GET.get('birthdate', '')
+        context['gender_filter'] = self.request.GET.get('gender', '')
+        context['status_filter'] = self.request.GET.get('status', '')
+        context['GENDERS'] = GENDERS
+        context['STATUS'] = STATUS
         context['COUNTRIES'] = COUNTRIES
         return context
 
 class ExportUserToExcelView(LoginRequiredMixin, ListView):
-    """
-    Export a mergde and sorted lisf ot User and DeletedUsers entries with filtering options.
-
-    Input:
-    - Optional query parameters 'q', 'nationality', 'country', and 'birthdate' for filtering.
-
-    Functionality:
-    - Retrieves and lists entries from User and DeletedUser models, merged and sorted by ID, with filtering.
-
-    Output:
-    - Returns the Excel file as an HTTP response for download.
-    """
     def get_queryset(self):
         query = self.request.GET.get('q', '')
         nationality = self.request.GET.get('nationality')
         country = self.request.GET.get('country')
         birthdate = self.request.GET.get('birthdate')
 
-        user_filters = Q(is_staff=False, is_superuser=False)
-        if query:
-            user_filters &= Q(username__icontains=query)
-        if nationality:
-            user_filters &= Q(nationality=nationality)
-        if country:
-            user_filters &= Q(country=country)
-        if birthdate:
-            try:
-                date = parse_date(birthdate)
-                if date:
-                    user_filters &= Q(birth_date__gt=date)
-            except ValueError:
-                pass
-
-        users = User.objects.filter(user_filters)
-        user_list = users.values(
-            'id', 'username', 'email', 'nick_name', 'phone_number', 'birth_date', 'gender', 'nationality', 'country',
-            'has_business', 'has_car', 'car_type', 'hobbies', 'favorite_presenter', 'favorite_show'
-        ).annotate(
-            is_user=Value(True, output_field=BooleanField())
-        )
-        # this part add the get get_nationality_display and get_country_display to the list so it can be used
-        user_data = [
-            dict(user, get_nationality_display=users.get(pk=user['id']).get_nationality_display(),
-                 get_country_display=users.get(pk=user['id']).get_country_display())
-            for user in user_list
-        ]
-
-        deleted_user_filters = Q()
-        if query:
-            deleted_user_filters &= Q(username__icontains=query)
-        if nationality:
-            deleted_user_filters &= Q(nationality=nationality)
-        if country:
-            deleted_user_filters &= Q(country=country)
-        if birthdate:
-            try:
-                date = parse_date(birthdate)
-                if date:
-                    deleted_user_filters &= Q(birth_date__gt=date)
-            except ValueError:
-                pass
-
-        deleted_users = DeletedUser.objects.filter(deleted_user_filters)
-        deleted_user_list = deleted_users.values(
-            'id', 'username', 'email', 'nick_name', 'phone_number', 'birth_date', 'gender', 'nationality', 'country',
-            'has_business', 'has_car', 'car_type', 'hobbies', 'favorite_presenter', 'favorite_show'
-        ).annotate(
-            is_user=Value(False, output_field=BooleanField())
-        )
-        # this part add the get get_nationality_display and get_country_display to the list so it can be used
-        deleted_user_data = [
-            dict(user, get_nationality_display=deleted_users.get(pk=user['id']).get_nationality_display(),
-                 get_country_display=deleted_users.get(pk=user['id']).get_country_display())
-            for user in deleted_user_list
-        ]
-
-        combined_queryset = sorted(
-            chain(user_data, deleted_user_data),
-            key=lambda instance: instance['id']
-        )
-        return combined_queryset
+        return get_merged_user_data(query, nationality, country, birthdate)
 
     def get(self, request, *args, **kwargs):
         queryset = self.get_queryset()
@@ -252,7 +109,24 @@ class ExportUserToExcelView(LoginRequiredMixin, ListView):
         ws = wb.active
         ws.title = "Users and Deleted Users"
 
-        headers = ['ID', 'Username', 'Email', 'Nick Name', 'Phone Number', 'Birth Date', 'Gender', 'Nationality', 'Country', 'Has Business', 'Has Car', 'Car Type', 'Favorite Presenter', 'Favorite Show', 'Is User']
+        headers = [
+            'ID',
+            'Username',
+            'Email',
+            'Nick Name',
+            'Phone Number',
+            'Birth Date',
+            'Gender',
+            'Nationality',
+            'Country',
+            'Has Business',
+            'Has Car',
+            'Car Type',
+            'Favorite Presenter',
+            'Favorite Show',
+            'Is User'
+        ]
+
         ws.append(headers)
 
         for user in queryset:
@@ -274,7 +148,6 @@ class ExportUserToExcelView(LoginRequiredMixin, ListView):
                 "Yes" if user['is_user'] else "No",
             ])
 
-        # Prepare the response
         response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
         response['Content-Disposition'] = 'attachment; filename=exported_users.xlsx'
         wb.save(response)
