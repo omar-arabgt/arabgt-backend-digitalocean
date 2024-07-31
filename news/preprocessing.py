@@ -1,9 +1,12 @@
 import re
-from bs4 import BeautifulSoup
-from news.models import WpPosts, WpPostmeta
-from .models import Post
-from django.db.models import Q
 import urllib.parse
+from bs4 import BeautifulSoup
+
+from django.db.models import Q
+
+from api.models import Post
+from .models import WpPosts, WpPostmeta
+
 
 def extract_elements(element):
     """
@@ -129,6 +132,7 @@ def extract_elements(element):
     elements = [element for element in elements if element['text'] or element['media'] or element['heading']]
     return elements, external_links
 
+
 def handle_galleries(text):
     """
     Handles gallery shortcodes in the text.
@@ -156,6 +160,7 @@ def handle_galleries(text):
                 elements.append({"text": part.strip(), "media": {}, "heading": ""})
     
     return elements
+
 
 def replace_gallery_ids_with_links(elements):
     """
@@ -189,6 +194,7 @@ def replace_gallery_ids_with_links(elements):
     
     return updated_elements
 
+
 def get_thumbnail(post_id):
     """
     Retrieves the thumbnail URL for a given post.
@@ -209,6 +215,7 @@ def get_thumbnail(post_id):
         thumbnail_url = WpPostmeta.objects.filter(post_id=thumbnail_id, meta_key='_wp_attached_file').values_list('meta_value', flat=True).first()
     
     return thumbnail_url
+
 
 def process_external_links(external_links):
     """
@@ -240,6 +247,7 @@ def process_external_links(external_links):
     
     return related_articles, cleaned_external_links
 
+
 def normalize_title(title):
     """
     Normalizes a given title string.
@@ -262,34 +270,30 @@ def normalize_title(title):
     title = re.sub(r'\s+', ' ', title).strip()
     return title
 
-def update_related_article_ids(post):
+
+def get_related_article_ids(related_articles):
     """
-    Updates related article IDs based on links in the content.
+    Get post IDs from related article links in the content.
 
     Input:
-    - post: A Post object representing the current post.
+    - related_articles: A list of related article links
 
     Functionality:
     - Extracts titles from related article links.
     - Normalizes the titles and searches for matching posts in the database.
-    - Updates related article links with the corresponding post IDs.
 
     Output:
-    - Returns a tuple:
-      - post: The updated Post object.
-      - missing_titles: A list of missing titles and corresponding post IDs.
+    - Returns a list of corresponding post IDs:
     """
-    updated = False
-    missing_titles = []
-    related_articles_in_content = post.related_articles.copy()
-    for index, related_article_link in enumerate(related_articles_in_content):
+    result = []
+    for related_article_link in related_articles.copy():
         if related_article_link.isdigit():
             continue
         try:
             title = related_article_link.split('/')[-2].replace('-', ' ')
         except IndexError:
-            missing_titles.append({"title": "Invalid URL", "id": post.id})
             continue
+
         normalized_title = normalize_title(title)
         words = normalized_title.split()
         query = Q()
@@ -297,16 +301,10 @@ def update_related_article_ids(post):
             query &= Q(title__icontains=word)
         related_post = Post.objects.filter(query).first()
         if related_post:
-            related_articles_in_content[index] = str(related_post.id)
-            updated = True
-        else:
-            missing_titles.append({"title": title, "id": post.id})
+            result.append(related_post.id)
 
-    if updated:
-        post.related_articles = related_articles_in_content
-        post.save()
+    return result
 
-    return post, missing_titles
 
 def preprocess_article(article):
     """
