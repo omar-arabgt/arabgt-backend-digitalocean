@@ -306,6 +306,8 @@ class AdvertisementRequest(APIView):
 
 
 class HomePageView(APIView):
+ 
+ @method_decorator(cache_page(60 * 60 * 24))
  def get(self, request):
         sections = [
             {'اختيارات المحررين': ['اختيارات المحررين']},
