@@ -99,8 +99,10 @@ class ExportUserToExcelView(LoginRequiredMixin, ListView):
         nationality = self.request.GET.get('nationality')
         country = self.request.GET.get('country')
         birthdate = self.request.GET.get('birthdate')
+        gender = self.request.GET.get('gender')
+        status = self.request.GET.get('status')
 
-        return get_merged_user_data(query, nationality, country, birthdate)
+        return get_merged_user_data(query, nationality, country, birthdate, gender, status)
 
     def get(self, request, *args, **kwargs):
         queryset = self.get_queryset()
@@ -110,21 +112,16 @@ class ExportUserToExcelView(LoginRequiredMixin, ListView):
         ws.title = "Users and Deleted Users"
 
         headers = [
-            'ID',
-            'Username',
-            'Email',
-            'Nick Name',
-            'Phone Number',
-            'Birth Date',
-            'Gender',
-            'Nationality',
-            'Country',
-            'Has Business',
-            'Has Car',
-            'Car Type',
-            'Favorite Presenter',
-            'Favorite Show',
-            'Is User'
+            'ID', # رقم المستخدم
+            'Status', # الحالة
+            'First Name', # اسم الاول
+            'Last Name', # الاسم الاخير
+            'Nick Name', # الكنية
+            'Birth Date', # تاريخ الميلاد
+            'Gender', # الجنسية
+            'Nationality', # دولة الإقامة
+            'Country', # الجنس
+            'Rank', # فئة
         ]
 
         ws.append(headers)
@@ -132,20 +129,15 @@ class ExportUserToExcelView(LoginRequiredMixin, ListView):
         for user in queryset:
             ws.append([
                 user['id'],
-                user['username'],
-                user['email'],
+                "محذوف" if user['status'] == "deleted" else "مفعل",
+                user['first_name'],
+                user['last_name'],
                 user['nick_name'],
-                user['phone_number'],
                 user['birth_date'],
                 "ذكر" if user['gender'] == "M" else "انثي",
                 user['get_nationality_display'],
                 user['get_country_display'],
-                user['has_business'],
-                user['has_car'],
-                user['car_type'],
-                user['favorite_presenter'],
-                user['favorite_show'],
-                "Yes" if user['is_user'] else "No",
+                ""
             ])
 
         response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')

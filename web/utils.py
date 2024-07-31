@@ -23,8 +23,7 @@ def get_merged_user_data(query='', nationality=None, country=None, birthdate=Non
             pass
 
     users = User.objects.filter(user_filters).values(
-        'id', 'username', 'email', 'nick_name', 'phone_number', 'birth_date', 'gender', 'nationality', 'country',
-        'has_business', 'has_car', 'car_type', 'hobbies', 'favorite_presenter', 'favorite_show'
+        'id', 'first_name', 'last_name', 'nick_name', 'birth_date', 'gender',
     ).annotate(
         status=Value('active', output_field=CharField())
     )
@@ -52,8 +51,7 @@ def get_merged_user_data(query='', nationality=None, country=None, birthdate=Non
             pass
 
     deleted_users = DeletedUser.objects.filter(deleted_user_filters).values(
-        'id', 'username', 'email', 'nick_name', 'phone_number', 'birth_date', 'gender', 'nationality', 'country',
-        'has_business', 'has_car', 'car_type', 'hobbies', 'favorite_presenter', 'favorite_show'
+        'id', 'first_name', 'last_name', 'nick_name', 'birth_date', 'gender',
     ).annotate(
         status=Value('deleted', output_field=CharField())
     )

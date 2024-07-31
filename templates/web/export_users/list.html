@@ -58,15 +58,14 @@
             <thead>
                 <tr class="bg-gray-200">
                     <th class="border border-gray-300 px-4 py-2">رقم المستخدم</th>
-                    <th class="border border-gray-300 px-4 py-2">البريد الإلكتروني</th>
-                    <th class="border border-gray-300 px-4 py-2">اسم المستخدم</th>
+                    <th class="border border-gray-300 px-4 py-2">الحالة</th>
+                    <th class="border border-gray-300 px-4 py-2">اسم الاول</th>
                     <th class="border border-gray-300 px-4 py-2">الاسم الاخير</th>
-                    <th class="border border-gray-300 px-4 py-2">الهاتف</th>
+                    <th class="border border-gray-300 px-4 py-2">الكنية</th>
                     <th class="border border-gray-300 px-4 py-2">تاريخ الميلاد</th>
                     <th class="border border-gray-300 px-4 py-2">الجنسية</th>
                     <th class="border border-gray-300 px-4 py-2">دولة الإقامة</th>
                     <th class="border border-gray-300 px-4 py-2">الجنس</th>
-                    <th class="border border-gray-300 px-4 py-2">الحالة</th>
                     <th class="border border-gray-300 px-4 py-2">فئة</th>
                 </tr>
             </thead>
@@ -74,15 +73,14 @@
                 {% for user in merged_list %}
                 <tr class="hover:bg-gray-200 {% if user.status == 'deleted' %} bg-gray-200/50 {% endif %}">
                     <td class="border border-gray-300 px-4 py-2">{{ user.id }}</td>
-                    <td class="border border-gray-300 px-4 py-2">{{ user.email }}</td>
-                    <td class="border border-gray-300 px-4 py-2">{{ user.username }}</td>
+                    <td class="border border-gray-300 px-4 py-2">{% if user.status == "deleted" %} محذوف {% else %} مفعل {% endif %}</td>
+                    <td class="border border-gray-300 px-4 py-2">{{ user.first_name }}</td>
                     <td class="border border-gray-300 px-4 py-2">{{ user.last_name }}</td>
-                    <td class="border border-gray-300 px-4 py-2">{{ user.phone_number }}</td>
+                    <td class="border border-gray-300 px-4 py-2">{{ user.nick_name }}</td>
                     <td class="border border-gray-300 px-4 py-2">{{ user.birth_date|date:"Y/m/d" }}</td>
                     <td class="border w-48 border-gray-300 px-4 py-2">{{ user.get_nationality_display }}</td>
                     <td class="border w-48 border-gray-300 px-4 py-2">{{ user.get_country_display }}</td>
                     <td class="border border-gray-300 px-4 py-2">{{ user.gender|gender_translation }}</td>
-                    <td class="border border-gray-300 px-4 py-2">{% if user.status == "deleted" %} محذوف {% else %} مفعل {% endif %}</td>
                     <td class="border border-gray-300 px-4 py-2"></td>
                 </tr>
                 {% endfor %}
