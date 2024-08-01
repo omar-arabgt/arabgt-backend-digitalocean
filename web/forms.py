@@ -75,9 +75,9 @@ class CustomAuthenticationForm(AuthenticationForm):
                 code="invalid_login",
             )
 
-class ForumForm(CustomFormMixin, forms.ModelForm):
+class GroupForm(CustomFormMixin, forms.ModelForm):
     class Meta:
-        model = Forum
+        model = Group
         fields = ['name', 'image']
         labels = {
             'name': 'اسم المجموعة',
