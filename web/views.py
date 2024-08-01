@@ -1,5 +1,5 @@
 from django.contrib.auth import views as auth_views
-from django.views.generic import ListView, UpdateView, TemplateView, DeleteView
+from django.views.generic import ListView, UpdateView, TemplateView, DeleteView, CreateView
 from django.urls import reverse_lazy
 from django.shortcuts import get_object_or_404, redirect
 from django.contrib.auth.mixins import LoginRequiredMixin
@@ -11,7 +11,7 @@ from django.db.models import Q
 from django.utils.timezone import localtime
 import openpyxl
 
-from api.models import User, Newsletter, DeletedUser
+from api.models import User, Newsletter, DeletedUser, Forum
 from .utils import get_merged_user_data
 from api.choices import COUNTRIES, GENDERS, STATUS
 from .forms import *
@@ -35,7 +35,6 @@ class UserListView(LoginRequiredMixin, ListView):
         context = super().get_context_data(**kwargs)
         context['page_name'] = 'قائمة المستخدمين'
         return context
-
 
 class UserUpdateView(LoginRequiredMixin, UpdateView):
     """
@@ -62,6 +61,49 @@ class UserUpdateView(LoginRequiredMixin, UpdateView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['page_name'] = 'تعديل المستخدم'
+        return context
+
+class ForumListView(LoginRequiredMixin, ListView):
+    model = Forum
+    template_name = 'web/forums/list.html'
+    context_object_name = 'forums'
+    paginate_by = 10
+
+    def get_queryset(self):
+        query = self.request.GET.get('q', '')
+        filters = Q()
+        if query:
+            filters &= Q(name__icontains=query)
+        return Forum.objects.filter(filters)
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['page_name'] = 'قائمة المنتديات'
+        return context
+
+class ForumCreateView(LoginRequiredMixin, CreateView):
+    model = Forum
+    form_class = ForumForm
+    template_name = 'web/forums/create.html'
+    success_url = reverse_lazy('forum_list')
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['page_name'] = 'انشاء منتدى'
+        return context
+
+class ForumUpdateView(LoginRequiredMixin, UpdateView):
+    model = Forum
+    form_class = ForumForm
+    template_name = 'web/forums/edit.html'
+    success_url = reverse_lazy('forum_list')
+
+    def get_object(self):
+        return get_object_or_404(Forum, pk=self.kwargs['pk'])
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['page_name'] = 'تعديل منتدى'
         return context
 
 class ExportUserListView(LoginRequiredMixin, ListView):
