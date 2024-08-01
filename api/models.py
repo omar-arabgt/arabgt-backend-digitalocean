@@ -31,6 +31,25 @@ class User(TimeStampedModel, AbstractUser):
     favorite_presenter = models.ForeignKey("FavoritePresenter", blank=True, null=True, on_delete=models.SET_NULL)
     favorite_show = models.ForeignKey("FavoriteShow", blank=True, null=True, on_delete=models.SET_NULL)
 
+class DeletedUser(models.Model):
+    email = models.CharField(max_length=255, blank=True)
+    first_name = models.CharField(max_length=255, blank=True)
+    last_name = models.CharField(max_length=255, blank=True)
+    username = models.CharField(max_length=255, blank=True)
+    email = models.CharField(max_length=255, blank=True)
+    nick_name = models.CharField(max_length=255, blank=True)
+    phone_number = models.CharField(max_length=20, blank=True)
+    birth_date = models.DateField(blank=True, null=True)
+    gender = models.CharField(max_length=1, blank=True, choices=GENDERS)
+    nationality = models.CharField(max_length=2, blank=True, choices=COUNTRIES)
+    country = models.CharField(max_length=2, blank=True, choices=COUNTRIES)
+    has_business = models.BooleanField(blank=True, null=True)
+    has_car = models.BooleanField(blank=True, null=True)
+    car_type = models.CharField(max_length=255, blank=True, choices=CARS)
+    hobbies = ArrayField(models.CharField(max_length=255), default=list, blank=True)
+    favorite_presenter = models.CharField(max_length=255, blank=True)
+    favorite_show = models.CharField(max_length=255, blank=True)
+
 
 class FavoritePresenter(TimeStampedModel):
     name = models.CharField(max_length=255, blank=True)
