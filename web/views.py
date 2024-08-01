@@ -1,16 +1,17 @@
 from django.contrib.auth import views as auth_views
-from django.views.generic import ListView, UpdateView, TemplateView
+from django.views.generic import ListView, UpdateView, TemplateView, DeleteView
 from django.urls import reverse_lazy
-from django.shortcuts import get_object_or_404
+from django.shortcuts import get_object_or_404, redirect
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.utils.timezone import localtime
 from django.utils.dateparse import parse_date
 from django.http import HttpResponse
 from django.db.models import Q
+from django.utils.timezone import localtime
 
 import openpyxl
 
-from api.models import User, Newsletter
+from api.models import User, Newsletter, DeletedUser
 from api.choices import COUNTRIES
 from .forms import *
 
@@ -93,6 +94,93 @@ class NewsletterListView(LoginRequiredMixin, ListView):
         context['search_query'] = self.request.GET.get('q', '')
         return context
 
+class UserDeleteView(LoginRequiredMixin, DeleteView):
+    """
+    Delete a specific user's information.
+
+    Input:
+    - User ID is passed in the URL.
+
+    Functionality:
+    - Retrieves the user by ID and deletes their information.
+
+    Output:
+    - Redirects to the user list view upon successful deletion.
+    """
+    model = User
+    success_url = reverse_lazy('user_list')
+    
+    def get_object(self, queryset=None):
+        return get_object_or_404(User, pk=self.kwargs['pk'])
+
+    def post(self, request, *args, **kwargs):
+        user = self.get_object()
+        
+        if user.is_superuser or user.is_staff:
+            return redirect(self.success_url)
+        
+        DeletedUser.objects.create(
+            username=user.username,
+            email=user.email,
+            first_name=user.first_name,
+            last_name=user.last_name,
+            nick_name=user.nick_name,
+            phone_number=user.phone_number,
+            birth_date=user.birth_date,
+            gender=user.gender,
+            nationality=user.nationality,
+            country=user.country,
+            has_business=user.has_business,
+            has_car=user.has_car,
+            car_type=user.car_type,
+            hobbies=user.hobbies,
+            favorite_presenter=str(user.favorite_presenter) if user.favorite_presenter else '',
+            favorite_show=str(user.favorite_show) if user.favorite_show else '',
+        )
+
+        user.delete()
+        return redirect(self.success_url)
+
+class DeletedUserListView(LoginRequiredMixin, ListView):
+    model = DeletedUser
+    template_name = 'web/deleted_users/list.html'
+    context_object_name = 'deleted_user_list'
+    paginate_by = 10
+
+    def get_queryset(self):
+        query = self.request.GET.get('q', '')
+        nationality = self.request.GET.get('nationality')
+        country = self.request.GET.get('country')
+        birthdate = self.request.GET.get('birthdate')
+
+        filters = Q()
+
+        if query:
+            filters &= Q(username__icontains=query)
+        if nationality:
+            filters &= Q(nationality=nationality)
+        if country:
+            filters &= Q(country=country)
+        if birthdate:
+            try:
+                date = parse_date(birthdate)
+                if date:
+                    filters &= Q(birth_date__gt=date)
+            except ValueError:
+                pass
+
+        return DeletedUser.objects.filter(filters)
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['page_name'] = 'قائمة المستخدمين'
+        context['search_query'] = self.request.GET.get('q', '')
+        context['nationality_filter'] = self.request.GET.get('nationality', '')
+        context['country_filter'] = self.request.GET.get('country', '')
+        context['birthdate_filter'] = self.request.GET.get('birthdate', '')
+        context['car_brand_filter'] = self.request.GET.get('car_brand', '')
+        context['COUNTRIES'] = COUNTRIES
+        return context
 
 def download_newsletter_excel(request):
     """
