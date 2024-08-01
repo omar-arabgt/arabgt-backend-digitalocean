@@ -1,0 +1,94 @@
+{% extends "web/partials/base.html" %}
+{% load static %}
+{% load custom_filters %}
+{% block title %}قائمة استخراج بيانات المستخدمين{% endblock %}
+{% block content %}
+
+<div class="container mx-auto p-4">
+    {% include "web/partials/heading.html" with title="قائمة استخراج بيانات المستخدمين" %}
+    
+<form method="get" class="mb-4">
+    <div class="flex flex-col md:flex-row gap-4 justify-between items-start">
+        <div class="flex flex-col gap-4 w-full md:w-auto">
+            <div class="flex flex-wrap md:flex-row gap-4 w-full">
+                <input type="text" name="q" value="{{ search_query }}" placeholder="بحث عن المستخدمين..." class="border px-2 py-1 w-full md:w-44">
+                <select name="nationality" class="w-full md:w-44 border bg-white px-2 py-1 tom-select">
+                    <option value="">اختر الجنسية</option>
+                    {% for code, name in COUNTRIES %}
+                    <option value="{{ code }}" {% if code == nationality_filter %}selected{% endif %}>{{ name }}</option>
+                    {% endfor %}
+                </select>
+                <select name="country" class="w-full md:w-44 border bg-white px-2 py-1 tom-select">
+                    <option value="">اختر دولة الإقامة</option>
+                    {% for code, name in COUNTRIES %}
+                    <option value="{{ code }}" {% if code == country_filter %}selected{% endif %}>{{ name }}</option>
+                    {% endfor %}
+                </select>
+                <input type="date" name="birthdate" value="{{ birthdate_filter }}" class="w-full md:w-44 border px-2 py-1">
+            </div>
+            <div class="flex flex-wrap md:flex-row gap-4 w-full">
+                <select name="gender" class="w-full md:w-44 border bg-white px-2 py-1 tom-select">
+                    <option value="">الجنس</option>
+                    {% for value, name in GENDERS %}
+                    <option value="{{ value }}" {% if value == gender_filter %}selected{% endif %}>{{ name }}</option>
+                    {% endfor %}
+                </select>
+                <select name="status" class="w-full md:w-44 border bg-white px-2 py-1 tom-select">
+                    <option value="">الحالة</option>
+                    {% for value, name in STATUS %}
+                    <option value="{{ value }}" {% if value == status_filter %}selected{% endif %}>{{ name }}</option>
+                    {% endfor %}
+                </select>
+                <select name="category" class="w-full md:w-44 border bg-white px-2 py-1 tom-select">
+                    <option value="">Rank</option>
+                </select>
+                <button type="submit" class="font-bold w-full md:w-44 rounded bg-blue-500 text-white px-4 py-2">بحث</button>
+            </div>
+        </div>
+        <div class="flex gap-4 w-full md:w-auto justify-center md:justify-start">
+            <button formaction="{% url 'export_users_excel' %}" class="rounded bg-green-600 text-white px-4 py-2 w-full md:w-auto">استخدج ملف Excel</button>
+        </div>
+        
+    </div>
+</form>
+
+
+    
+    <div class="overflow-y-auto">
+        <table class="w-full border-collapse border border-gray-300 text-sm">
+            <thead>
+                <tr class="bg-gray-200">
+                    <th class="border border-gray-300 px-4 py-2">رقم المستخدم</th>
+                    <th class="border border-gray-300 px-4 py-2">الحالة</th>
+                    <th class="border border-gray-300 px-4 py-2">اسم الاول</th>
+                    <th class="border border-gray-300 px-4 py-2">الاسم الاخير</th>
+                    <th class="border border-gray-300 px-4 py-2">الكنية</th>
+                    <th class="border border-gray-300 px-4 py-2">تاريخ الميلاد</th>
+                    <th class="border border-gray-300 px-4 py-2">الجنسية</th>
+                    <th class="border border-gray-300 px-4 py-2">دولة الإقامة</th>
+                    <th class="border border-gray-300 px-4 py-2">الجنس</th>
+                    <th class="border border-gray-300 px-4 py-2">Rank</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for user in merged_list %}
+                <tr class="hover:bg-gray-200 {% if user.status == 'deleted' %} bg-gray-200/50 {% endif %}">
+                    <td class="border border-gray-300 px-4 py-2">{{ user.id }}</td>
+                    <td class="border border-gray-300 px-4 py-2">{% if user.status == "deleted" %} محذوف {% else %} مفعل {% endif %}</td>
+                    <td class="border border-gray-300 px-4 py-2">{{ user.first_name }}</td>
+                    <td class="border border-gray-300 px-4 py-2">{{ user.last_name }}</td>
+                    <td class="border border-gray-300 px-4 py-2">{{ user.nick_name }}</td>
+                    <td class="border border-gray-300 px-4 py-2">{{ user.birth_date|date:"Y/m/d" }}</td>
+                    <td class="border w-48 border-gray-300 px-4 py-2">{{ user.get_nationality_display }}</td>
+                    <td class="border w-48 border-gray-300 px-4 py-2">{{ user.get_country_display }}</td>
+                    <td class="border border-gray-300 px-4 py-2">{{ user.gender|gender_translation }}</td>
+                    <td class="border border-gray-300 px-4 py-2"></td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    {% include "web/partials/pagination.html" %}
+</div>
+{% endblock %}

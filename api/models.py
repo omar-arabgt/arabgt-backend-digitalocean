@@ -37,7 +37,6 @@ class DeletedUser(TimeStampedModel):
     first_name = models.CharField(max_length=255, blank=True)
     last_name = models.CharField(max_length=255, blank=True)
     username = models.CharField(max_length=255, blank=True)
-    email = models.CharField(max_length=255, blank=True)
     nick_name = models.CharField(max_length=255, blank=True)
     phone_number = models.CharField(max_length=20, blank=True)
     birth_date = models.DateField(blank=True, null=True)

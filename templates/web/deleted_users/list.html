@@ -11,15 +11,7 @@
 </style>
 <div class="container mx-auto p-4">
     {% include "web/partials/heading.html" with title="قائمة المستخدمين المحذوفين" %}
-    
-    <form method="get" class="mb-4">
-        <div class="flex gap-4 justify-between items-center">
-            <div class="flex w-full gap-4">
-                <input type="text" name="q" value="{{ search_query }}" placeholder="بحث عن المستخدمين المحذوفين..." class="border w-full px-2 py-1 w-72">
-            </div>
-            <button type="submit" class="bg-blue-500 text-white px-4 py-2">بحث</button>
-        </div>
-    </form>
+    {% include "web/partials/search_form.html" with placeholder="بحث عن المستخدمين المحذوفين..." %}
     
     <div class="overflow-y-auto">
         <table class="w-full border-collapse border border-gray-300 text-sm">
@@ -38,7 +30,7 @@
             </thead>
             <tbody>
                 {% for user in deleted_user_list %}
-                <tr class="hover:bg-gray-100">
+                <tr class="hover:bg-gray-200">
                     <td class="border border-gray-300 px-4 py-2">{{ user.id }}</td>
                     <td class="border border-gray-300 px-4 py-2">{{ user.date_joined|date:"Y-m-d" }}</td>
                     <td class="border border-gray-300 px-4 py-2">{{ user.username }}</td>

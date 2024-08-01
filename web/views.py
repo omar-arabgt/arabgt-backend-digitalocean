@@ -6,13 +6,14 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 from django.utils.timezone import localtime
 from django.utils.dateparse import parse_date
 from django.http import HttpResponse
+from django.utils.dateparse import parse_date
 from django.db.models import Q
 from django.utils.timezone import localtime
-
 import openpyxl
 
 from api.models import User, Newsletter, DeletedUser
-from api.choices import COUNTRIES
+from .utils import get_merged_user_data
+from api.choices import COUNTRIES, GENDERS, STATUS
 from .forms import *
 
 
@@ -63,6 +64,86 @@ class UserUpdateView(LoginRequiredMixin, UpdateView):
         context['page_name'] = 'تعديل المستخدم'
         return context
 
+class ExportUserListView(LoginRequiredMixin, ListView):
+    template_name = 'web/export_users/list.html'
+    context_object_name = 'merged_list'
+    paginate_by = 10
+
+    def get_queryset(self):
+        query = self.request.GET.get('q', '')
+        nationality = self.request.GET.get('nationality')
+        country = self.request.GET.get('country')
+        birthdate = self.request.GET.get('birthdate')
+        gender = self.request.GET.get('gender')
+        status = self.request.GET.get('status')
+
+        return get_merged_user_data(query, nationality, country, birthdate, gender, status)
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['page_name'] = 'Merged User and DeletedUser List'
+        context['search_query'] = self.request.GET.get('q', '')
+        context['nationality_filter'] = self.request.GET.get('nationality', '')
+        context['country_filter'] = self.request.GET.get('country', '')
+        context['birthdate_filter'] = self.request.GET.get('birthdate', '')
+        context['gender_filter'] = self.request.GET.get('gender', '')
+        context['status_filter'] = self.request.GET.get('status', '')
+        context['GENDERS'] = GENDERS
+        context['STATUS'] = STATUS
+        context['COUNTRIES'] = COUNTRIES
+        return context
+
+class ExportUserToExcelView(LoginRequiredMixin, ListView):
+    def get_queryset(self):
+        query = self.request.GET.get('q', '')
+        nationality = self.request.GET.get('nationality')
+        country = self.request.GET.get('country')
+        birthdate = self.request.GET.get('birthdate')
+        gender = self.request.GET.get('gender')
+        status = self.request.GET.get('status')
+
+        return get_merged_user_data(query, nationality, country, birthdate, gender, status)
+
+    def get(self, request, *args, **kwargs):
+        queryset = self.get_queryset()
+
+        wb = openpyxl.Workbook()
+        ws = wb.active
+        ws.title = "Users and Deleted Users"
+
+        headers = [
+            'ID', # رقم المستخدم
+            'Status', # الحالة
+            'First Name', # اسم الاول
+            'Last Name', # الاسم الاخير
+            'Nick Name', # الكنية
+            'Birth Date', # تاريخ الميلاد
+            'Gender', # الجنسية
+            'Nationality', # دولة الإقامة
+            'Country', # الجنس
+            'Rank', # فئة
+        ]
+
+        ws.append(headers)
+
+        for user in queryset:
+            ws.append([
+                user['id'],
+                "محذوف" if user['status'] == "deleted" else "مفعل",
+                user['first_name'],
+                user['last_name'],
+                user['nick_name'],
+                user['birth_date'],
+                "ذكر" if user['gender'] == "M" else "انثي",
+                user['get_nationality_display'],
+                user['get_country_display'],
+                ""
+            ])
+
+        response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+        response['Content-Disposition'] = 'attachment; filename=exported_users.xlsx'
+        wb.save(response)
+        return response
 
 class NewsletterListView(LoginRequiredMixin, ListView):
     """
