@@ -1,7 +1,7 @@
 from django import forms
 from django.contrib.auth.forms import AuthenticationForm, UsernameField
 from django.core.exceptions import ValidationError
-from api.models import User
+from api.models import User, Group
 
 class CustomFormMixin:
     def __init__(self, *args, **kwargs):
@@ -74,3 +74,29 @@ class CustomAuthenticationForm(AuthenticationForm):
                 self.error_messages["invalid_login"],
                 code="invalid_login",
             )
+
+class ForumForm(CustomFormMixin, forms.ModelForm):
+    class Meta:
+        model = Forum
+        fields = ['name', 'image']
+        labels = {
+            'name': 'اسم المجموعة',
+            'image': 'صورة',   
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        if self.instance.pk:
+            self.fields['is_active'] = forms.BooleanField(
+                label='مفعل؟',
+                initial=self.instance.is_active,
+                required=False,
+            )
+
+    def save(self, commit=True):
+        instance = super().save(commit=False)
+        if not self.instance.pk:
+            instance.is_active = True
+        if commit:
+            instance.save()
+        return instance
