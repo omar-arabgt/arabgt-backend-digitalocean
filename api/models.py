@@ -4,11 +4,20 @@ from django.contrib.postgres.fields import ArrayField
 
 from .choices import *
 
-class Newsletter(models.Model):
-    email = models.EmailField(unique=True)
-    created_at = models.DateTimeField(auto_now_add=True)
 
-class User(AbstractUser):
+class TimeStampedModel(models.Model):
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        abstract = True
+
+
+class Newsletter(TimeStampedModel):
+    email = models.EmailField(unique=True)
+
+
+class User(TimeStampedModel, AbstractUser):
     nick_name = models.CharField(max_length=255, blank=True)
     phone_number = models.CharField(max_length=20, blank=True)
     birth_date = models.DateField(blank=True, null=True)
@@ -41,26 +50,26 @@ class DeletedUser(models.Model):
     favorite_show = models.CharField(max_length=255, blank=True)
 
 
-class FavoritePresenter(models.Model):
+class FavoritePresenter(TimeStampedModel):
     name = models.CharField(max_length=255, blank=True)
     image = models.CharField(max_length=255, blank=True)
     video = models.CharField(max_length=255, blank=True)
 
 
-class FavoriteShow(models.Model):
+class FavoriteShow(TimeStampedModel):
     name = models.CharField(max_length=255, blank=True)
     image = models.CharField(max_length=255, blank=True)
 
 
-class Post(models.Model):
-    post_id = models.IntegerField(unique=True)
+class Post(TimeStampedModel):
+    post_id = models.IntegerField(unique=True, db_index=True)
     title = models.CharField(max_length=255)
     author = models.CharField(max_length=255)
     publish_date = models.DateTimeField()
     edit_date = models.DateTimeField()
     category = ArrayField(models.CharField(max_length=255), blank=True, default=list)
     tag = ArrayField(models.CharField(max_length=255), blank=True, default=list)
-    related_articles = ArrayField(models.CharField(max_length=255), blank=True, default=list)
+    related_articles = models.ManyToManyField("Post", blank=True)
     thumbnail = models.CharField(max_length=255)
     content = models.TextField()
 
@@ -70,7 +79,7 @@ class PostManager(models.Manager):
         return super().get_queryset().filter(unsaved=False)
 
 
-class SavedPost(models.Model):
+class SavedPost(TimeStampedModel):
     post = models.ForeignKey(Post, on_delete=models.CASCADE)
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     unsaved = models.BooleanField(default=False)

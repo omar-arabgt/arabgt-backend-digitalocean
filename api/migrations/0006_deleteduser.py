@@ -7,7 +7,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('api', '0003_savedpost'),
+        ('api', '0005_alter_user_options_favoritepresenter_created_at_and_more'),
     ]
 
     operations = [

@@ -1,9 +1,10 @@
-from rest_framework.serializers import ModelSerializer, ValidationError
+# from rest_framework.serializers import ModelSerializer, ValidationError, Serializer
+from rest_framework import serializers
 
 from .models import *
 
 
-class UserSerializer(ModelSerializer):
+class UserSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = User
@@ -23,33 +24,40 @@ class UserSerializer(ModelSerializer):
         }
 
 
-class FavoritePresenterSerializer(ModelSerializer):
+class FavoritePresenterSerializer(serializers.ModelSerializer):
     
     class Meta:
         model = FavoritePresenter
         fields = "__all__"
 
 
-class FavoriteShowSerializer(ModelSerializer):
+class FavoriteShowSerializer(serializers.ModelSerializer):
     
     class Meta:
         model = FavoriteShow
         fields = "__all__"
 
 
-class PostSerializer(ModelSerializer):
-    class Meta:
-        model = Post
-        fields = "__all__"
 
 
-class PostListSerializer(ModelSerializer):
+class PostListSerializer(serializers.ModelSerializer):
     class Meta:
         model = Post
         fields = ["title", "tag", "category", "thumbnail", "id"]
 
 
-class SavedPostReadSerializer(ModelSerializer):
+
+class PostSerializer(serializers.ModelSerializer):
+    related_articles = PostListSerializer(many=True)
+    class Meta:
+        model = Post
+        fields = "__all__"
+
+class HomepageSectionSerializer(serializers.Serializer):
+    section_name = serializers.CharField()
+    posts = PostListSerializer(many=True)
+
+class SavedPostReadSerializer(serializers.ModelSerializer):
     post = PostListSerializer()
 
     class Meta:
@@ -57,7 +65,7 @@ class SavedPostReadSerializer(ModelSerializer):
         fields = "__all__"
 
 
-class SavedPostWriteSerializer(ModelSerializer):
+class SavedPostWriteSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = SavedPost
@@ -73,7 +81,7 @@ class SavedPostWriteSerializer(ModelSerializer):
         validated_data["user"] = user
         return super().create(validated_data)
 
-class NewsletterSerializer(ModelSerializer):
+class NewsletterSerializer(serializers.ModelSerializer):
     class Meta:
         model = Newsletter
         fields = ['email', 'created_at']

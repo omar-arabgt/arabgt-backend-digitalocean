@@ -9,6 +9,7 @@ from django.core.mail import EmailMessage
 from django.template.loader import render_to_string
 from django.views.decorators.cache import cache_page
 from django.utils.decorators import method_decorator
+from django.db.models import Q
 
 from .models import *
 from .serializers import *
@@ -362,29 +363,29 @@ class AdvertisementRequest(APIView):
             return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
-class HomePageView(ListAPIView):
-    serializer_class = PostListSerializer
-
-    @method_decorator(cache_page(60 * 60 * 24))
-    def get(self, request, *args, **kwargs):
-        return super().get(request, *args, **kwargs)
-
-    def get_queryset(self):
-        categories = [
-            "اختيارات المحررين",
-            "أحدث أخبار السيارات",
-            "تصفح بحسب ماركة السيارة",
-            "تكنولوجيا السيارات",
-            "برامج عرب جي تي",
-            "مقالات",
-            "فيديو",
-            "مواصفات وأسعار السيارات",
-            "وكلاء وبيانات",      
+class HomePageView(APIView):
+ 
+ @method_decorator(cache_page(60 * 60 * 24))
+ def get(self, request):
+        sections = [
+            {'اختيارات المحررين': ['اختيارات المحررين']},
+            {'أحدث أخبار السيارات': ['جديد الأخبار', 'سيارات 2023', 'سيارات 2024', 'سيارات معدلة', 'معارض عالمية', 'صور رقمية وتجسسية', 'متفرقات', 'فيس لفت', 'سوبر كارز', 'سيارات نادرة', 'ميكانيك', 'نصائح']},
+            {'تكنولوجيا السيارات': ['سيارات كهربائية', 'القيادة الذاتية', 'تكنولوجيا السيارات', 'تكنولوجيا متقدمة']},
+            {'مقالات': ['اختيارات المحررين', 'تقارير وبحوث', 'توب 5', 'قوائم عرب جي تي']},
+            {'وكلاء وبيانات': ['وكلاء وبيانات']},
         ]
 
-        queryset = []
-        for category in categories:
-            posts = list(Post.objects.filter(category__contains=[category]).order_by("-publish_date")[:3])
-            queryset += posts
+        result = []
+        for section in sections:
+            section_name = list(section.keys())[0]
+            categories = section[section_name]
+            posts = Post.objects.filter(Q(category__overlap=categories)).order_by('-publish_date')[:3]
+            
+            section_data = {
+                'section_name': section_name,
+                'posts': posts
+            }
+            result.append(section_data)
 
-        return queryset
+        serializer = HomepageSectionSerializer(result, many=True)
+        return Response(serializer.data)
