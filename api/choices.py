@@ -1,3 +1,13 @@
+from django.db import models
+
+
+class ReactionType(models.TextChoices):
+    LIKE = "like"
+    DISLIKE = "dislike"
+    HEART = "heart"
+    APPLAUSE = "applause",
+
+
 GENDERS = [
     ("M", 'ذكر'),
     ("F", 'أنثى'),
