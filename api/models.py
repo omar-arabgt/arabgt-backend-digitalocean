@@ -3,7 +3,7 @@ from django.contrib.auth.models import AbstractUser
 from django.contrib.postgres.fields import ArrayField
 
 from .choices import *
-
+from .utils import * 
 
 class TimeStampedModel(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
@@ -31,7 +31,8 @@ class User(TimeStampedModel, AbstractUser):
     favorite_presenter = models.ForeignKey("FavoritePresenter", blank=True, null=True, on_delete=models.SET_NULL)
     favorite_show = models.ForeignKey("FavoriteShow", blank=True, null=True, on_delete=models.SET_NULL)
 
-class DeletedUser(models.Model):
+
+class DeletedUser(TimeStampedModel):
     email = models.CharField(max_length=255, blank=True)
     first_name = models.CharField(max_length=255, blank=True)
     last_name = models.CharField(max_length=255, blank=True)
@@ -80,8 +81,63 @@ class PostManager(models.Manager):
 
 
 class SavedPost(TimeStampedModel):
-    post = models.ForeignKey(Post, on_delete=models.CASCADE)
-    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    post = models.ForeignKey("Post", on_delete=models.CASCADE)
+    user = models.ForeignKey("User", on_delete=models.CASCADE)
     unsaved = models.BooleanField(default=False)
 
     objects = PostManager()
+
+
+class Forum(TimeStampedModel):
+    name = models.CharField(max_length=255)
+    image = models.ImageField(upload_to="forum")
+    is_active = models.BooleanField(default=True)
+
+
+class Group(TimeStampedModel):
+    name = models.CharField(max_length=255)
+    members = models.ManyToManyField("User", through="GroupMembership")
+    image = models.ImageField(upload_to="group")
+    is_active = models.BooleanField(default=True)
+
+
+class GroupMembership(TimeStampedModel):
+    user = models.ForeignKey("User", on_delete=models.CASCADE)
+    group = models.ForeignKey("Group", on_delete=models.CASCADE)
+
+    class Meta:
+        unique_together = ("user", "group")
+
+
+class Question(TimeStampedModel):
+    user = models.ForeignKey("User", related_name="questions", on_delete=models.CASCADE)
+    forum = models.ForeignKey("Forum", related_name="questions", blank=True, null=True, on_delete=models.SET_NULL)
+    group = models.ForeignKey("Group", related_name="questions", blank=True, null=True, on_delete=models.SET_NULL)
+    title = models.CharField(max_length=255)
+    content = models.TextField()
+
+    def clean(self):
+        check_one_field(self, "forum", "group")
+
+
+class Reply(TimeStampedModel):
+    user = models.ForeignKey("User", related_name="replies", on_delete=models.CASCADE)
+    question = models.ForeignKey("Question", related_name="replies", blank=True, null=True, on_delete=models.CASCADE)
+    parent_reply = models.ForeignKey("Reply", related_name="replies", blank=True, null=True, on_delete=models.CASCADE)
+    content = models.TextField()
+
+    def clean(self):
+        check_one_field(self, "question", "parent_reply")
+
+
+class Reaction(TimeStampedModel):
+    user = models.ForeignKey("User", on_delete=models.CASCADE)
+    question = models.ForeignKey("Question", blank=True, null=True, related_name='reactions', on_delete=models.CASCADE)
+    reply = models.ForeignKey("Reply", blank=True, null=True, related_name='reactions', on_delete=models.CASCADE)
+    reaction_type = models.CharField(max_length=8, choices=ReactionType.choices)
+
+    class Meta:
+        unique_together = ("user", "question", "reply")
+    
+    def clean(self):
+        check_one_field(self, "question", "reply")
