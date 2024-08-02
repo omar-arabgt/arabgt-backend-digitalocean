@@ -68,7 +68,7 @@ class ForumForm(CustomFormMixin, forms.ModelForm):
                 label_suffix="",
                 help_text="",
                 widget=forms.FileInput(attrs={
-                    'class': 'custom-select w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400 appearance-none bg-white'
+                    'class': 'w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400'
                 })
             )
         else:
