@@ -381,3 +381,19 @@ class HomeView(LoginRequiredMixin, TemplateView):
         context = super().get_context_data(**kwargs)
         context['page_name'] = 'لوحة التحكم'
         return context
+
+class PrivacyPolicy(TemplateView):
+    template_name = 'web/privacy_policy.html'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['no_sidebar'] = True
+        return context
+
+class TermsOfUsage(TemplateView):
+    template_name = 'web/terms_of_usage.html'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['no_sidebar'] = True
+        return context
