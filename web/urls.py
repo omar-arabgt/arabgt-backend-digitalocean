@@ -16,7 +16,7 @@ urlpatterns = [
     
     path('groups/', GroupListView.as_view(), name='group_list'),
     path('groups/create', GroupCreateView.as_view(), name='group_create'),
-    path('groups/<int:pk>/delete/', GroupUpdateView.as_view(), name='group_edit'),
+    path('groups/<int:pk>/edit/', GroupUpdateView.as_view(), name='group_edit'),
 
     path('newsletter/', NewsletterListView.as_view(), name='newsletter_list'),
     path('download_newsletter_excel/', download_newsletter_excel, name='download_newsletter_excel'),
