@@ -61,6 +61,20 @@ class ForumForm(CustomFormMixin, forms.ModelForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         if self.instance.pk:
+            del self.fields['image']
+            self.fields['image'] = forms.FileField(
+                label=':صورة',
+                required=False,
+                label_suffix="",
+                help_text="",
+                widget=forms.FileInput(attrs={
+                    'class': 'custom-select w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400 appearance-none bg-white'
+                })
+            )
+        else:
+            self.fields['image'].label = 'صورة'
+        
+        if self.instance.pk:
             self.fields['is_active'] = forms.BooleanField(
                 label='مفعل؟',
                 initial=self.instance.is_active,
