@@ -1,13 +1,37 @@
 <!DOCTYPE html>
-<html>
+<html lang="ar">
 <head>
-    <title>Confirm Your Email</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@700&display=swap" rel="stylesheet">
+    <title>تأكيد البريد الإلكتروني</title>
+    <style>
+        body {
+            font-family: 'Cairo', Arial, Helvetica, sans-serif;
+        }
+    </style>
 </head>
-<body>
-    <p>Hello!</p>
-    <p>You're receiving this email because you need to confirm your email address</p>
-    <p>Please go to the following page and confirm your email address:</p>
-    <p><a href="{{ activate_url }}">Confirm Email</a></p>
-    <p>Thank you!</p>
+<body style="font-family: 'Cairo', Arial, Helvetica, sans-serif; text-align: right; direction: rtl; color: #333333; font-size: 14px; padding: 40px; font-weight: 700; margin: 0 auto;">
+    <div class="container" style="margin: 0 auto;">
+        <p style="text-align: left;">
+            Sender: ArabGT
+        </p>
+        <div class="logo" style="margin: 20px 0; text-align: center;">
+            <a href="https://arabgt.com/"><img src="https://arabgt-bucket.s3.eu-north-1.amazonaws.com/Logo+Pictorial+Red+(2).png" width="68.69" height="19.81" alt="ArabGT Logo"></a>
+        </div>
+        <h1 style="font-size: 20px;">مرحباً بكم في عرب جي تي!</h1>
+
+        <div class="content" style="margin: 20px 0;">
+            <p>عزيزي المستخدم،</p>
+            <p>للبدء، يرجى التحقق من بريدك الإلكتروني عن طريق النقر على الرابط أدناه: <a href="{{ activate_url }}" style="color: #E2072C; text-decoration: none; cursor: pointer;">الرابط</a></p>
+            
+            <p style="margin-top: 30px;">شكراً لانضمامك إلينا!</p>
+        </div>
+        <div style="margin-top: 30px;">
+            <p>هل تواجه مشكلة؟ <a href="mailto:customer@arabgt.com" style="color: #E2072C; text-decoration: none; cursor: pointer;">اتصل بخدمة العملاء</a></p>
+        </div>
+    </div>
 </body>
 </html>
