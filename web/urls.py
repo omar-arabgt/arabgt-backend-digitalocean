@@ -13,6 +13,12 @@ urlpatterns = [
     path('export_users/', ExportUserListView.as_view(), name='export_user_list'),
     path('export_users_excel/', ExportUserToExcelView.as_view(), name='export_users_excel'),
     path('users/<int:pk>/delete/', UserDeleteView.as_view(), name='user_delete'),
+    
+    path('groups/', GroupListView.as_view(), name='group_list'),
+    path('groups/create', GroupCreateView.as_view(), name='group_create'),
+    path('groups/<int:pk>/edit/', GroupUpdateView.as_view(), name='group_edit'),
+
+    path('newsletter/', NewsletterListView.as_view(), name='newsletter_list'),
     path('download_newsletter_excel/', download_newsletter_excel, name='download_newsletter_excel'),
     path('newsletter/', NewsletterListView.as_view(), name='newsletter_list'),
 ]
