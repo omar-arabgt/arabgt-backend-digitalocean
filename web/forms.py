@@ -54,7 +54,7 @@ class ForumForm(CustomFormMixin, forms.ModelForm):
         model = Forum
         fields = ['name', 'image']
         labels = {
-            'name': 'اسم المنتدي',
+            'name': 'اسم المنتدى',
             'image': 'صورة',   
         }
 
