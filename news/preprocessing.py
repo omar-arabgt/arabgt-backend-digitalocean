@@ -332,8 +332,6 @@ def preprocess_article(article):
     """
     post_content = article['post_content']
     post_id = article['id']
-    post_date = article['post_date']
-    post_title = article['post_title']
 
     soup = BeautifulSoup(post_content, "html.parser")
     structured_data, external_links = extract_elements(soup.body if soup.body else soup)
@@ -358,10 +356,6 @@ def preprocess_article(article):
     thumbnail_url_with_base = f'https://arabgt.com/wp-content/uploads/{thumbnail_url}'
 
     output_data = {
-        "post_date": post_date,
-        "post_content": post_content,
-        "post_title": post_title,
-        "post_id": post_id,
         "thumbnail": thumbnail_url_with_base,
         "content": final_elements,
         "related_articles": related_articles
@@ -372,9 +366,6 @@ def preprocess_article(article):
 def preprocess_video_article(article):
     post_content = article['post_content']
     post_id = article['id']
-    post_date = article['post_date']
-    post_title = article['post_title']
-     
     
     youtube_pattern = re.compile(r'https?://(www\.)?(youtube\.com|youtu\.be)/[^\s]+')
     facebook_pattern = re.compile(r'<iframe[^>]+src="https?://www\.facebook\.com/plugins/video\.php[^"]+"[^>]*></iframe>')
@@ -436,9 +427,6 @@ def preprocess_video_article(article):
     thumbnail_url_with_base = f'https://arabgt.com/wp-content/uploads/{thumbnail_url}'
 
     output_data = {
-        "post_date": post_date,
-        "post_title": post_title,
-        "post_id": post_id,
         "thumbnail": thumbnail_url_with_base,
         "content": contetnt,
     }

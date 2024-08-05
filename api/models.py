@@ -73,6 +73,7 @@ class Post(TimeStampedModel):
     related_articles = models.ManyToManyField("Post", blank=True)
     thumbnail = models.CharField(max_length=255)
     content = models.TextField()
+    post_type = models.CharField(max_length=255)
 
 
 class PostManager(models.Manager):
