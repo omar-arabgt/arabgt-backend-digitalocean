@@ -303,3 +303,7 @@ CSRF_TRUSTED_ORIGINS = ["https://localhost", "https://localhost", 'https://dev-a
 LOGIN_REDIRECT_URL="home"
 LOGOUT_REDIRECT_URL = "web-login"
 LOGIN_URL="web-login"
+
+
+IOS_STORE_URL = env("IOS_STORE_URL")
+ANDROID_STORE_URL = env("ANDROID_STORE_URL")
