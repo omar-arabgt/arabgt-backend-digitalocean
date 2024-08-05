@@ -1,0 +1,46 @@
+{% extends "web/partials/base.html" %}
+{% load static %}
+{% load custom_filters %}
+{% block title %}قائمة المجموعات{% endblock %}
+{% block content %}
+<style>
+    .tom-select > .ts-control{
+        background-color: transparent;
+        border: 0;
+    }
+</style>
+<div class="container mx-auto p-4">
+    {% include "web/partials/heading.html" with title="قائمة المجموعات" %}
+    {% include "web/partials/search_form.html" with placeholder="بحث عن المجموعات..." %}
+    <div class="flex justify-start mb-4">
+        <a href="{% url 'group_create' %}" class="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded inline-block">إنشاء مجموعة جديدة</a>
+    </div>
+    <div class="overflow-y-auto">
+        <table class="w-full border-collapse border border-gray-300 text-sm">
+            <thead>
+                <tr class="bg-gray-200">
+                    <th class="border border-gray-300 px-4 py-2">الاسم</th>
+                    <th class="border border-gray-300 px-4 py-2">تاريخ الانشاء</th>
+                    <th class="border border-gray-300 px-4 py-2">الحالة</th>
+                    <th class="border border-gray-300 px-4 py-2">خيارات</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for group in groups %}
+                <tr class="hover:bg-gray-200">
+                    <td class="border border-gray-300 px-4 py-2">{{ group.name }}</td>
+                    <td class="border border-gray-300 px-4 py-2">{{ group.created_at|date:"Y-m-d" }}</td>
+                    <td class="border border-gray-300 px-4 py-2">{{ group.is_active|yesno:"مفعل,غير مفعل"}}</td>
+                    <td class="border border-gray-300 px-4 py-2">
+                        <div class="flex gap-4 justify-center">
+                            <a href="{% url 'group_edit' group.pk %}" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded inline-block">تعديل</a>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% include "web/partials/pagination.html" %}
+</div>
+{% endblock %}
