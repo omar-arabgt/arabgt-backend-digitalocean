@@ -332,8 +332,6 @@ def preprocess_article(article):
     """
     post_content = article['post_content']
     post_id = article['id']
-    post_date = article['post_date']
-    post_title = article['post_title']
 
     soup = BeautifulSoup(post_content, "html.parser")
     structured_data, external_links = extract_elements(soup.body if soup.body else soup)
@@ -358,13 +356,78 @@ def preprocess_article(article):
     thumbnail_url_with_base = f'https://arabgt.com/wp-content/uploads/{thumbnail_url}'
 
     output_data = {
-        "post_date": post_date,
-        "post_content": post_content,
-        "post_title": post_title,
-        "post_id": post_id,
         "thumbnail": thumbnail_url_with_base,
         "content": final_elements,
         "related_articles": related_articles
     }
     
     return output_data
+
+def preprocess_video_article(article):
+    post_content = article['post_content']
+    post_id = article['id']
+    
+    youtube_pattern = re.compile(r'https?://(www\.)?(youtube\.com|youtu\.be)/[^\s]+')
+    facebook_pattern = re.compile(r'<iframe[^>]+src="https?://www\.facebook\.com/plugins/video\.php[^"]+"[^>]*></iframe>')
+    twitter_pattern = re.compile(r'<blockquote class="twitter-tweet".*?</blockquote>', re.DOTALL)
+    twitter_media_pattern = re.compile(r'<a href="(https?://(?:t\.co|pic\.twitter\.com|pic\.x\.com)/[^"]+)"')
+    instagram_pattern = re.compile(r'<blockquote class="instagram-media".*?</blockquote>', re.DOTALL)
+    instagram_permalink_pattern = re.compile(r'data-instgrm-permalink="([^"]+)"')
+
+    media_content = None
+    
+    # Extract YouTube URL
+    youtube_match = youtube_pattern.search(post_content)
+    if youtube_match:
+        media_content = youtube_match.group(0)
+        post_content = youtube_pattern.sub('', post_content)
+
+    # Extract Facebook iframe
+    facebook_match = facebook_pattern.search(post_content)
+    if facebook_match:
+        media_content = facebook_match.group(0)
+        post_content = facebook_pattern.sub('', post_content)
+
+    # Extract Twitter media URL
+    twitter_match = twitter_pattern.search(post_content)
+    if twitter_match:
+        tweet_content = twitter_match.group(0)
+        media_match = twitter_media_pattern.search(tweet_content)
+        if media_match:
+            media_content = media_match.group(1)
+        post_content = twitter_pattern.sub('', post_content)
+
+    # Extract Instagram post URL
+    instagram_match = instagram_pattern.search(post_content)
+    if instagram_match:
+        instagram_content = instagram_match.group(0)
+        permalink_match = instagram_permalink_pattern.search(instagram_content)
+        if permalink_match:
+            media_content = permalink_match.group(1)
+        post_content = instagram_pattern.sub('', post_content)
+
+    # Clean the text
+    soup = BeautifulSoup(post_content, "html.parser")
+    
+    # Remove all script tags
+    for script in soup(["script", "style"]):
+        script.decompose()
+
+    text_content = soup.get_text(separator=" ").strip()
+
+    # Replace non-breaking spaces with regular spaces
+    text_content = text_content.replace('\xa0', ' ')
+
+    contetnt =  {
+        "media_content": media_content,
+        "text_content": text_content
+    }
+    
+    thumbnail_url = get_thumbnail(post_id)
+    thumbnail_url_with_base = f'https://arabgt.com/wp-content/uploads/{thumbnail_url}'
+
+    output_data = {
+        "thumbnail": thumbnail_url_with_base,
+        "content": contetnt,
+    }
+    return output_data  
