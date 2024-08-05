@@ -414,3 +414,13 @@ class QuestionRetrieveUpdateDestroyView(RetrieveUpdateDestroyAPIView):
     def get_queryset(self):
         queryset = Question.objects.filter(user=self.request.user)
         return queryset
+
+
+class MobileReleaseView(RetrieveAPIView):
+    serializer_class = MobileReleaseSerializer
+
+    def get_object(self):
+        platform = self.request.GET.get("platform", "")
+        version_number = self.request.GET.get("version_number", 0)
+        obj = MobileRelease.objects.filter(platform=platform, version_number__gt=version_number).last()
+        return obj

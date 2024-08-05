@@ -154,3 +154,12 @@ class Reaction(TimeStampedModel):
     def save(self, *args, **kwargs):
         self.clean()
         return super().save(*args, **kwargs)
+
+
+class MobileRelease(TimeStampedModel):
+    platform = models.CharField(choices=MobilePlatform.choices)
+    release_type = models.CharField(choices=MobileReleaseType.choices)
+    version_number = models.IntegerField()
+
+    def __str__(self):
+        return f"{self.platform} - {self.version_number}"

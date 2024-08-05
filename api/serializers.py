@@ -1,5 +1,6 @@
 # from rest_framework.serializers import ModelSerializer, ValidationError, Serializer
 from rest_framework import serializers
+from django.conf import settings
 
 from .models import *
 
@@ -104,3 +105,18 @@ class QuestionReadSerializer(serializers.ModelSerializer):
     class Meta:
         model = Question
         fields = "__all__"
+
+
+class MobileReleaseSerializer(serializers.ModelSerializer):
+    download_url = serializers.SerializerMethodField()
+
+    class Meta:
+        model = MobileRelease
+        fields = ["platform", "release_type", "download_url", "version_number"]
+
+    def get_download_url(self, obj):
+        if obj.platform == MobilePlatform.IOS:
+            download_url = settings.IOS_STORE_URL
+        elif obj.platform == MobilePlatform.ANDROID:
+            download_url = settings.ANDROID_STORE_URL
+        return download_url

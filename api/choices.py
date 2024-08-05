@@ -8,6 +8,16 @@ class ReactionType(models.TextChoices):
     APPLAUSE = "applause",
 
 
+class MobilePlatform(models.TextChoices):
+    IOS = "ios"
+    ANDROID = "android"
+
+
+class MobileReleaseType(models.TextChoices):
+    SOFT = "soft"
+    HARD = "hard"
+
+
 GENDERS = [
     ("M", 'ذكر'),
     ("F", 'أنثى'),

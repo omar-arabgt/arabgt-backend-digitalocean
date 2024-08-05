@@ -19,4 +19,5 @@ urlpatterns = [
     path('unsubscribe_newsletter', UnsubscribeNewsletter.as_view(), name='unsubscribe-newsletter'),
     path("questions/", QuestionListCreateView.as_view(), name="question-list-create"),
     path("questions/<int:pk>/", QuestionRetrieveUpdateDestroyView.as_view(), name="question-retrieve-update-destroy"),
+    path("mobile_release/", MobileReleaseView.as_view(), name="mobile-release"),
 ]
