@@ -131,6 +131,7 @@ class Reply(TimeStampedModel):
     question = models.ForeignKey("Question", related_name="replies", blank=True, null=True, on_delete=models.CASCADE)
     parent_reply = models.ForeignKey("Reply", related_name="replies", blank=True, null=True, on_delete=models.CASCADE)
     content = models.TextField()
+    file = models.FileField(upload_to="reply", blank=True, null=True)
 
     def clean(self):
         check_one_field(self, "question", "parent_reply")
