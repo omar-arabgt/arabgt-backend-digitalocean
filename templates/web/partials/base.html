@@ -2,44 +2,47 @@
 <html dir="rtl" lang="ar">
 {% include 'web/partials/head.html' %}
 <body class="page-wrapper flex">
-    {% include 'web/partials/sidebar.html' %}
+    {% if not no_sidebar %}
+        {% include 'web/partials/sidebar.html' %}
+    {% endif %}
     <div class="overflow-y-auto flex-1 px-4 bg-gray-100">
         {% block content %}
         {% endblock %}
     </div>
-    <script src="https://cdn.jsdelivr.net/npm/tom-select@2.0.3/dist/js/tom-select.complete.min.js"></script>
-    <script>
-        function toggleSidebar() {
-            if (window.innerWidth < 1024) {
-                const sidebar = document.getElementById('sidebar');
-                sidebar.classList.toggle('close');
+    {% if not no_sidebar %}
+        <script src="https://cdn.jsdelivr.net/npm/tom-select@2.0.3/dist/js/tom-select.complete.min.js"></script>
+        <script>
+            function toggleSidebar() {
+                if (window.innerWidth < 1024) {
+                    const sidebar = document.getElementById('sidebar');
+                    sidebar.classList.toggle('close');
+                }
             }
-        }
-        if (window.innerWidth >= 1024) {
-            sidebar.classList.remove('close');
-        } else {
-            sidebar.classList.add('close');
-        }
-        window.addEventListener('resize', function() {
-            const sidebar = document.getElementById('sidebar');
             if (window.innerWidth >= 1024) {
                 sidebar.classList.remove('close');
             } else {
                 sidebar.classList.add('close');
             }
-        });
-        document.addEventListener('DOMContentLoaded', function() {
-            const elements = document.querySelectorAll('.tom-select');
-            elements.forEach(el => {
-                new TomSelect(el, {
-                    allowEmptyOption: true,
-                    searchField: ['text'],
-                    rtl: true,
-                    plugins: ['dropdown_input'],
+            window.addEventListener('resize', function() {
+                const sidebar = document.getElementById('sidebar');
+                if (window.innerWidth >= 1024) {
+                    sidebar.classList.remove('close');
+                } else {
+                    sidebar.classList.add('close');
+                }
+            });
+            document.addEventListener('DOMContentLoaded', function() {
+                const elements = document.querySelectorAll('.tom-select');
+                elements.forEach(el => {
+                    new TomSelect(el, {
+                        allowEmptyOption: true,
+                        searchField: ['text'],
+                        rtl: true,
+                        plugins: ['dropdown_input'],
+                    });
                 });
             });
-        });
-    </script>
-
+        </script>
+    {% endif %}
 </body>
 </html>

@@ -1,7 +1,7 @@
 from django import forms
 from django.contrib.auth.forms import AuthenticationForm, UsernameField
 from django.core.exceptions import ValidationError
-from api.models import User, Forum
+from api.models import User, Group, Forum
 
 class CustomFormMixin:
     def __init__(self, *args, **kwargs):
@@ -113,3 +113,43 @@ class CustomAuthenticationForm(AuthenticationForm):
                 self.error_messages["invalid_login"],
                 code="invalid_login",
             )
+
+class GroupForm(CustomFormMixin, forms.ModelForm):
+    class Meta:
+        model = Group
+        fields = ['name', 'image']
+        labels = {
+            'name': 'اسم المجموعة',
+            'image': 'صورة',   
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        if self.instance.pk:
+            del self.fields['image']
+            self.fields['image'] = forms.FileField(
+                label=':صورة',
+                required=False,
+                label_suffix="",
+                help_text="",
+                widget=forms.FileInput(attrs={
+                    'class': 'w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400'
+                })
+            )
+        else:
+            self.fields['image'].label = 'صورة'
+
+        if self.instance.pk:
+            self.fields['is_active'] = forms.BooleanField(
+                label='مفعل؟',
+                initial=self.instance.is_active,
+                required=False,
+            )
+
+    def save(self, commit=True):
+        instance = super().save(commit=False)
+        if not self.instance.pk:
+            instance.is_active = True
+        if commit:
+            instance.save()
+        return instance

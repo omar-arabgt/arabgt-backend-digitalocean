@@ -1,6 +1,7 @@
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from rest_framework.generics import ListAPIView, UpdateAPIView, RetrieveAPIView, ListCreateAPIView, DestroyAPIView
+from rest_framework.generics import ListAPIView, UpdateAPIView, RetrieveAPIView, \
+    ListCreateAPIView, DestroyAPIView, RetrieveUpdateDestroyAPIView
 from rest_framework import status
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.filters import SearchFilter
@@ -365,8 +366,8 @@ class AdvertisementRequest(APIView):
 
 class HomePageView(APIView):
  
- @method_decorator(cache_page(60 * 60 * 24))
- def get(self, request):
+    @method_decorator(cache_page(60 * 60 * 24))
+    def get(self, request):
         sections = [
             {'اختيارات المحررين': ['اختيارات المحررين']},
             {'أحدث أخبار السيارات': ['جديد الأخبار', 'سيارات 2023', 'سيارات 2024', 'سيارات معدلة', 'معارض عالمية', 'صور رقمية وتجسسية', 'متفرقات', 'فيس لفت', 'سوبر كارز', 'سيارات نادرة', 'ميكانيك', 'نصائح']},
@@ -389,3 +390,27 @@ class HomePageView(APIView):
 
         serializer = HomepageSectionSerializer(result, many=True)
         return Response(serializer.data)
+ 
+
+class QuestionListCreateView(ListCreateAPIView):
+
+    def get_serializer_class(self):
+        if self.request.method == "GET":
+            return QuestionReadSerializer
+        return QuestionWriteSerializer
+
+    def get_queryset(self):
+        queryset = Question.objects.filter(user=self.request.user)
+        return queryset
+
+
+class QuestionRetrieveUpdateDestroyView(RetrieveUpdateDestroyAPIView):
+
+    def get_serializer_class(self):
+        if self.request.method == "GET":
+            return QuestionReadSerializer
+        return QuestionWriteSerializer
+
+    def get_queryset(self):
+        queryset = Question.objects.filter(user=self.request.user)
+        return queryset

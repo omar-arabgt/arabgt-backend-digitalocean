@@ -11,10 +11,53 @@ from django.db.models import Q
 from django.utils.timezone import localtime
 import openpyxl
 
-from api.models import User, Newsletter, DeletedUser, Forum
+from api.models import User, Newsletter, DeletedUser, Group, Forum
 from .utils import get_merged_user_data
 from api.choices import COUNTRIES, GENDERS, STATUS
 from .forms import *
+
+class GroupListView(LoginRequiredMixin, ListView):
+    model = Group
+    template_name = 'web/groups/list.html'
+    context_object_name = 'groups'
+    paginate_by = 10
+
+    def get_queryset(self):
+        query = self.request.GET.get('q', '')
+        filters = Q()
+        if query:
+            filters &= Q(name__icontains=query)
+        return Group.objects.filter(filters)
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['page_name'] = 'قائمة المجموعات'
+        return context
+
+class GroupCreateView(LoginRequiredMixin, CreateView):
+    model = Group
+    form_class = GroupForm
+    template_name = 'web/groups/create.html'
+    success_url = reverse_lazy('group_list')
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['page_name'] = 'إنشاء مجموعة'
+        return context
+
+class GroupUpdateView(LoginRequiredMixin, UpdateView):
+    model = Group
+    form_class = GroupForm
+    template_name = 'web/groups/edit.html'
+    success_url = reverse_lazy('group_list')
+
+    def get_object(self):
+        return get_object_or_404(Group, pk=self.kwargs['pk'])
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['page_name'] = 'تعديل مجموعة'
+        return context
 
 
 class UserListView(LoginRequiredMixin, ListView):
@@ -379,4 +422,20 @@ class HomeView(LoginRequiredMixin, TemplateView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['page_name'] = 'لوحة التحكم'
+        return context
+
+class PrivacyPolicy(TemplateView):
+    template_name = 'web/privacy_policy.html'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['no_sidebar'] = True
+        return context
+
+class TermsOfUsage(TemplateView):
+    template_name = 'web/terms_of_usage.html'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['no_sidebar'] = True
         return context

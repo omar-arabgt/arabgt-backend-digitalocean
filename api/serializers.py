@@ -86,3 +86,21 @@ class NewsletterSerializer(serializers.ModelSerializer):
         model = Newsletter
         fields = ['email', 'created_at']
         read_only_fields = ['created_at']
+
+
+class QuestionWriteSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = Question
+        fields = ["title", "content", "group", "forum", "file"]
+
+    def create(self, validated_data):
+        validated_data["user"] = self.context["request"].user
+        return super().create(validated_data)
+
+
+class QuestionReadSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = Question
+        fields = "__all__"

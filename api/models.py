@@ -115,9 +115,14 @@ class Question(TimeStampedModel):
     group = models.ForeignKey("Group", related_name="questions", blank=True, null=True, on_delete=models.SET_NULL)
     title = models.CharField(max_length=255)
     content = models.TextField()
+    file = models.FileField(upload_to="question", blank=True, null=True)
 
     def clean(self):
         check_one_field(self, "forum", "group")
+
+    def save(self, *args, **kwargs):
+        self.clean()
+        return super().save(*args, **kwargs)
 
 
 class Reply(TimeStampedModel):
@@ -128,6 +133,10 @@ class Reply(TimeStampedModel):
 
     def clean(self):
         check_one_field(self, "question", "parent_reply")
+
+    def save(self, *args, **kwargs):
+        self.clean()
+        return super().save(*args, **kwargs)
 
 
 class Reaction(TimeStampedModel):
@@ -141,3 +150,7 @@ class Reaction(TimeStampedModel):
     
     def clean(self):
         check_one_field(self, "question", "reply")
+
+    def save(self, *args, **kwargs):
+        self.clean()
+        return super().save(*args, **kwargs)
