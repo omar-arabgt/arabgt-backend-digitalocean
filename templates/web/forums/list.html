@@ -1,7 +1,7 @@
 {% extends "web/partials/base.html" %}
 {% load static %}
 {% load custom_filters %}
-{% block title %}قائمة المجموعات{% endblock %}
+{% block title %}قائمة المنتديات{% endblock %}
 {% block content %}
 <style>
     .tom-select > .ts-control{
@@ -10,10 +10,10 @@
     }
 </style>
 <div class="container mx-auto p-4">
-    {% include "web/partials/heading.html" with title="قائمة المجموعات" %}
-    {% include "web/partials/search_form.html" with placeholder="بحث عن المجموعات..." %}
+    {% include "web/partials/heading.html" with title="قائمة المنتديات" %}
+    {% include "web/partials/search_form.html" with placeholder="بحث عن المنتديات..." %}
     <div class="flex justify-start mb-4">
-        <a href="{% url 'group_create' %}" class="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded inline-block">إنشاء مجموعة جديدة</a>
+        <a href="{% url 'forum_create' %}" class="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded inline-block">إنشاء منتدى جديد</a>
     </div>
     <div class="overflow-y-auto">
         <table class="w-full border-collapse border border-gray-300 text-sm">
@@ -26,14 +26,14 @@
                 </tr>
             </thead>
             <tbody>
-                {% for group in groups %}
+                {% for forum in forums %}
                 <tr class="hover:bg-gray-200">
-                    <td class="border border-gray-300 px-4 py-2">{{ group.name }}</td>
-                    <td class="border border-gray-300 px-4 py-2">{{ group.created_at|date:"Y-m-d" }}</td>
+                    <td class="border border-gray-300 px-4 py-2">{{ forum.name }}</td>
+                    <td class="border border-gray-300 px-4 py-2">{{ forum.created_at|date:"Y-m-d" }}</td>
                     <td class="border border-gray-300 px-4 py-2">{{ group.is_active|yesno:"غير مفعل , مفعل" }}</td>
                     <td class="border border-gray-300 px-4 py-2">
                         <div class="flex gap-4 justify-center">
-                            <a href="{% url 'group_edit' group.pk %}" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded inline-block">تعديل</a>
+                            <a href="{% url 'forum_edit' forum.pk %}" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded inline-block">تعديل</a>
                         </div>
                     </td>
                 </tr>
