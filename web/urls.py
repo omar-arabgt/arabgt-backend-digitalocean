@@ -21,6 +21,5 @@ urlpatterns = [
     path('newsletter/', NewsletterListView.as_view(), name='newsletter_list'),
     path('download_newsletter_excel/', download_newsletter_excel, name='download_newsletter_excel'),
     path('newsletter/', NewsletterListView.as_view(), name='newsletter_list'),
-    path('privacy-policy/', PrivacyPolicy.as_view(), name='privacy_policy'),
-    path('terms-of-usage/', TermsOfUsage.as_view(), name='terms_of_usage'),
+    path('term-of-use-privacy-policy/', TermsOfUsePrivacyPolicy.as_view(), name='term_of_use_privacy_policy'),
 ]
