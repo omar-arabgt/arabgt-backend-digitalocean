@@ -600,6 +600,148 @@
 			]
 		},
 		{
+			"name": "reply",
+			"item": [
+				{
+					"name": "create",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": {
+								"token": "{{token}}"
+							}
+						},
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "content",
+									"value": "asd",
+									"type": "text"
+								},
+								{
+									"key": "question",
+									"value": "1",
+									"type": "text"
+								},
+								{
+									"key": "parent_reply",
+									"value": "2",
+									"type": "text",
+									"disabled": true
+								},
+								{
+									"key": "file",
+									"type": "file",
+									"src": "/Users/mehmetcan/Desktop/Screenshot 2024-08-01 at 12.28.49.png"
+								}
+							]
+						},
+						"url": "{{url}}/api/replies/"
+					},
+					"response": []
+				},
+				{
+					"name": "update",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": {
+								"token": "{{token}}"
+							}
+						},
+						"method": "PATCH",
+						"header": [],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "content",
+									"value": "updated content",
+									"type": "text"
+								}
+							]
+						},
+						"url": "{{url}}/api/replies/3/"
+					},
+					"response": []
+				},
+				{
+					"name": "delete",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": {
+								"token": "{{token}}"
+							}
+						},
+						"method": "DELETE",
+						"header": [],
+						"url": "{{url}}/api/replies/2"
+					},
+					"response": []
+				},
+				{
+					"name": "retrieve",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": {
+								"token": "{{token}}"
+							}
+						},
+						"method": "GET",
+						"header": [],
+						"url": "{{url}}/api/replies/2"
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "mobile release",
+			"protocolProfileBehavior": {
+				"disableBodyPruning": true
+			},
+			"request": {
+				"method": "GET",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{url}}/api/mobile_release/?platform=ios&version_number=1",
+					"host": [
+						"{{url}}"
+					],
+					"path": [
+						"api",
+						"mobile_release",
+						""
+					],
+					"query": [
+						{
+							"key": "platform",
+							"value": "ios"
+						},
+						{
+							"key": "version_number",
+							"value": "1"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
 			"name": "CHOICES",
 			"request": {
 				"method": "GET",

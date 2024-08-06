@@ -1,7 +1,7 @@
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.generics import ListAPIView, UpdateAPIView, RetrieveAPIView, \
-    ListCreateAPIView, DestroyAPIView, RetrieveUpdateDestroyAPIView
+    ListCreateAPIView, DestroyAPIView, RetrieveUpdateDestroyAPIView, CreateAPIView
 from rest_framework import status
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.filters import SearchFilter
@@ -413,6 +413,22 @@ class QuestionRetrieveUpdateDestroyView(RetrieveUpdateDestroyAPIView):
 
     def get_queryset(self):
         queryset = Question.objects.filter(user=self.request.user)
+        return queryset
+
+
+class ReplyCreateView(CreateAPIView):
+    serializer_class = ReplyWriteSerializer
+
+
+class ReplyRetrieveUpdateDestroyView(RetrieveUpdateDestroyAPIView):
+
+    def get_serializer_class(self):
+        if self.request.method == "GET":
+            return ReplyReadSerializer
+        return ReplyWriteSerializer
+
+    def get_queryset(self):
+        queryset = Reply.objects.filter(user=self.request.user)
         return queryset
 
 

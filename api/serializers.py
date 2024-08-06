@@ -3,6 +3,7 @@ from rest_framework import serializers
 from django.conf import settings
 
 from .models import *
+from .choices import MobilePlatform
 
 
 class UserSerializer(serializers.ModelSerializer):
@@ -39,8 +40,6 @@ class FavoriteShowSerializer(serializers.ModelSerializer):
         fields = "__all__"
 
 
-
-
 class PostListSerializer(serializers.ModelSerializer):
     class Meta:
         model = Post
@@ -54,9 +53,11 @@ class PostSerializer(serializers.ModelSerializer):
         model = Post
         fields = "__all__"
 
+
 class HomepageSectionSerializer(serializers.Serializer):
     section_name = serializers.CharField()
     posts = PostListSerializer(many=True)
+
 
 class SavedPostReadSerializer(serializers.ModelSerializer):
     post = PostListSerializer()
@@ -82,11 +83,38 @@ class SavedPostWriteSerializer(serializers.ModelSerializer):
         validated_data["user"] = user
         return super().create(validated_data)
 
+
 class NewsletterSerializer(serializers.ModelSerializer):
     class Meta:
         model = Newsletter
         fields = ['email', 'created_at']
         read_only_fields = ['created_at']
+
+
+class ChildReplySerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = Reply
+        fields = "__all__"
+
+
+class ReplyWriteSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = Reply
+        fields = ["question", "parent_reply", "content", "file"]
+
+    def create(self, validated_data):
+        validated_data["user"] = self.context["request"].user
+        return super().create(validated_data)
+
+
+class ReplyReadSerializer(serializers.ModelSerializer):
+    replies = ChildReplySerializer(many=True)
+
+    class Meta:
+        model = Reply
+        fields = "__all__"
 
 
 class QuestionWriteSerializer(serializers.ModelSerializer):
@@ -101,6 +129,7 @@ class QuestionWriteSerializer(serializers.ModelSerializer):
 
 
 class QuestionReadSerializer(serializers.ModelSerializer):
+    replies = ReplyReadSerializer(many=True)
 
     class Meta:
         model = Question
