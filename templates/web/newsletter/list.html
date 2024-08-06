@@ -38,7 +38,7 @@
         const csrfToken = '{{ csrf_token }}';
         
         fetch("{% url 'unsubscribe-newsletter' %}?email=" + email, {
-            method: 'DELETE',
+            method: 'POST',
             headers: {
                 'X-CSRFToken': csrfToken,
             }
