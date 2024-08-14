@@ -1,7 +1,7 @@
-from django import forms
 from django.contrib.auth.forms import AuthenticationForm, UsernameField
 from django.core.exceptions import ValidationError
 from api.models import User, Group, Forum
+from django import forms
 
 class CustomFormMixin:
     def __init__(self, *args, **kwargs):
@@ -9,16 +9,16 @@ class CustomFormMixin:
         for field_name, field in self.fields.items():
             if isinstance(field.widget, forms.Select):
                 field.widget.attrs.update({
-                    'class': 'custom-select w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400 appearance-none bg-white'
+                    'class': 'custom-select w-full h-12 px-3 py-2 agt-default-input'
                 })
             elif isinstance(field.widget, forms.DateInput):
                 field.widget.attrs.update({
-                    'class': 'w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400',
+                    'class': 'w-full h-12 px-3 py-2 agt-default-input',
                     'type': 'date'
                 })
             else:
                 field.widget.attrs.update({
-                    'class': 'w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400'
+                    'class': 'w-full h-12 px-3 py-2 agt-default-input'
                 })
 
 class UserForm(CustomFormMixin, forms.ModelForm):
@@ -48,6 +48,71 @@ class UserForm(CustomFormMixin, forms.ModelForm):
             'username': 'مطلوب. 150 حرف أو أقل. حروف، أرقام و @/./+/-/_ فقط.',
         }
 
+class CustomAuthenticationForm(AuthenticationForm, CustomFormMixin):
+    username = UsernameField(
+        label= 'اسم المستخدم',
+        widget=forms.TextInput(attrs={
+            'autofocus': True, 
+            'class': 'agt-default-input w-full px-3 py-2',
+            'placeholder': 'اسم المستخدم'
+        })
+    )
+    password = forms.CharField(
+        strip=False,
+        label= 'كلمة المرور',
+        widget=forms.PasswordInput(attrs={
+            'class': 'agt-default-input w-full px-3 py-2',
+            'placeholder': 'كلمة المرور'
+        }),
+    )
+
+    def confirm_login_allowed(self, user):
+        if not user.is_active or not user.is_staff:
+            raise ValidationError(
+                self.error_messages["invalid_login"],
+                code="invalid_login",
+            )
+
+
+class GroupForm(CustomFormMixin, forms.ModelForm):
+    class Meta:
+        model = Forum
+        fields = ['name', 'image']
+        labels = {
+            'name': 'اسم المجموعة',
+            'image': 'صورة',   
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        if self.instance.pk:
+            del self.fields['image']
+            self.fields['image'] = forms.FileField(
+                label='صورة:',
+                required=False,
+                label_suffix="",
+                help_text="",
+                widget=forms.FileInput(attrs={
+                    'class': 'w-full px-3 py-2 agt-default-input'
+                })
+            )
+
+            self.fields['is_active'] = forms.ChoiceField(
+                label='مفعل؟',
+                choices=[(True, 'نعم'), (False, 'لا')],
+                widget=forms.RadioSelect(attrs={
+                    'class': 'custom-radio',
+                }),
+                initial=self.instance.is_active
+            )
+
+    def save(self, commit=True):
+        instance = super().save(commit=False)
+        if not self.instance.pk:
+            instance.is_active = True
+        if commit:
+            instance.save()
+        return instance
 
 class ForumForm(CustomFormMixin, forms.ModelForm):
     class Meta:
@@ -63,87 +128,22 @@ class ForumForm(CustomFormMixin, forms.ModelForm):
         if self.instance.pk:
             del self.fields['image']
             self.fields['image'] = forms.FileField(
-                label=':صورة',
+                label='صورة:',
                 required=False,
                 label_suffix="",
                 help_text="",
                 widget=forms.FileInput(attrs={
-                    'class': 'w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400'
+                    'class': 'w-full px-3 py-2 agt-default-input'
                 })
             )
-        else:
-            self.fields['image'].label = 'صورة'
-        
-        if self.instance.pk:
-            self.fields['is_active'] = forms.BooleanField(
+
+            self.fields['is_active'] = forms.ChoiceField(
                 label='مفعل؟',
-                initial=self.instance.is_active,
-                required=False,
-            )
-
-    def save(self, commit=True):
-        instance = super().save(commit=False)
-        if not self.instance.pk:
-            instance.is_active = True
-        if commit:
-            instance.save()
-        return instance
-
-class CustomAuthenticationForm(AuthenticationForm):
-    username = UsernameField(
-        label='',
-        widget=forms.TextInput(attrs={
-            'autofocus': True, 
-            'class': 'w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400',
-            'placeholder': 'اسم المستخدم'
-        })
-    )
-    password = forms.CharField(
-        strip=False,
-        widget=forms.PasswordInput(attrs={
-            'class': 'w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400',
-            'placeholder': 'كلمة المرور'
-        }),
-        label=''
-    )
-
-    def confirm_login_allowed(self, user):
-        if not user.is_active or not user.is_staff:
-            raise ValidationError(
-                self.error_messages["invalid_login"],
-                code="invalid_login",
-            )
-
-class GroupForm(CustomFormMixin, forms.ModelForm):
-    class Meta:
-        model = Group
-        fields = ['name', 'image']
-        labels = {
-            'name': 'اسم المجموعة',
-            'image': 'صورة',   
-        }
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        if self.instance.pk:
-            del self.fields['image']
-            self.fields['image'] = forms.FileField(
-                label=':صورة',
-                required=False,
-                label_suffix="",
-                help_text="",
-                widget=forms.FileInput(attrs={
-                    'class': 'w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400'
-                })
-            )
-        else:
-            self.fields['image'].label = 'صورة'
-
-        if self.instance.pk:
-            self.fields['is_active'] = forms.BooleanField(
-                label='مفعل؟',
-                initial=self.instance.is_active,
-                required=False,
+                choices=[(True, 'نعم'), (False, 'لا')],
+                widget=forms.RadioSelect(attrs={
+                    'class': 'custom-radio',
+                }),
+                initial=self.instance.is_active
             )
 
     def save(self, commit=True):

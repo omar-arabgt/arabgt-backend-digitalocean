@@ -5,7 +5,7 @@
 
     {% for num in page_obj.paginator.page_range %}
         {% if page_obj.number == num %}
-            <span class="bg-red-500 text-white font-bold py-2 px-4 rounded mx-1">{{ num }}</span>
+            <span class="agt-bg-red-900 text-white font-bold py-2 px-4 rounded mx-1">{{ num }}</span>
         {% else %}
             <a href="?{% if search_query %}q={{ search_query }}&{% endif %}page={{ num }}" class="bg-gray-300 hover:bg-gray-400 text-black font-bold py-2 px-4 rounded mx-1">{{ num }}</a>
         {% endif %}

@@ -87,3 +87,67 @@ html, body {
     background-color: transparent;
     border: 0;
 }
+
+.agt-bg-gray-100 {
+  background-color: #EBEBEC;
+}
+
+.agt-bg-red-900 {
+  background-color: #E2072C;
+}
+
+.agt-border-red-900 {
+  border-color: #E2072C;
+}
+
+.agt-default-input {
+  background-color: #F8F8F8;
+  border-bottom: 2px solid #E2072C;
+}
+
+.agt-default-input * {
+  background-color: #F8F8F8 !important;
+  font-size: 16px !important;
+  color: #9ca3af !important;
+}
+
+.custom-radio {
+  display: flex;
+  gap: 20px;
+}
+.custom-radio label {
+  display: flex;
+  gap: 10px;
+}
+.custom-radio input[type="radio"] {
+    appearance: none;
+    background-color: #fff;
+    font: inherit;
+    color: #333;
+    width: 1.25em;
+    height: 1.25em;
+    border: 0.15em solid #cbd5e0;
+    border-radius: 50%;
+    display: grid;
+    margin: 0;
+    place-content: center;
+}
+
+.custom-radio input[type="radio"]::before {
+    content: "";
+    width: 0.65em;
+    height: 0.65em;
+    border-radius: 50%;
+    transform: scale(0);
+    transition: 120ms transform ease-in-out;
+    box-shadow: inset 1em 1em #f00;
+    background-color: CanvasText;
+}
+
+.custom-radio input[type="radio"]:checked::before {
+    transform: scale(1);
+}
+
+.custom-radio label {
+    cursor: pointer;
+}

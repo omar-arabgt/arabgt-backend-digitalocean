@@ -6,12 +6,12 @@
 {% block content %}
 <div class="container mx-auto p-4">
     {% include "web/partials/heading.html" with title="انشاء مجموعة" %}
-    <form method="post" enctype="multipart/form-data" class="w-full p-6 rounded-lg bg-white shadow-md">
+    <form method="post" enctype="multipart/form-data" class="w-full py-3 rounded-lg">
         {% csrf_token %}
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
             {% for field in form %}
             <div>
-                <span class="block mb-1">
+                <span class="block mb-2 font-bold">
                     {{ field.label_tag }}
                 </span>
                 {{ field }}
@@ -27,7 +27,7 @@
             {% endfor %}
         </div>
         <div class="flex justify-end gap-4 mt-4">
-            <button type="submit" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">حفظ</button>
+            <button type="submit" class="agt-bg-red-900 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">حفظ</button>
         </div>
     </form>
 </div>
