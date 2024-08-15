@@ -24,7 +24,7 @@ class CustomFormMixin:
 class UserForm(CustomFormMixin, forms.ModelForm):
     class Meta:
         model = User
-        fields = ['username', 'email', 'nick_name', 'phone_number', 'birth_date', 'gender', 'nationality', 'country', 'has_business', 'has_car', 'car_type', 'hobbies', 'favorite_presenter', 'favorite_show']
+        fields = ['username', 'email', 'nick_name', 'phone_number', 'birth_date', 'gender', 'nationality', 'country', 'has_business', 'has_car', 'car_type', 'hobbies', 'interests', 'car_sorting', 'favorite_presenter', 'favorite_show']
         widgets = {
             'birth_date': forms.DateInput(attrs={'type': 'date'}),
         }
