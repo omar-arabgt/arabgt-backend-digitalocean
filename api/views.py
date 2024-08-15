@@ -15,7 +15,7 @@ from django.db.models import Q
 from .models import *
 from .serializers import *
 from .filters import *
-from .choices import *
+from . import choices as choices_module
 from .pagination import *
 
 
@@ -61,25 +61,6 @@ class UserDeleteAPIView(DestroyAPIView):
                 'error': 'You cannot delete a superuser or staff member.'},
                 status=status.HTTP_403_FORBIDDEN
             )
-        
-        DeletedUser.objects.create(
-            username=instance.username,
-            email=instance.email,
-            first_name=instance.first_name,
-            last_name=instance.last_name,
-            nick_name=instance.nick_name,
-            phone_number=instance.phone_number,
-            birth_date=instance.birth_date,
-            gender=instance.gender,
-            nationality=instance.nationality,
-            country=instance.country,
-            has_business=instance.has_business,
-            has_car=instance.has_car,
-            car_type=instance.car_type,
-            hobbies=instance.hobbies,
-            favorite_presenter=str(instance.favorite_presenter) if instance.favorite_presenter else '',
-            favorite_show=str(instance.favorite_show) if instance.favorite_show else '',
-        )
 
         instance.delete()
 
@@ -254,16 +235,7 @@ class ChoicesView(APIView):
     """
     def get(self, request, *args, **kwargs):
         choice_type = request.GET.get("type")
-        
-        if choice_type == "gender":
-            choices = GENDERS
-        elif choice_type == "country":
-            choices = COUNTRIES
-        elif choice_type == "car":
-            choices = CARS
-        else:
-            choices = []
-
+        choices = getattr(choices_module, str(choice_type).upper(), [])
         return Response(choices)
 
 

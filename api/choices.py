@@ -401,3 +401,51 @@ COUNTRIES= [
     ('ZM', 'زامبيا'),
     ('ZW', 'زيمبابوي'),
 ]
+
+HOBBIES = [
+    ('car_customization','تعديل السيارات وضبطها'),
+    ('car_sports','رياضة السيارات'),
+    ('test_drive','تجارب القيادة'),
+    ('car_collection_restoration','مع وترميم السيارات'),
+    ('diy_cars','مشاريع السيارات DIY'),
+    ('photography','التصوير الفوتوغرافي'),
+    ('video_games','الألعاب الإلكترونية'),
+    ('trips_travel','الرحلات والسفر'),
+    ('sport_hobies','هوايات الرياضة (كرة القدم، الجري، ركوب الدراجات)'),
+    ('reading_writing','القراءة والكتابة'),
+]
+
+
+INTERESTS = [
+    ('economics_and_business', 'الاقتصاد والأعمال'),
+    ('automobiles', 'السيارات'),
+    ('health_and_fitness', 'الصحة واللياقة البدنية'),
+    ('technology', 'تكنولوجيا'),
+    ('entertainment_and_music', 'الترفيه والموسيقى'),
+    ('car_customization', 'تعديل سيارات'),
+    ('cooking_and_recipes', 'الطبخ والوصفات'),
+    ('driving_tips_and_techniques', 'نصائح وتقنيات القيادة'),
+    ('fashion_and_style', 'الموضة والأناقة'),
+    ('car_financing', 'تمويل السيارات'),
+    ('future_mobility', 'مستقبل التنقل'),
+    ('environment', 'البيئة'),
+    ('luxury_cars', 'السيارات الفاخرة'),
+]
+
+
+CAR_SORTING = [
+    ('coupe_cars', 'سيارات كوبيه'),
+    ('sports_cars', 'سيارات رياضية'),
+    ('hyper_cars', 'سيارات هايبر كارز'),
+    ('small_sedan', 'سيارات سيدان صغيرة'),
+    ('medium_sedan', 'سيدان متوسط'),
+    ('luxury_sedan', 'سيدان فخم'),
+    ('crossover_cars', 'سيارات كروس اوفر'),
+    ('SUVs', 'سيارات دفع رباعي'),
+    ('large_SUVs', 'سيارات دفع رباعي كبيرة'),
+    ('small_pickup _trucks', 'سيارات بيك اب صغير'),
+    ('medium_sized_trucks', 'شاحنات متوسطة الحجم'),
+    ('hatchback_cars', 'سيارات هاتش باك'),
+    ('electric_cars', 'سيارات كهربائية'),
+    ('hybrid_cars', 'سيارات هايبرد'),
+]

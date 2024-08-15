@@ -284,25 +284,6 @@ class UserDeleteView(LoginRequiredMixin, DeleteView):
         
         if user.is_superuser or user.is_staff:
             return redirect(self.success_url)
-        
-        DeletedUser.objects.create(
-            username=user.username,
-            email=user.email,
-            first_name=user.first_name,
-            last_name=user.last_name,
-            nick_name=user.nick_name,
-            phone_number=user.phone_number,
-            birth_date=user.birth_date,
-            gender=user.gender,
-            nationality=user.nationality,
-            country=user.country,
-            has_business=user.has_business,
-            has_car=user.has_car,
-            car_type=user.car_type,
-            hobbies=user.hobbies,
-            favorite_presenter=str(user.favorite_presenter) if user.favorite_presenter else '',
-            favorite_show=str(user.favorite_show) if user.favorite_show else '',
-        )
 
         user.delete()
         return redirect(self.success_url)
