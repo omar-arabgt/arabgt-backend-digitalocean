@@ -24,7 +24,7 @@ def fetch_and_process_post(post, override_existing=False):
     Output:
     - Returns a list of saved Post objects.
     """
-    if post["post_type"] == "post":
+    if post["post_type"] == "post" or post["post_type"] == "car_reviews":
         processed_article = preprocess_article(post)
     elif post["post_type"] == "videos":
         processed_article = preprocess_video_article(post)
@@ -108,7 +108,7 @@ def fetch_and_process_wp_posts(post_id=None):
     """
     override_existing = False
     query_filter = {
-        "post_type__in": ["post", "videos"],
+        "post_type__in": ["post", "videos", "car_reviews"],
         "post_status": "publish",
     }
 
