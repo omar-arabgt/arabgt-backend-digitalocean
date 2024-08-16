@@ -1,5 +1,9 @@
 from rest_framework.views import APIView
 from rest_framework.response import Response
+from rest_framework.exceptions import NotFound
+from rest_framework.pagination import PageNumberPagination
+
+
 from rest_framework.generics import ListAPIView, UpdateAPIView, RetrieveAPIView, \
     ListCreateAPIView, DestroyAPIView, RetrieveUpdateDestroyAPIView, CreateAPIView
 from rest_framework import status
@@ -374,13 +378,20 @@ class HomePageView(APIView):
             {'تكنولوجيا السيارات': ['سيارات كهربائية', 'القيادة الذاتية', 'تكنولوجيا السيارات', 'تكنولوجيا متقدمة']},
             {'مقالات': ['اختيارات المحررين', 'تقارير وبحوث', 'توب 5', 'قوائم عرب جي تي']},
             {'وكلاء وبيانات': ['وكلاء وبيانات']},
+            {'فيديوهات': ['videos']},  # post_type videos
+            {'مراجعات السيارات': ['car_reviews']}  # post_type car_reviews
         ]
 
         result = []
         for section in sections:
             section_name = list(section.keys())[0]
             categories = section[section_name]
-            posts = Post.objects.filter(Q(category__overlap=categories)).order_by('-publish_date')[:3]
+            if categories[0] == 'videos':
+                posts = Post.objects.filter(post_type='videos').order_by('-publish_date')[:3]
+            elif categories[0] == 'car_reviews':
+                posts = Post.objects.filter(post_type='car_reviews').order_by('-publish_date')[:3]
+            else:
+                posts = Post.objects.filter(Q(category__overlap=categories)).order_by('-publish_date')[:3]
             
             section_data = {
                 'section_name': section_name,
@@ -391,6 +402,37 @@ class HomePageView(APIView):
         serializer = HomepageSectionSerializer(result, many=True)
         return Response(serializer.data)
  
+class SectionPostsView(APIView):
+   def get(self, request):
+       section_name = request.query_params.get('section_name')
+       if not section_name:
+           return Response({"error": "section_name parameter is required"}, status=400)
+       
+       sections = {
+           'اختيارات المحررين': ['اختيارات المحررين'],
+           'أحدث أخبار السيارات': ['جديد الأخبار', 'سيارات 2023', 'سيارات 2024', 'سيارات معدلة', 'معارض عالمية', 'صور رقمية وتجسسية', 'متفرقات', 'فيس لفت', 'سوبر كارز', 'سيارات نادرة', 'ميكانيك', 'نصائح'],
+           'تكنولوجيا السيارات': ['سيارات كهربائية', 'القيادة الذاتية', 'تكنولوجيا السيارات', 'تكنولوجيا متقدمة'],
+           'مقالات': ['اختيارات المحررين', 'تقارير وبحوث', 'توب 5', 'قوائم عرب جي تي'],
+           'وكلاء وبيانات': ['وكلاء وبيانات'],
+           'فيديوهات': ['videos'],
+           'مراجعات السيارات': ['car_reviews']
+       }
+       if section_name not in sections:
+           raise NotFound("Section not found")
+       categories = sections[section_name]
+       
+       if categories[0] == 'videos':
+           posts = Post.objects.filter(post_type='videos').order_by('-publish_date')
+       elif categories[0] == 'car_reviews':
+           posts = Post.objects.filter(post_type='car_reviews').order_by('-publish_date')
+       else:
+           posts = Post.objects.filter(Q(category__overlap=categories)).order_by('-publish_date')
+       # Pagination
+       paginator = PageNumberPagination()
+       paginator.page_size = 10 
+       paginated_posts = paginator.paginate_queryset(posts, request)
+       serializer = PostListSerializer(paginated_posts, many=True)
+       return paginator.get_paginated_response(serializer.data)
 
 class QuestionListCreateView(ListCreateAPIView):
 

@@ -43,7 +43,7 @@ class FavoriteShowSerializer(serializers.ModelSerializer):
 class PostListSerializer(serializers.ModelSerializer):
     class Meta:
         model = Post
-        fields = ["title", "tag", "category", "thumbnail", "id"]
+        fields = ["title", "tag", "category", "thumbnail", "id", "post_type"]
 
 
 

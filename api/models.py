@@ -72,7 +72,7 @@ class Post(TimeStampedModel):
     tag = ArrayField(models.CharField(max_length=255), blank=True, default=list)
     related_articles = models.ManyToManyField("Post", blank=True)
     thumbnail = models.CharField(max_length=255)
-    content = models.TextField()
+    content = models.JSONField(default=dict)
     post_type = models.CharField(max_length=255)
 
 
