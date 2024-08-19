@@ -443,7 +443,7 @@ CAR_SORTING = [
     ('crossover_cars', 'سيارات كروس اوفر'),
     ('SUVs', 'سيارات دفع رباعي'),
     ('large_SUVs', 'سيارات دفع رباعي كبيرة'),
-    ('small_pickup _trucks', 'سيارات بيك اب صغير'),
+    ('small_pickup_trucks', 'سيارات بيك اب صغير'),
     ('medium_sized_trucks', 'شاحنات متوسطة الحجم'),
     ('hatchback_cars', 'سيارات هاتش باك'),
     ('electric_cars', 'سيارات كهربائية'),
