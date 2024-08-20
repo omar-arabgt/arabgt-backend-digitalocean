@@ -18,6 +18,7 @@ from django.db.models import Q
 
 from .models import *
 from .serializers import *
+from .utils import get_car_sorting_list
 from .filters import *
 from . import choices as choices_module
 from .pagination import *
@@ -239,17 +240,9 @@ class ChoicesView(APIView):
     """
     def get(self, request, *args, **kwargs):
         choice_type = request.GET.get("type")
-        base_url = "https://arabgt-bucket.s3.eu-north-1.amazonaws.com"
         choices = getattr(choices_module, str(choice_type).upper(), [])
         if choice_type == "CAR_SORTING":
-            choices = [
-                {
-                    'label': ar_label,
-                    'value': en_label,
-                    'image_url': f"{base_url}/sort_cars/{en_label}.png"
-                }
-                for en_label, ar_label in choices
-            ]
+            choices = get_car_sorting_list()
 
         return Response(choices)
 

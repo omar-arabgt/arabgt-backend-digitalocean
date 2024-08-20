@@ -7,6 +7,7 @@ from .choices import MobilePlatform
 
 
 class UserSerializer(serializers.ModelSerializer):
+    car_sorting = serializers.SerializerMethodField()
 
     class Meta:
         model = User
@@ -25,6 +26,9 @@ class UserSerializer(serializers.ModelSerializer):
             "email": {"read_only": True},
         }
 
+    def get_car_sorting(self, obj):
+        car_sorting = get_car_sorting_list(obj.car_sorting)
+        return car_sorting
 
 class FavoritePresenterSerializer(serializers.ModelSerializer):
     
