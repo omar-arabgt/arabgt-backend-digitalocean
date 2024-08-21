@@ -1,1 +1,9 @@
-Email is confirmed
+{% extends "authentication/templates/base_email.html" %}
+
+{% block title %}تأكيد البريد الإلكتروني{% endblock %}
+
+{% block content %}
+    <h1 style="font-size: 20px;">تم تأكيد البريد الإلكتروني</h1>
+    <p>لقد تم تأكيد بريدك الإلكتروني بنجاح. يمكنك الآن استخدام حسابك بالكامل.</p>
+{% endblock %}
+  
