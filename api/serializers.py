@@ -3,7 +3,7 @@ from rest_framework import serializers
 from django.conf import settings
 
 from .models import *
-from .choices import MobilePlatform
+from .choices import MobilePlatform, CAR_SORTING
 
 
 class UserSerializer(serializers.ModelSerializer):
@@ -27,7 +27,7 @@ class UserSerializer(serializers.ModelSerializer):
         }
 
     def get_car_sorting_list(self, obj):
-        car_sorting_list = get_car_sorting_list(obj.car_sorting)
+        car_sorting_list = get_detailed_list(obj.car_sorting, "sort_cars", CAR_SORTING)
         return car_sorting_list
 
 class FavoritePresenterSerializer(serializers.ModelSerializer):

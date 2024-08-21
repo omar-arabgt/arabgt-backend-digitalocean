@@ -10,15 +10,18 @@ def check_one_field(model, field1, field2):
     if getattr(model, field1) and getattr(model, field2):
         raise ValidationError(f"{ONE_FIELD_MESSAGE} ({field1}, {field2})")
 
-def get_car_sorting_list(keys=None, base_url=f"https://{settings.AWS_S3_CUSTOM_DOMAIN}"):
+def get_detailed_list(keys=None, s3_directory="", list=None):
+    if list is None:
+        raise ValueError("A list of car brands must be provided.")
+
     if keys is None:
-        keys = [en_label for en_label, _ in CAR_SORTING]
+        keys = [en_label for en_label, _ in list]
     
     return [
         {
             'label': ar_label,
             'value': en_label,
-            'image_url': f"{base_url}/sort_cars/{en_label}.png"
+            'image_url': f"https://{settings.AWS_S3_CUSTOM_DOMAIN}/{s3_directory}/{en_label.lower()}.png"
         }
-        for en_label, ar_label in CAR_SORTING if en_label in keys
+        for en_label, ar_label in list if en_label in keys
     ]
