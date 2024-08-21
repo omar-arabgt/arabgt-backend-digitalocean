@@ -24,7 +24,7 @@ class CustomFormMixin:
 class UserForm(CustomFormMixin, forms.ModelForm):
     class Meta:
         model = User
-        fields = ['username', 'email', 'nick_name', 'phone_number', 'birth_date', 'gender', 'nationality', 'country', 'has_business', 'has_car', 'car_type', 'hobbies', 'favorite_presenter', 'favorite_show']
+        fields = ['username', 'email', 'nick_name', 'phone_number', 'birth_date', 'gender', 'nationality', 'country', 'has_business', 'has_car', 'car_type', 'hobbies', 'interests', 'car_sorting', 'favorite_presenter', 'favorite_show']
         widgets = {
             'birth_date': forms.DateInput(attrs={'type': 'date'}),
         }
@@ -96,7 +96,6 @@ class GroupForm(CustomFormMixin, forms.ModelForm):
                     'class': 'w-full px-3 py-2 agt-default-input'
                 })
             )
-
             self.fields['is_active'] = forms.ChoiceField(
                 label='مفعل؟',
                 choices=[(True, 'نعم'), (False, 'لا')],
@@ -105,11 +104,15 @@ class GroupForm(CustomFormMixin, forms.ModelForm):
                 }),
                 initial=self.instance.is_active
             )
+        else:
+            self.fields['image'].label = 'صورة'
 
     def save(self, commit=True):
         instance = super().save(commit=False)
         if not self.instance.pk:
             instance.is_active = True
+        elif 'is_active' in self.cleaned_data:
+            instance.is_active = self.cleaned_data['is_active']
         if commit:
             instance.save()
         return instance
@@ -136,7 +139,6 @@ class ForumForm(CustomFormMixin, forms.ModelForm):
                     'class': 'w-full px-3 py-2 agt-default-input'
                 })
             )
-
             self.fields['is_active'] = forms.ChoiceField(
                 label='مفعل؟',
                 choices=[(True, 'نعم'), (False, 'لا')],
@@ -145,11 +147,15 @@ class ForumForm(CustomFormMixin, forms.ModelForm):
                 }),
                 initial=self.instance.is_active
             )
+        else:
+            self.fields['image'].label = 'صورة'
 
     def save(self, commit=True):
         instance = super().save(commit=False)
         if not self.instance.pk:
             instance.is_active = True
+        elif 'is_active' in self.cleaned_data:
+            instance.is_active = self.cleaned_data['is_active']
         if commit:
             instance.save()
         return instance

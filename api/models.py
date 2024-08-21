@@ -27,9 +27,35 @@ class User(TimeStampedModel, AbstractUser):
     has_business = models.BooleanField(blank=True, null=True)
     has_car = models.BooleanField(blank=True, null=True)
     car_type = models.CharField(max_length=255, blank=True, choices=CARS)
-    hobbies = ArrayField(models.CharField(max_length=255), default=list, blank=True)
+    hobbies = ArrayField(models.CharField(max_length=30, choices=HOBBIES), default=list, blank=True)
+    interests = ArrayField(models.CharField(max_length=30, choices=INTERESTS), default=list, blank=True)
+    car_sorting = ArrayField(models.CharField(max_length=30, choices=CAR_SORTING), default=list, blank=True)
     favorite_presenter = models.ForeignKey("FavoritePresenter", blank=True, null=True, on_delete=models.SET_NULL)
     favorite_show = models.ForeignKey("FavoriteShow", blank=True, null=True, on_delete=models.SET_NULL)
+
+
+    def delete(self, *args, **kwargs):
+        DeletedUser.objects.create(
+            username=self.username,
+            email=self.email,
+            first_name=self.first_name,
+            last_name=self.last_name,
+            nick_name=self.nick_name,
+            phone_number=self.phone_number,
+            birth_date=self.birth_date,
+            gender=self.gender,
+            nationality=self.nationality,
+            country=self.country,
+            has_business=self.has_business,
+            has_car=self.has_car,
+            car_type=self.car_type,
+            hobbies=self.hobbies,
+            interests=self.interests,
+            car_sorting=self.car_sorting,
+            favorite_presenter=str(self.favorite_presenter) if self.favorite_presenter else '',
+            favorite_show=str(self.favorite_show) if self.favorite_show else '',
+        )
+        return super().delete(*args, **kwargs)
 
 
 class DeletedUser(TimeStampedModel):
@@ -46,7 +72,9 @@ class DeletedUser(TimeStampedModel):
     has_business = models.BooleanField(blank=True, null=True)
     has_car = models.BooleanField(blank=True, null=True)
     car_type = models.CharField(max_length=255, blank=True, choices=CARS)
-    hobbies = ArrayField(models.CharField(max_length=255), default=list, blank=True)
+    hobbies = ArrayField(models.CharField(max_length=30, choices=HOBBIES), default=list, blank=True)
+    interests = ArrayField(models.CharField(max_length=30, choices=INTERESTS), default=list, blank=True)
+    car_sorting = ArrayField(models.CharField(max_length=30, choices=CAR_SORTING), default=list, blank=True)
     favorite_presenter = models.CharField(max_length=255, blank=True)
     favorite_show = models.CharField(max_length=255, blank=True)
 
@@ -72,7 +100,7 @@ class Post(TimeStampedModel):
     tag = ArrayField(models.CharField(max_length=255), blank=True, default=list)
     related_articles = models.ManyToManyField("Post", blank=True)
     thumbnail = models.CharField(max_length=255)
-    content = models.TextField()
+    content = models.JSONField(default=dict)
     post_type = models.CharField(max_length=255)
 
 
