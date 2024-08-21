@@ -419,9 +419,8 @@ def preprocess_video_article(article):
     text_content = text_content.replace('\xa0', ' ')
 
     contetnt =  {
-        "media": media_content,
-        "text": text_content,
-        "type": "video" if youtube_match else "iframe",
+        "media_content": media_content,
+        "text_content": text_content
     }
     
     thumbnail_url = get_thumbnail(post_id)
