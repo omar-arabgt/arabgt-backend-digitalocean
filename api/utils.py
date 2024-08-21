@@ -1,5 +1,6 @@
 from django.utils.translation import gettext_lazy as _
 from django.core.exceptions import ValidationError
+from django.conf import settings
 
 from .choices import MobilePlatform, CAR_SORTING
 
@@ -9,7 +10,7 @@ def check_one_field(model, field1, field2):
     if getattr(model, field1) and getattr(model, field2):
         raise ValidationError(f"{ONE_FIELD_MESSAGE} ({field1}, {field2})")
 
-def get_car_sorting_list(keys=None, base_url="https://arabgt-bucket.s3.eu-north-1.amazonaws.com"):
+def get_car_sorting_list(keys=None, base_url=f"https://{settings.AWS_S3_CUSTOM_DOMAIN}"):
     if keys is None:
         keys = [en_label for en_label, _ in CAR_SORTING]
     

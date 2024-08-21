@@ -241,7 +241,7 @@ class ChoicesView(APIView):
     def get(self, request, *args, **kwargs):
         choice_type = request.GET.get("type")
         choices = getattr(choices_module, str(choice_type).upper(), [])
-        if choice_type == "CAR_SORTING":
+        if choice_type.lower() == "car_sorting":
             choices = get_car_sorting_list()
 
         return Response(choices)
