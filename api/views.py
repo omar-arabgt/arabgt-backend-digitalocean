@@ -29,7 +29,8 @@ class UserUpdateView(UpdateAPIView):
     Updates the currently authenticated user's information.
 
     Input:
-    - Uses the UserSerializer to update user details.
+    - Uses the UserSerializer to display user details.
+    - Uses the UserUpdateSerializer to update user details.
 
     Functionality:
     - Retrieves the current user from the request and updates their information.
@@ -37,7 +38,11 @@ class UserUpdateView(UpdateAPIView):
     Output:
     - Returns the updated user information.
     """
-    serializer_class = UserSerializer
+    def get_serializer_class(self):
+        # Check if any data is being passed in the request
+        if self.request.data:
+            return UserUpdateSerializer
+        return UserSerializer
 
     def get_object(self):
         return self.request.user
