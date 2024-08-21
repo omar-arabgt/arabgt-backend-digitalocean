@@ -405,6 +405,28 @@ class HomeView(LoginRequiredMixin, TemplateView):
         context['page_name'] = 'لوحة التحكم'
         return context
 
+class NotificationView(LoginRequiredMixin, TemplateView):
+    """
+    Displays the home/notifications page for logged-in users.
+
+    Input:
+    - No specific input required.
+
+    Functionality:
+    - Renders the notification page for authenticated users.
+
+    Output:
+    - Renders the 'web/notifications/container.html' template.
+    """
+    template_name = "web/notifications/container.html"
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['page_name'] = 'إرسال التنبيهات'
+        context['form'] = NotificationForm()
+        return context
+
+
 class TermsOfUsePrivacyPolicy(TemplateView):
     template_name = 'web/terms_of_us_privacy_policy.html'
 

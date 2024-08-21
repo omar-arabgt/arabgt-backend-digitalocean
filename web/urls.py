@@ -18,6 +18,7 @@ urlpatterns = [
     path('forums/create', ForumCreateView.as_view(), name='forum_create'),
     path('forums/<int:pk>/edit/', ForumUpdateView.as_view(), name='forum_edit'),
 
+    path('notifications/', NotificationView.as_view(), name='notifications'),
     
     path('groups/', GroupListView.as_view(), name='group_list'),
     path('groups/create', GroupCreateView.as_view(), name='group_create'),

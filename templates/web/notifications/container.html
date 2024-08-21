@@ -1,0 +1,97 @@
+{% extends "web/partials/base.html" %}
+{% load static %}
+{% load custom_filters %}
+{% block title %}ارسال التنبيهات{% endblock %}
+{% block content %}
+<div class="container mx-auto p-4">
+    {% include "web/partials/heading.html" with title="ارسال التنبيهات" %}
+    
+    <div class="border-b border-gray-200 mb-10">
+        <ul class="flex">
+            <li class="mr-1">
+                <a href="#tab1" class="inline-block text-center py-3 px-5 text-gray-800 font-bold active-tab bg-gray-200">ارسال التنبيهات</a>
+            </li>
+            <li class="mr-1">
+                <a href="#tab2" class="inline-block text-center py-3 px-5 text-gray-800 font-bold bg-white">التنبيهات المرسلة</a>
+            </li>
+        </ul>
+    </div>
+
+    <div id="tab1" class="tab-content">
+        <form method="post">
+            {% csrf_token %}
+            {% for field in form %}
+            <div class="mb-3 w-full lg:w-1/3">
+                <span class="block mb-2 font-bold">
+                    {{ field.label_tag }}
+                </span>
+                {{ field }}
+                <span class="block mb-1">
+                    {% if field.help_text %}
+                </span> 
+                <p class="text-gray-500 text-sm">{{ field.help_text }}</p>
+                {% endif %}
+                {% for error in field.errors %}
+                <p class="text-red-500 text-sm">{{ error }}</p>
+                {% endfor %}
+            </div>
+            {% endfor %}
+            <div class="mt-10">
+                <button type="submit" class="agt-bg-red-900 hover:bg-red-700 text-white font-bold py-3 px-5 rounded">
+                    إرسال لجميع المستخدمين
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <div id="tab2" class="tab-content hidden">
+        <div class="overflow-x-auto">
+            <table class="min-w-full bg-white border border-gray-200 text-sm">
+                <tbody>
+                    <tr class="border-b">
+                        <td class="text-right py-3 px-4 border-l text-xs sm:text-sm">العنوان</td>
+                        <td class="text-right py-3 px-4 border-l text-xs sm:text-sm">هذا النص يعرض فقط كمال توضيح داخل التطبيق...</td>
+                        <td class="text-right py-3 px-4 text-xs sm:text-sm">الرابط</td>
+                    </tr>
+                    <tr class="border-b">
+                        <td class="text-right py-3 px-4 border-l text-xs sm:text-sm">العنوان</td>
+                        <td class="text-right py-3 px-4 border-l text-xs sm:text-sm">هذا النص يعرض فقط كمال توضيح داخل التطبيق...</td>
+                        <td class="text-right py-3 px-4 text-xs sm:text-sm">الرابط</td>
+                    </tr>
+                    <tr class="border-b">
+                        <td class="text-right py-3 px-4 border-l text-xs sm:text-sm">العنوان</td>
+                        <td class="text-right py-3 px-4 border-l text-xs sm:text-sm">هذا النص يعرض فقط كمال توضيح داخل التطبيق...</td>
+                        <td class="text-right py-3 px-4 text-xs sm:text-sm">الرابط</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+      const tabs = document.querySelectorAll('.tab-content');
+      const tabLinks = document.querySelectorAll('.border-b a');
+
+      tabLinks.forEach(link => {
+          link.addEventListener('click', function (e) {
+              e.preventDefault();
+              const targetTab = document.querySelector(this.getAttribute('href'));
+
+              tabs.forEach(tab => tab.classList.add('hidden'));
+              targetTab.classList.remove('hidden');
+
+              tabLinks.forEach(link => {
+                  link.classList.remove('active-tab', 'bg-gray-200');
+                  link.classList.add('bg-white');
+              });
+
+              this.classList.add('active-tab', 'bg-gray-200');
+              this.classList.remove('bg-white');
+          });
+      });
+  });
+</script>
+
+{% endblock %}
