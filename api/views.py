@@ -4,7 +4,7 @@ from rest_framework.exceptions import NotFound
 from rest_framework.pagination import PageNumberPagination
 
 
-from rest_framework.generics import ListAPIView, UpdateAPIView, RetrieveAPIView, \
+from rest_framework.generics import ListAPIView, RetrieveUpdateAPIView, UpdateAPIView, RetrieveAPIView, \
     ListCreateAPIView, DestroyAPIView, RetrieveUpdateDestroyAPIView, CreateAPIView
 from rest_framework import status
 from rest_framework.permissions import IsAuthenticated
@@ -24,9 +24,9 @@ from . import choices as choices_module
 from .pagination import *
 
 
-class UserUpdateView(UpdateAPIView):
+class UserUpdateView(RetrieveUpdateAPIView):
     """
-    Updates the currently authenticated user's information.
+    Retrieves and updates the currently authenticated user's information.
 
     Input:
     - Uses the UserSerializer to display user details.
@@ -36,13 +36,13 @@ class UserUpdateView(UpdateAPIView):
     - Retrieves the current user from the request and updates their information.
 
     Output:
-    - Returns the updated user information.
+    - Returns the user's information or the updated user information.
     """
+    
     def get_serializer_class(self):
-        # Check if any data is being passed in the request
-        if self.request.data:
-            return UserUpdateSerializer
-        return UserSerializer
+        if self.request.method == 'GET':
+            return UserSerializer
+        return UserUpdateSerializer
 
     def get_object(self):
         return self.request.user
