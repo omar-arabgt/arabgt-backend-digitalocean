@@ -71,20 +71,20 @@ class ForumForm(CustomFormMixin, forms.ModelForm):
                     'class': 'w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400'
                 })
             )
-        else:
-            self.fields['image'].label = 'صورة'
-        
-        if self.instance.pk:
             self.fields['is_active'] = forms.BooleanField(
                 label='مفعل؟',
                 initial=self.instance.is_active,
                 required=False,
             )
+        else:
+            self.fields['image'].label = 'صورة'
 
     def save(self, commit=True):
         instance = super().save(commit=False)
         if not self.instance.pk:
             instance.is_active = True
+        elif 'is_active' in self.cleaned_data:
+            instance.is_active = self.cleaned_data['is_active']
         if commit:
             instance.save()
         return instance
@@ -136,20 +136,20 @@ class GroupForm(CustomFormMixin, forms.ModelForm):
                     'class': 'w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400'
                 })
             )
-        else:
-            self.fields['image'].label = 'صورة'
-
-        if self.instance.pk:
             self.fields['is_active'] = forms.BooleanField(
                 label='مفعل؟',
                 initial=self.instance.is_active,
                 required=False,
             )
+        else:
+            self.fields['image'].label = 'صورة'
 
     def save(self, commit=True):
         instance = super().save(commit=False)
         if not self.instance.pk:
             instance.is_active = True
+        elif 'is_active' in self.cleaned_data:
+            instance.is_active = self.cleaned_data['is_active']
         if commit:
             instance.save()
         return instance
