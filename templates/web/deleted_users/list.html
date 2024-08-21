@@ -1,7 +1,7 @@
 {% extends "web/partials/base.html" %}
 {% load static %}
 {% load custom_filters %}
-{% block title %}قائمة المستخدمين{% endblock %}
+{% block title %}قائمة المستخدمين المحذوفين{% endblock %}
 {% block content %}
 <style>
     .tom-select > .ts-control{
@@ -17,29 +17,29 @@
         <table class="w-full border-collapse border border-gray-300 text-sm">
             <thead>
                 <tr class="bg-gray-200">
-                    <th class="border border-gray-300 px-4 py-2">رقم المستخدم</th>
-                    <th class="border border-gray-300 px-4 py-2">تاريخ التسجيل</th>
+                    <th class="border border-gray-300 px-4 py-2">رقم<br>المستخدم</th>
+                    <th class="border border-gray-300 px-4 py-2">تاريخ<br>التسجيل</th>
                     <th class="border border-gray-300 px-4 py-2">اسم المستخدم</th>
                     <th class="border border-gray-300 px-4 py-2">الاسم الاخير</th>
                     <th class="border border-gray-300 px-4 py-2">اللقب</th>
                     <th class="border border-gray-300 px-4 py-2">البريد الإلكتروني</th>
                     <th class="border border-gray-300 px-4 py-2">الهاتف</th>
-                    <th class="border border-gray-300 px-4 py-2">نقاط المستخدم</th>
-                    <th class="border border-gray-300 px-4 py-2">رتبة المستخدم</th>
+                    <th class="border border-gray-300 px-4 py-2">نقاط<br>المستخدم</th>
+                    <th class="border border-gray-300 px-4 py-2">رتبة<br>المستخدم</th>
                 </tr>
             </thead>
             <tbody>
                 {% for user in deleted_user_list %}
-                <tr class="hover:bg-gray-200">
-                    <td class="border border-gray-300 px-4 py-2">{{ user.id }}</td>
-                    <td class="border border-gray-300 px-4 py-2">{{ user.date_joined|date:"Y-m-d" }}</td>
-                    <td class="border border-gray-300 px-4 py-2">{{ user.username }}</td>
-                    <td class="border border-gray-300 px-4 py-2">{{ user.last_name }}</td>
-                    <td class="border border-gray-300 px-4 py-2">{{ user.nick_name }}</td>
-                    <td class="border border-gray-300 px-4 py-2">{{ user.email }}</td>
-                    <td class="border border-gray-300 px-4 py-2">{{ user.phone_number }}</td>
-                    <td class="border border-gray-300 px-4 py-2"></td>
-                    <td class="border border-gray-300 px-4 py-2"></td>
+                <tr class="hover:bg-gray-100">
+                    <td class="border border-gray-300 font-bold px-4 py-2">{{ user.id }}</td>
+                    <td class="border border-gray-300 font-bold px-4 py-2">{{ user.date_joined|date:"Y-m-d" }}</td>
+                    <td class="border border-gray-300 font-bold px-4 py-2">{{ user.username }}</td>
+                    <td class="border border-gray-300 font-bold px-4 py-2">{{ user.last_name }}</td>
+                    <td class="border border-gray-300 font-bold px-4 py-2">{{ user.nick_name }}</td>
+                    <td class="border border-gray-300 font-bold px-4 py-2">{{ user.email }}</td>
+                    <td class="border border-gray-300 font-bold px-4 py-2">{{ user.phone_number }}</td>
+                    <td class="border border-gray-300 font-bold px-4 py-2"></td>
+                    <td class="border border-gray-300 font-bold px-4 py-2"></td>
                 </tr>
                 {% endfor %}
             </tbody>

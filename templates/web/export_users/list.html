@@ -7,65 +7,60 @@
 <div class="container mx-auto p-4">
     {% include "web/partials/heading.html" with title="قائمة استخراج بيانات المستخدمين" %}
     
-<form method="get" class="mb-8">
-    <div class="flex flex-col md:flex-row gap-4 justify-between items-start">
-        <div class="flex flex-col gap-4 w-full md:w-auto">
-            <div class="flex flex-wrap md:flex-row gap-4 w-full">
-                <input type="text" name="q" value="{{ search_query }}" placeholder="بحث عن المستخدمين..." class="border px-2 py-1 w-full md:w-44">
-                <select name="nationality" class="w-full md:w-44 border bg-white px-2 py-1 tom-select">
-                    <option value="">اختر الجنسية</option>
-                    {% for code, name in COUNTRIES %}
-                    <option value="{{ code }}" {% if code == nationality_filter %}selected{% endif %}>{{ name }}</option>
-                    {% endfor %}
-                </select>
-                <select name="country" class="w-full md:w-44 border bg-white px-2 py-1 tom-select">
-                    <option value="">اختر دولة الإقامة</option>
-                    {% for code, name in COUNTRIES %}
-                    <option value="{{ code }}" {% if code == country_filter %}selected{% endif %}>{{ name }}</option>
-                    {% endfor %}
-                </select>
-                <select name="gender" class="w-full md:w-44 border bg-white px-2 py-1 tom-select">
-                    <option value="">الجنس</option>
-                    {% for value, name in GENDERS %}
-                    <option value="{{ value }}" {% if value == gender_filter %}selected{% endif %}>{{ name }}</option>
-                    {% endfor %}
-                </select>
-                
-            </div>
-            <div class="flex flex-wrap md:flex-row gap-4 w-full">
-                <select name="status" class="w-full md:w-44 border bg-white px-2 py-1 tom-select">
-                    <option value="">الحالة</option>
-                    {% for value, name in STATUS %}
-                    <option value="{{ value }}" {% if value == status_filter %}selected{% endif %}>{{ name }}</option>
-                    {% endfor %}
-                </select>
-                <select name="category" class="w-full md:w-44 border bg-white px-2 py-1 tom-select">
-                    <option value="">Rank</option>
-                </select>
-                <div class="w-full md:w-44 md:mb-0 mb-4 flex flex-col relative">
-                    <input type="date" name="birthdate" value="{{ birthdate_filter }}" class="w-full h-full md:w-44 border px-2 py-1">
-                    <label style="bottom: -22px; width: 250px;" class="text-slate-600 text-xs absolute" for="birthdate"> تاريخ ميلاد، يعرض  ما اكبر من هذا التاريخ</label>
+    <form method="get" class="mb-8">
+        <div class="flex flex-col md:flex-row gap-4 justify-between items-start">
+            <div class="flex flex-col gap-4 w-full md:w-auto">
+                <div class="flex flex-wrap md:flex-row gap-4 w-full">
+                    <input type="text" name="q" value="{{ search_query }}" placeholder="بحث عن المستخدمين..." class="px-2 py-1 w-full md:w-44 agt-default-input">
+                    <select name="nationality" class="custom-select w-full md:w-44 px-2 py-1 tom-select agt-default-input">
+                        <option value="">اختر الجنسية</option>
+                        {% for code, name in COUNTRIES %}
+                        <option value="{{ code }}" {% if code == nationality_filter %}selected{% endif %}>{{ name }}</option>
+                        {% endfor %}
+                    </select>
+                    <select name="country" class="custom-select w-full md:w-44 px-2 py-1 tom-select agt-default-input">
+                        <option value="">اختر دولة الإقامة</option>
+                        {% for code, name in COUNTRIES %}
+                        <option value="{{ code }}" {% if code == country_filter %}selected{% endif %}>{{ name }}</option>
+                        {% endfor %}
+                    </select>
+                    <select name="gender" class="custom-select w-full md:w-44 px-2 py-1 tom-select agt-default-input">
+                        <option value="">الجنس</option>
+                        {% for value, name in GENDERS %}
+                        <option value="{{ value }}" {% if value == gender_filter %}selected{% endif %}>{{ name }}</option>
+                        {% endfor %}
+                    </select>
                 </div>
-                <button type="submit" class="font-bold w-full md:w-44 rounded bg-blue-500 text-white px-4 py-2">بحث</button>
+                <div class="flex flex-wrap md:flex-row gap-4 w-full">
+                    <select name="status" class="custom-select w-full md:w-44 px-2 py-1 tom-select agt-default-input">
+                        <option value="">الحالة</option>
+                        {% for value, name in STATUS %}
+                        <option value="{{ value }}" {% if value == status_filter %}selected{% endif %}>{{ name }}</option>
+                        {% endfor %}
+                    </select>
+                    <select name="category" class="custom-select w-full md:w-44 px-2 py-1 tom-select agt-default-input">
+                        <option value="">Rank</option>
+                    </select>
+                    <div class="w-full md:w-44 md:mb-0 mb-4 flex flex-col relative">
+                        <input type="date" name="birthdate" value="{{ birthdate_filter }}" class="w-full h-full md:w-44 px-2 py-1 agt-default-input">
+                    </div>
+                    <button type="submit" class="font-bold w-full md:w-44 rounded agt-bg-red-900 text-white px-4 py-2">بحث</button>
+                </div>
+            </div>
+            <div class="flex gap-4 w-full md:w-auto justify-center md:justify-start">
+                <button formaction="{% url 'export_users_excel' %}" class="rounded border-2 border-red-600 text-red-600 font-bold px-4 py-2 w-full md:w-auto">استخدج ملف Excel</button>
             </div>
         </div>
-        <div class="flex gap-4 w-full md:w-auto justify-center md:justify-start">
-            <button formaction="{% url 'export_users_excel' %}" class="rounded bg-green-600 text-white px-4 py-2 w-full md:w-auto">استخدج ملف Excel</button>
-        </div>
-        
-    </div>
-</form>
-
-
+    </form>
     
     <div class="overflow-y-auto">
         <table class="w-full border-collapse border border-gray-300 text-sm">
             <thead>
                 <tr class="bg-gray-200">
-                    <th class="border border-gray-300 px-4 py-2">رقم المستخدم</th>
+                    <th class="border border-gray-300 px-4 py-2">رقم<br>المستخدم</th>
                     <th class="border border-gray-300 px-4 py-2">الحالة</th>
-                    <th class="border border-gray-300 px-4 py-2">اسم الاول</th>
-                    <th class="border border-gray-300 px-4 py-2">الاسم الاخير</th>
+                    <th class="border border-gray-300 px-4 py-2">اسم<br>الاول</th>
+                    <th class="border border-gray-300 px-4 py-2">الاسم<br>الاخير</th>
                     <th class="border border-gray-300 px-4 py-2">الكنية</th>
                     <th class="border border-gray-300 px-4 py-2">تاريخ الميلاد</th>
                     <th class="border border-gray-300 px-4 py-2">الجنسية</th>
@@ -76,17 +71,17 @@
             </thead>
             <tbody>
                 {% for user in merged_list %}
-                <tr class="hover:bg-gray-200 {% if user.status == 'deleted' %} bg-gray-200/50 {% endif %}">
-                    <td class="border border-gray-300 px-4 py-2">{{ user.id }}</td>
-                    <td class="border border-gray-300 px-4 py-2">{% if user.status == "deleted" %} محذوف {% else %} مفعل {% endif %}</td>
-                    <td class="border border-gray-300 px-4 py-2">{{ user.first_name }}</td>
-                    <td class="border border-gray-300 px-4 py-2">{{ user.last_name }}</td>
-                    <td class="border border-gray-300 px-4 py-2">{{ user.nick_name }}</td>
-                    <td class="border border-gray-300 px-4 py-2">{{ user.birth_date|date:"Y/m/d" }}</td>
-                    <td class="border w-48 border-gray-300 px-4 py-2">{{ user.get_nationality_display }}</td>
-                    <td class="border w-48 border-gray-300 px-4 py-2">{{ user.get_country_display }}</td>
-                    <td class="border border-gray-300 px-4 py-2">{{ user.gender|gender_translation }}</td>
-                    <td class="border border-gray-300 px-4 py-2"></td>
+                <tr class="hover:bg-gray-100 {% if user.status == 'deleted' %} bg-gray-200/50 {% endif %}">
+                    <td class="border border-gray-300 font-bold px-4 py-2">{{ user.id }}</td>
+                    <td class="border border-gray-300 font-bold px-4 py-2">{% if user.status == "deleted" %} محذوف {% else %} مفعل {% endif %}</td>
+                    <td class="border border-gray-300 font-bold px-4 py-2">{{ user.first_name }}</td>
+                    <td class="border border-gray-300 font-bold px-4 py-2">{{ user.last_name }}</td>
+                    <td class="border border-gray-300 font-bold px-4 py-2">{{ user.nick_name }}</td>
+                    <td class="border border-gray-300 font-bold px-4 py-2">{{ user.birth_date|date:"Y/m/d" }}</td>
+                    <td class="border border-gray-300 font-bold px-4 py-2">{{ user.get_nationality_display }}</td>
+                    <td class="border border-gray-300 font-bold px-4 py-2">{{ user.get_country_display }}</td>
+                    <td class="border border-gray-300 font-bold px-4 py-2">{{ user.gender|gender_translation }}</td>
+                    <td class="border border-gray-300 font-bold px-4 py-2"></td>
                 </tr>
                 {% endfor %}
             </tbody>
@@ -95,4 +90,28 @@
 
     {% include "web/partials/pagination.html" %}
 </div>
+
+<style>
+    .custom-select {
+      position: relative;
+    }
+
+    .custom-select:before {
+      position: absolute;
+      z-index: 999;
+      content: "";
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Cpath d='M233.4 406.6c12.5 12.5 32.8 12.5 45.3 0l192-192c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0L256 338.7 86.6 169.4c-12.5-12.5-32.8-12.5-45.3 0s-12.5 32.8 0 45.3l192 192z'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 0.75rem center;
+      z-index: 5;
+      pointer-events: none;
+      width: 40px;
+      height: 15px;
+      left: 0;
+      top: 50%;
+      transform: translateY(-50%);
+    }
+
+</style>
+
 {% endblock %}
