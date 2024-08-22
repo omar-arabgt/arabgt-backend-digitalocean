@@ -1,9 +1,6 @@
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.exceptions import NotFound
-from rest_framework.pagination import PageNumberPagination
-
-
 from rest_framework.generics import ListAPIView, RetrieveUpdateAPIView, UpdateAPIView, RetrieveAPIView, \
     ListCreateAPIView, DestroyAPIView, RetrieveUpdateDestroyAPIView, CreateAPIView
 from rest_framework import status
@@ -388,12 +385,13 @@ class HomePageView(APIView):
         serializer = HomepageSectionSerializer(result, many=True)
         return Response(serializer.data)
  
-class SectionPostsView(APIView):
-   def get(self, request):
-       section_name = request.query_params.get('section_name')
-       if not section_name:
-           return Response({"error": "section_name parameter is required"}, status=400)
-       
+class SectionPostsView(ListAPIView):
+    serializer_class = PostListSerializer
+    pagination_class = CustomPagination
+    page_size = 10
+
+    def get_queryset(self):
+       section_name = self.request.query_params.get("section_name")
        sections = {
            'اختيارات المحررين': ['اختيارات المحررين'],
            'أحدث أخبار السيارات': ['جديد الأخبار', 'سيارات 2023', 'سيارات 2024', 'سيارات معدلة', 'معارض عالمية', 'صور رقمية وتجسسية', 'متفرقات', 'فيس لفت', 'سوبر كارز', 'سيارات نادرة', 'ميكانيك', 'نصائح'],
@@ -405,20 +403,20 @@ class SectionPostsView(APIView):
        }
        if section_name not in sections:
            raise NotFound("Section not found")
+
        categories = sections[section_name]
-       
-       if categories[0] == 'videos':
-           posts = Post.objects.filter(post_type='videos').order_by('-publish_date')
-       elif categories[0] == 'car_reviews':
-           posts = Post.objects.filter(post_type='car_reviews').order_by('-publish_date')
+       if categories[0] in ["videos", "car_reviews"]:
+           queryset = Post.objects.filter(post_type=categories[0])
        else:
-           posts = Post.objects.filter(Q(category__overlap=categories)).order_by('-publish_date')
-       # Pagination
-       paginator = PageNumberPagination()
-       paginator.page_size = 10 
-       paginated_posts = paginator.paginate_queryset(posts, request)
-       serializer = PostListSerializer(paginated_posts, many=True)
-       return paginator.get_paginated_response(serializer.data)
+           queryset = Post.objects.filter(Q(category__overlap=categories))
+       return queryset.order_by("-publish_date")
+
+    def get(self, request, *args, **kwargs):
+        section_name = request.query_params.get("section_name")
+        if not section_name:
+            return Response({"error": "section_name parameter is required"}, status=400)
+        return super().get(request, *args, **kwargs)
+
 
 class QuestionListCreateView(ListCreateAPIView):
 
