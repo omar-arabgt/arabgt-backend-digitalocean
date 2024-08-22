@@ -23,5 +23,5 @@ urlpatterns = [
     path("replies/<int:pk>/", ReplyRetrieveUpdateDestroyView.as_view(), name="reply-retrieve-update-destroy"),
     path("mobile_release/", MobileReleaseView.as_view(), name="mobile-release"),
     path('sections-posts/', SectionPostsView.as_view(), name='section-posts'),
-
+    path('notifications/', NotificationList.as_view(), name='notifications'),
 ]

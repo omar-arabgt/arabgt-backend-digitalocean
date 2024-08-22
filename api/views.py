@@ -456,3 +456,11 @@ class MobileReleaseView(RetrieveAPIView):
         version_number = self.request.GET.get("version_number", 0)
         obj = MobileRelease.objects.filter(platform=platform, version_number__gt=version_number).last()
         return obj
+
+
+class NotificationList(ListAPIView):
+    serializer_class = NotificationSerializer
+
+    def get_queryset(self):
+        queryset = Notification.objects.filter(user=self.request.user)
+        return queryset

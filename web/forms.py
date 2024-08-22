@@ -1,6 +1,6 @@
 from django.contrib.auth.forms import AuthenticationForm, UsernameField
 from django.core.exceptions import ValidationError
-from api.models import User, Group, Forum
+from api.models import User, Group, Forum, Notification
 from django import forms
 
 class CustomFormMixin:
@@ -185,3 +185,9 @@ class NotificationForm(forms.Form):
             'placeholder': 'إضافة رابط'
         })
     )
+
+
+class NotificationForm(CustomFormMixin, forms.ModelForm):
+    class Meta:
+        model = Notification
+        fields = ["title", "content", "link"]

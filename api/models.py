@@ -193,3 +193,11 @@ class MobileRelease(TimeStampedModel):
 
     def __str__(self):
         return f"{self.platform} - {self.version_number}"
+
+
+class Notification(TimeStampedModel):
+    user = models.ForeignKey("User", on_delete=models.CASCADE)
+    title = models.CharField(max_length=255)
+    content = models.TextField()
+    link = models.CharField(max_length=255)
+    is_admin_notification = models.BooleanField(default=False)

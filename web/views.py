@@ -12,6 +12,7 @@ from django.utils.timezone import localtime
 import openpyxl
 
 from api.models import User, Newsletter, DeletedUser, Group, Forum
+from api.tasks import send_push_notification
 from .utils import get_merged_user_data
 from api.choices import COUNTRIES, GENDERS, STATUS
 from .forms import *
@@ -434,3 +435,15 @@ class TermsOfUsePrivacyPolicy(TemplateView):
         context = super().get_context_data(**kwargs)
         context['no_sidebar'] = True
         return context
+
+
+class NotificationView(CreateView):
+    template_name = "web/notification.html"
+    form_class = NotificationForm
+
+    def form_valid(self, form):
+        title = form.cleaned_data.get("title")
+        content = form.cleaned_data.get("content")
+        link = form.cleaned_data.get("link")
+        send_push_notification.delay(title, content, link)
+        return redirect("send-notification")
