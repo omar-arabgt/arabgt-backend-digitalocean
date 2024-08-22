@@ -3,10 +3,17 @@ from rest_framework import serializers
 from django.conf import settings
 
 from .models import *
-from .choices import MobilePlatform
+from .choices import MobilePlatform, CAR_SORTING
 
 
 class UserSerializer(serializers.ModelSerializer):
+    car_sorting = serializers.SerializerMethodField()
+    gender = serializers.SerializerMethodField()
+    nationality = serializers.SerializerMethodField()
+    country = serializers.SerializerMethodField()
+    car_type = serializers.SerializerMethodField()
+    hobbies = serializers.SerializerMethodField()
+    interests = serializers.SerializerMethodField()
 
     class Meta:
         model = User
@@ -25,6 +32,46 @@ class UserSerializer(serializers.ModelSerializer):
             "email": {"read_only": True},
         }
 
+    def get_gender(self, obj):
+        return obj.get_gender_display() if obj.gender else None
+
+    def get_nationality(self, obj):
+        return obj.get_nationality_display() if obj.nationality else None
+
+    def get_country(self, obj):
+        return obj.get_country_display() if obj.country else None
+
+    def get_car_type(self, obj):
+        return dict(CARS).get(obj.car_type) if obj.car_type else None
+
+    def get_hobbies(self, obj):
+        return [dict(HOBBIES).get(hobby) for hobby in obj.hobbies] if obj.hobbies else []
+
+    def get_interests(self, obj):
+        return [dict(INTERESTS).get(interest) for interest in obj.interests] if obj.interests else []
+
+    def get_car_sorting(self, obj):
+        return [dict(CAR_SORTING).get(car) for car in obj.car_sorting] if obj.car_sorting else []
+
+
+
+class UserUpdateSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        exclude = [
+            "username",
+            "password",
+            "is_active",
+            "is_staff",
+            "is_superuser",
+            "date_joined",
+            "last_login",
+            "groups",
+            "user_permissions",
+        ]
+        extra_kwargs = {
+            "email": {"read_only": True},
+        }
 
 class FavoritePresenterSerializer(serializers.ModelSerializer):
     

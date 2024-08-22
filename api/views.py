@@ -4,7 +4,7 @@ from rest_framework.exceptions import NotFound
 from rest_framework.pagination import PageNumberPagination
 
 
-from rest_framework.generics import ListAPIView, UpdateAPIView, RetrieveAPIView, \
+from rest_framework.generics import ListAPIView, RetrieveUpdateAPIView, UpdateAPIView, RetrieveAPIView, \
     ListCreateAPIView, DestroyAPIView, RetrieveUpdateDestroyAPIView, CreateAPIView
 from rest_framework import status
 from rest_framework.permissions import IsAuthenticated
@@ -18,25 +18,31 @@ from django.db.models import Q
 
 from .models import *
 from .serializers import *
+from .utils import get_detailed_list
 from .filters import *
 from . import choices as choices_module
 from .pagination import *
 
 
-class UserUpdateView(UpdateAPIView):
+class UserUpdateView(RetrieveUpdateAPIView):
     """
-    Updates the currently authenticated user's information.
+    Retrieves and updates the currently authenticated user's information.
 
     Input:
-    - Uses the UserSerializer to update user details.
+    - Uses the UserSerializer to display user details.
+    - Uses the UserUpdateSerializer to update user details.
 
     Functionality:
     - Retrieves the current user from the request and updates their information.
 
     Output:
-    - Returns the updated user information.
+    - Returns the user's information or the updated user information.
     """
-    serializer_class = UserSerializer
+    
+    def get_serializer_class(self):
+        if self.request.method == 'GET':
+            return UserSerializer
+        return UserUpdateSerializer
 
     def get_object(self):
         return self.request.user
@@ -239,7 +245,13 @@ class ChoicesView(APIView):
     """
     def get(self, request, *args, **kwargs):
         choice_type = request.GET.get("type")
-        choices = getattr(choices_module, str(choice_type).upper(), [])
+        if choice_type.lower() == "car_sorting":
+            choices = get_detailed_list(s3_directory="sort_cars", list=choices_module.CAR_SORTING)
+        elif choice_type.lower() == "car_brands":
+            choices = get_detailed_list(s3_directory="car_brands", list=choices_module.CAR_BRANDS)
+        else:
+            choices = getattr(choices_module, str(choice_type).upper(), [])
+
         return Response(choices)
 
 
