@@ -418,17 +418,22 @@ def preprocess_video_article(article):
     # Replace non-breaking spaces with regular spaces
     text_content = text_content.replace('\xa0', ' ')
 
-    contetnt =  {
-        "media": media_content,
+    content = {
         "text": text_content,
-        "type": "video" if youtube_match else "iframe",
+        "media": {}
     }
-    
+
+    if youtube_match:
+        content["media"]["youtube"] = media_content
+    else:
+        content["media"]["iframe"] = media_content
+
     thumbnail_url = get_thumbnail(post_id)
     thumbnail_url_with_base = f'https://arabgt.com/wp-content/uploads/{thumbnail_url}'
 
     output_data = {
         "thumbnail": thumbnail_url_with_base,
-        "content": contetnt,
+        "content": content,
     }
-    return output_data  
+
+    return output_data
