@@ -29,6 +29,7 @@ class User(TimeStampedModel, AbstractUser):
     car_type = models.CharField(max_length=255, blank=True, choices=CARS)
     hobbies = ArrayField(models.CharField(max_length=30, choices=HOBBIES), default=list, blank=True)
     interests = ArrayField(models.CharField(max_length=30, choices=INTERESTS), default=list, blank=True)
+    favorite_cars = ArrayField(models.CharField(max_length=30, choices=CAR_BRANDS), default=list, blank=True)
     car_sorting = ArrayField(models.CharField(max_length=30, choices=CAR_SORTING), default=list, blank=True)
     favorite_presenter = models.ForeignKey("FavoritePresenter", blank=True, null=True, on_delete=models.SET_NULL)
     favorite_show = models.ForeignKey("FavoriteShow", blank=True, null=True, on_delete=models.SET_NULL)
@@ -51,6 +52,7 @@ class User(TimeStampedModel, AbstractUser):
             car_type=self.car_type,
             hobbies=self.hobbies,
             interests=self.interests,
+            favorite_cars=self.favorite_cars,
             car_sorting=self.car_sorting,
             favorite_presenter=str(self.favorite_presenter) if self.favorite_presenter else '',
             favorite_show=str(self.favorite_show) if self.favorite_show else '',
@@ -74,6 +76,7 @@ class DeletedUser(TimeStampedModel):
     car_type = models.CharField(max_length=255, blank=True, choices=CARS)
     hobbies = ArrayField(models.CharField(max_length=30, choices=HOBBIES), default=list, blank=True)
     interests = ArrayField(models.CharField(max_length=30, choices=INTERESTS), default=list, blank=True)
+    favorite_cars = ArrayField(models.CharField(max_length=30, choices=CAR_BRANDS), default=list, blank=True)
     car_sorting = ArrayField(models.CharField(max_length=30, choices=CAR_SORTING), default=list, blank=True)
     favorite_presenter = models.CharField(max_length=255, blank=True)
     favorite_show = models.CharField(max_length=255, blank=True)

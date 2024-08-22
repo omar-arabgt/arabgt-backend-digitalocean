@@ -399,13 +399,18 @@ class SectionPostsView(ListAPIView):
            'مقالات': ['اختيارات المحررين', 'تقارير وبحوث', 'توب 5', 'قوائم عرب جي تي'],
            'وكلاء وبيانات': ['وكلاء وبيانات'],
            'فيديوهات': ['videos'],
-           'مراجعات السيارات': ['car_reviews']
+           'مراجعات السيارات': ['car_reviews'],
+           'خصيصاً لك': [],  # for you section
        }
        if section_name not in sections:
            raise NotFound("Section not found")
 
        categories = sections[section_name]
-       if categories[0] in ["videos", "car_reviews"]:
+       user = self.request.user
+
+       if section_name == 'خصيصاً لك' and user.is_authenticated:
+           queryset = Post.objects.filter(tag__overlap=user.favorite_cars)
+       elif categories[0] in ["videos", "car_reviews"]:
            queryset = Post.objects.filter(post_type=categories[0])
        else:
            queryset = Post.objects.filter(Q(category__overlap=categories))
