@@ -424,7 +424,7 @@ def preprocess_video_article(article):
     }
 
     if youtube_match:
-        content["media"]["video"] = media_content
+        content["media"]["youtube"] = media_content
     else:
         content["media"]["iframe"] = media_content
 
