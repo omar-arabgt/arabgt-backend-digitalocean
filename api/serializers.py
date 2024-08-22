@@ -149,3 +149,10 @@ class MobileReleaseSerializer(serializers.ModelSerializer):
         elif obj.platform == MobilePlatform.ANDROID:
             download_url = settings.ANDROID_STORE_URL
         return download_url
+
+
+class NotificationSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = Notification
+        fields = "__all__"
