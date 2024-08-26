@@ -12,7 +12,7 @@ from django.utils.timezone import localtime
 import openpyxl
 
 from api.models import User, Newsletter, DeletedUser, Group, Forum
-from api.tasks import send_push_notification
+from api.tasks import send_push_notification, NOTIFICATION_ALL
 from .utils import get_merged_user_data
 from api.choices import COUNTRIES, GENDERS, STATUS
 from .forms import *
@@ -445,5 +445,5 @@ class NotificationView(CreateView):
         title = form.cleaned_data.get("title")
         content = form.cleaned_data.get("content")
         link = form.cleaned_data.get("link")
-        send_push_notification.delay(title, content, link)
+        send_push_notification.delay(NOTIFICATION_ALL, title, content, link)
         return redirect("send-notification")

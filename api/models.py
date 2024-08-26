@@ -3,7 +3,8 @@ from django.contrib.auth.models import AbstractUser
 from django.contrib.postgres.fields import ArrayField
 
 from .choices import *
-from .utils import * 
+from .utils import *
+from .tasks import *
 
 class TimeStampedModel(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
@@ -169,6 +170,10 @@ class Reply(TimeStampedModel):
 
     def save(self, *args, **kwargs):
         self.clean()
+        if not self.id:
+            model = self.question or self.parent_reply
+            send_push_notification.delay(model.user_id, "title", "content")
+
         return super().save(*args, **kwargs)
 
 
@@ -202,5 +207,5 @@ class Notification(TimeStampedModel):
     user = models.ForeignKey("User", on_delete=models.CASCADE)
     title = models.CharField(max_length=255)
     content = models.TextField()
-    link = models.CharField(max_length=255)
+    link = models.CharField(max_length=255, blank=True, null=True)
     is_admin_notification = models.BooleanField(default=False)
