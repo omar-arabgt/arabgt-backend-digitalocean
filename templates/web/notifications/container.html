@@ -48,50 +48,70 @@
         <div class="overflow-x-auto">
             <table class="min-w-full bg-white border border-gray-200 text-sm">
                 <tbody>
+                    {% for notification in page_obj %}
                     <tr class="border-b">
-                        <td class="text-right py-3 px-4 border-l text-xs sm:text-sm">العنوان</td>
-                        <td class="text-right py-3 px-4 border-l text-xs sm:text-sm">هذا النص يعرض فقط كمال توضيح داخل التطبيق...</td>
-                        <td class="text-right py-3 px-4 text-xs sm:text-sm">الرابط</td>
+                        <td class="text-right py-3 px-4 border-l text-xs sm:text-sm">{{ notification.title }}</td>
+                        <td class="text-right py-3 px-4 border-l text-xs sm:text-sm">{{ notification.content|truncatewords:10 }}</td>
+                        <td class="text-right py-3 px-4 text-xs sm:text-sm">
+                            <a href="{{ notification.link }}" target="_blank" class="text-blue-500 underline">{{ notification.link }}</a>
+                        </td>
                     </tr>
-                    <tr class="border-b">
-                        <td class="text-right py-3 px-4 border-l text-xs sm:text-sm">العنوان</td>
-                        <td class="text-right py-3 px-4 border-l text-xs sm:text-sm">هذا النص يعرض فقط كمال توضيح داخل التطبيق...</td>
-                        <td class="text-right py-3 px-4 text-xs sm:text-sm">الرابط</td>
+                    {% empty %}
+                    <tr>
+                        <td colspan="3" class="text-center py-3 px-4 text-gray-500 text-xs sm:text-sm">لا توجد تنبيهات مرسلة حتى الآن</td>
                     </tr>
-                    <tr class="border-b">
-                        <td class="text-right py-3 px-4 border-l text-xs sm:text-sm">العنوان</td>
-                        <td class="text-right py-3 px-4 border-l text-xs sm:text-sm">هذا النص يعرض فقط كمال توضيح داخل التطبيق...</td>
-                        <td class="text-right py-3 px-4 text-xs sm:text-sm">الرابط</td>
-                    </tr>
+                    {% endfor %}
                 </tbody>
             </table>
         </div>
+
+        {% include "web/partials/pagination.html" %}
     </div>
 </div>
 
-<script>
-  document.addEventListener("DOMContentLoaded", function () {
-      const tabs = document.querySelectorAll('.tab-content');
-      const tabLinks = document.querySelectorAll('.border-b a');
+  <script>
+    document.addEventListener("DOMContentLoaded", function () {
+      const tabs = document.querySelectorAll(".tab-content");
+      const tabLinks = document.querySelectorAll(".border-b a");
+     
+      function activateTab(tabId) {
+          tabs.forEach(tab => tab.classList.add("hidden"));
+          document.querySelector(tabId).classList.remove("hidden");
+
+          tabLinks.forEach(link => {
+              link.classList.remove("active-tab", "bg-gray-200");
+              link.classList.add("bg-white");
+          });
+
+          document.querySelector(`a[href="${tabId}"]`).classList.add("active-tab", "bg-gray-200");
+          document.querySelector(`a[href="${tabId}"]`).classList.remove("bg-white");
+      }
+
+     
+      const storedTabId = localStorage.getItem("activeTab");
+      const activeTab = storedTabId || "#tab1";
+
+     
+      activateTab(activeTab);
 
       tabLinks.forEach(link => {
-          link.addEventListener('click', function (e) {
+          link.addEventListener("click", function (e) {
               e.preventDefault();
-              const targetTab = document.querySelector(this.getAttribute('href'));
-
-              tabs.forEach(tab => tab.classList.add('hidden'));
-              targetTab.classList.remove('hidden');
-
-              tabLinks.forEach(link => {
-                  link.classList.remove('active-tab', 'bg-gray-200');
-                  link.classList.add('bg-white');
-              });
-
-              this.classList.add('active-tab', 'bg-gray-200');
-              this.classList.remove('bg-white');
+              const targetTab = this.getAttribute("href");
+              activateTab(targetTab);
+             
+              localStorage.setItem("activeTab", targetTab);
           });
       });
-  });
-</script>
 
-{% endblock %}
+     
+      if (window.location.search.includes("page=")) {
+          const currentTab = localStorage.getItem("activeTab") || "#tab1";
+          activateTab(currentTab);
+      }
+  });
+
+  </script>
+
+  {% endblock %}
+</div>

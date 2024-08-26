@@ -160,7 +160,7 @@ class ForumForm(CustomFormMixin, forms.ModelForm):
             instance.save()
         return instance
 
-class NotificationForm(forms.Form):
+class NotificationForm(forms.ModelForm):
     title = forms.CharField(
         label='إضافة عنوان التنبيه',
         max_length=255,
@@ -169,7 +169,7 @@ class NotificationForm(forms.Form):
             'placeholder': 'إضافة عنوان التنبيه'
         })
     )
-    description = forms.CharField(
+    content = forms.CharField(
         label='إضافة نص التنبيه',
         widget=forms.Textarea(attrs={
             'class': 'w-full px-3 py-2 border-b-2 border-red-500 bg-gray-100 text-gray-800',
@@ -186,8 +186,6 @@ class NotificationForm(forms.Form):
         })
     )
 
-
-class NotificationForm(CustomFormMixin, forms.ModelForm):
     class Meta:
         model = Notification
         fields = ["title", "content", "link"]

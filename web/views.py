@@ -8,6 +8,7 @@ from django.utils.dateparse import parse_date
 from django.http import HttpResponse
 from django.utils.dateparse import parse_date
 from django.db.models import Q
+from django.core.paginator import Paginator
 from django.utils.timezone import localtime
 import openpyxl
 
@@ -406,6 +407,15 @@ class HomeView(LoginRequiredMixin, TemplateView):
         context['page_name'] = 'لوحة التحكم'
         return context
 
+class TermsOfUsePrivacyPolicy(TemplateView):
+    template_name = 'web/terms_of_us_privacy_policy.html'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['no_sidebar'] = True
+        return context
+
+
 class NotificationView(LoginRequiredMixin, TemplateView):
     """
     Displays the home/notifications page for logged-in users.
@@ -420,30 +430,28 @@ class NotificationView(LoginRequiredMixin, TemplateView):
     - Renders the 'web/notifications/container.html' template.
     """
     template_name = "web/notifications/container.html"
+    paginate_by = 10  # Number of notifications per page
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['page_name'] = 'إرسال التنبيهات'
         context['form'] = NotificationForm()
+
+        # Fetching sent notifications with pagination
+        notifications = Notification.objects.all().order_by('-created_at')
+        paginator = Paginator(notifications, self.paginate_by)
+        page_number = self.request.GET.get('page')
+        page_obj = paginator.get_page(page_number)
+
+        context['page_obj'] = page_obj
         return context
 
-
-class TermsOfUsePrivacyPolicy(TemplateView):
-    template_name = 'web/terms_of_us_privacy_policy.html'
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context['no_sidebar'] = True
-        return context
-
-
-class NotificationView(CreateView):
-    template_name = "web/notification.html"
-    form_class = NotificationForm
-
-    def form_valid(self, form):
-        title = form.cleaned_data.get("title")
-        content = form.cleaned_data.get("content")
-        link = form.cleaned_data.get("link")
-        send_push_notification.delay(title, content, link)
-        return redirect("send-notification")
+    def post(self, request, *args, **kwargs):
+        form = NotificationForm(request.POST)
+        if form.is_valid():
+            title = form.cleaned_data.get("title")
+            content = form.cleaned_data.get("content")
+            link = form.cleaned_data.get("link")
+            send_push_notification.delay(title, content, link)
+            return redirect(reverse_lazy("send-notification"))
+        return self.render_to_response(self.get_context_data(form=form))
