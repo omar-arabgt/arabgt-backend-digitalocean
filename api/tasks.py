@@ -4,26 +4,38 @@ from onesignal.model.notification import Notification as OneSignalNotification
 from django.conf import settings
 from celery import shared_task
 
-from .models import User, Notification
+
+NOTIFICATION_ALL = "notification_all"
 
 
 @shared_task
-def send_push_notification(title, content, link=None):
+def send_push_notification(user_id, title, content, link=None):
+    from .models import User, Notification
+
+    if user_id == NOTIFICATION_ALL:
+        user_info = {"included_segments": ["All"]}
+    else:
+        user_info = {"include_external_user_ids": [str(user_id)]}
+
     configuration = Configuration(app_key=settings.ONESIGNAL_API_KEY)
     with ApiClient(configuration) as api_client:
         api_instance = default_api.DefaultApi(api_client)
         notification = OneSignalNotification(
             app_id=settings.ONESIGNAL_APP_ID,
-            included_segments=["All"],
             contents={"en": content},
             headings={"en": title},
             url=link,
             channel_for_external_user_ids="push",
+            **user_info,
         )
         api_instance.create_notification(notification)
 
     notifications = []
-    users = User.objects.all()
+    if user_id == NOTIFICATION_ALL:
+        users = User.objects.all()
+    else:
+        users = User.objects.filter(id=user_id)
+
     for user in users:
         n = Notification(
             user=user,
@@ -33,4 +45,5 @@ def send_push_notification(title, content, link=None):
             is_admin_notification=True,
         )
         notifications.append(n)
+
     Notification.objects.bulk_create(notifications)
