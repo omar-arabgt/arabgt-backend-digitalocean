@@ -19,9 +19,11 @@ urlpatterns = [
     path('unsubscribe_newsletter', UnsubscribeNewsletter.as_view(), name='unsubscribe-newsletter'),
     path("questions/", QuestionListCreateView.as_view(), name="question-list-create"),
     path("questions/<int:pk>/", QuestionRetrieveUpdateDestroyView.as_view(), name="question-retrieve-update-destroy"),
+    path("pin_question/<question_id>/", PinQuestionView.as_view(), name="question-pin"),
     path("replies/", ReplyCreateView.as_view(), name="reply-create"),
     path("replies/<int:pk>/", ReplyRetrieveUpdateDestroyView.as_view(), name="reply-retrieve-update-destroy"),
     path("mobile_release/", MobileReleaseView.as_view(), name="mobile-release"),
     path('sections-posts/', SectionPostsView.as_view(), name='section-posts'),
     path('notifications/', NotificationList.as_view(), name='notifications'),
+    path('forums/', ForumListView.as_view(), name='forums'),
 ]

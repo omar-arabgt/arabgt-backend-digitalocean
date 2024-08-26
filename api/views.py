@@ -12,6 +12,7 @@ from django.template.loader import render_to_string
 from django.views.decorators.cache import cache_page
 from django.utils.decorators import method_decorator
 from django.db.models import Q
+from django.shortcuts import get_object_or_404
 
 from .models import *
 from .serializers import *
@@ -424,6 +425,7 @@ class SectionPostsView(ListAPIView):
 
 
 class QuestionListCreateView(ListCreateAPIView):
+    filterset_fields = ["group_id", "forum_id"]
 
     def get_serializer_class(self):
         if self.request.method == "GET":
@@ -431,8 +433,11 @@ class QuestionListCreateView(ListCreateAPIView):
         return QuestionWriteSerializer
 
     def get_queryset(self):
-        queryset = Question.objects.filter(user=self.request.user)
-        return queryset
+        if self.request.GET.get("is_pinned"):     
+            queryset = Question.objects.filter(pinned_by=self.request.user)
+        else:
+            queryset = Question.objects.all()
+        return queryset.prefetch_related("pinned_by")
 
 
 class QuestionRetrieveUpdateDestroyView(RetrieveUpdateDestroyAPIView):
@@ -445,6 +450,22 @@ class QuestionRetrieveUpdateDestroyView(RetrieveUpdateDestroyAPIView):
     def get_queryset(self):
         queryset = Question.objects.filter(user=self.request.user)
         return queryset
+
+
+class PinQuestionView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, *args, **kwargs):
+        is_pinned = request.data.get("is_pinned")
+
+        question = get_object_or_404(Question, id=self.kwargs.get("question_id"))
+        if is_pinned:
+            question.pinned_by.add(request.user)
+        else:
+            question.pinned_by.remove(request.user)
+
+        return Response("OK")
+
 
 
 class ReplyCreateView(CreateAPIView):
@@ -479,3 +500,8 @@ class NotificationList(ListAPIView):
     def get_queryset(self):
         queryset = Notification.objects.filter(user=self.request.user)
         return queryset
+
+
+class ForumListView(ListAPIView):
+    serializer_class = ForumSerializer
+    queryset = Forum.objects.all()
