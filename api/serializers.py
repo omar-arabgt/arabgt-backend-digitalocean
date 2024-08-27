@@ -177,10 +177,15 @@ class QuestionWriteSerializer(serializers.ModelSerializer):
 
 class QuestionReadSerializer(serializers.ModelSerializer):
     replies = ReplyReadSerializer(many=True)
+    pinned_by = serializers.SerializerMethodField()
 
     class Meta:
         model = Question
         fields = "__all__"
+
+    def get_pinned_by(self, obj):
+        user = self.context["request"].user
+        return user in obj.pinned_by.all()
 
 
 class MobileReleaseSerializer(serializers.ModelSerializer):
@@ -202,4 +207,11 @@ class NotificationSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Notification
+        fields = "__all__"
+
+
+class ForumSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = Forum
         fields = "__all__"
