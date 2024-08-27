@@ -242,7 +242,8 @@ class ChoicesView(APIView):
     - Returns the requested choice list or an empty list if the type is not recognized.
     """
     def get(self, request, *args, **kwargs):
-        choice_type = request.GET.get("type")
+        choice_type = request.GET.get("type", "")
+        
         if choice_type.lower() == "car_sorting":
             choices = get_detailed_list(s3_directory="sort_cars", list=choices_module.CAR_SORTING)
         elif choice_type.lower() == "car_brands":
