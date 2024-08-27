@@ -3,7 +3,7 @@ from rest_framework import serializers
 from django.conf import settings
 
 from .models import *
-from .choices import MobilePlatform, CAR_SORTING
+from .choices import MobilePlatform, CAR_SORTING, CAR_BRANDS
 
 
 class UserSerializer(serializers.ModelSerializer):
@@ -14,6 +14,7 @@ class UserSerializer(serializers.ModelSerializer):
     car_type = serializers.SerializerMethodField()
     hobbies = serializers.SerializerMethodField()
     interests = serializers.SerializerMethodField()
+    favorite_cars = serializers.SerializerMethodField()
 
     class Meta:
         model = User
@@ -53,6 +54,8 @@ class UserSerializer(serializers.ModelSerializer):
     def get_car_sorting(self, obj):
         return [dict(CAR_SORTING).get(car) for car in obj.car_sorting] if obj.car_sorting else []
 
+    def get_favorite_cars(self, obj):
+        return [dict(CAR_BRANDS).get(car) for car in obj.favorite_cars] if obj.favorite_cars else []
 
 
 class UserUpdateSerializer(serializers.ModelSerializer):
@@ -177,10 +180,15 @@ class QuestionWriteSerializer(serializers.ModelSerializer):
 
 class QuestionReadSerializer(serializers.ModelSerializer):
     replies = ReplyReadSerializer(many=True)
+    pinned_by = serializers.SerializerMethodField()
 
     class Meta:
         model = Question
         fields = "__all__"
+
+    def get_pinned_by(self, obj):
+        user = self.context["request"].user
+        return user in obj.pinned_by.all()
 
 
 class MobileReleaseSerializer(serializers.ModelSerializer):
@@ -202,4 +210,11 @@ class NotificationSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Notification
+        fields = "__all__"
+
+
+class ForumSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = Forum
         fields = "__all__"

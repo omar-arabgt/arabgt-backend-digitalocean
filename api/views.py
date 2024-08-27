@@ -12,6 +12,7 @@ from django.template.loader import render_to_string
 from django.views.decorators.cache import cache_page
 from django.utils.decorators import method_decorator
 from django.db.models import Q
+from django.shortcuts import get_object_or_404
 
 from .models import *
 from .serializers import *
@@ -241,11 +242,12 @@ class ChoicesView(APIView):
     - Returns the requested choice list or an empty list if the type is not recognized.
     """
     def get(self, request, *args, **kwargs):
-        choice_type = request.GET.get("type")
-        if choice_type.lower() == "car_sorting":
+        choice_type = request.GET.get("type", "").lower()
+        
+        if choice_type == "car_sorting":
             choices = get_detailed_list(s3_directory="sort_cars", list=choices_module.CAR_SORTING)
-        elif choice_type.lower() == "car_brands":
-            choices = get_detailed_list(s3_directory="car_brands", list=choices_module.CAR_BRANDS)
+        elif choice_type == "car_brands":
+            choices = get_detailed_list(s3_directory="car_brand", list=choices_module.CAR_BRANDS)
         else:
             choices = getattr(choices_module, str(choice_type).upper(), [])
 
@@ -424,6 +426,7 @@ class SectionPostsView(ListAPIView):
 
 
 class QuestionListCreateView(ListCreateAPIView):
+    filterset_fields = ["group_id", "forum_id"]
 
     def get_serializer_class(self):
         if self.request.method == "GET":
@@ -431,8 +434,11 @@ class QuestionListCreateView(ListCreateAPIView):
         return QuestionWriteSerializer
 
     def get_queryset(self):
-        queryset = Question.objects.filter(user=self.request.user)
-        return queryset
+        if self.request.GET.get("is_pinned"):     
+            queryset = Question.objects.filter(pinned_by=self.request.user)
+        else:
+            queryset = Question.objects.all()
+        return queryset.prefetch_related("pinned_by")
 
 
 class QuestionRetrieveUpdateDestroyView(RetrieveUpdateDestroyAPIView):
@@ -445,6 +451,22 @@ class QuestionRetrieveUpdateDestroyView(RetrieveUpdateDestroyAPIView):
     def get_queryset(self):
         queryset = Question.objects.filter(user=self.request.user)
         return queryset
+
+
+class PinQuestionView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, *args, **kwargs):
+        is_pinned = request.data.get("is_pinned")
+
+        question = get_object_or_404(Question, id=self.kwargs.get("question_id"))
+        if is_pinned:
+            question.pinned_by.add(request.user)
+        else:
+            question.pinned_by.remove(request.user)
+
+        return Response("OK")
+
 
 
 class ReplyCreateView(CreateAPIView):
@@ -479,3 +501,8 @@ class NotificationList(ListAPIView):
     def get_queryset(self):
         queryset = Notification.objects.filter(user=self.request.user)
         return queryset
+
+
+class ForumListView(ListAPIView):
+    serializer_class = ForumSerializer
+    queryset = Forum.objects.all()

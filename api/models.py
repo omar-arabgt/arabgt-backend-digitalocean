@@ -151,6 +151,7 @@ class Question(TimeStampedModel):
     title = models.CharField(max_length=255)
     content = models.TextField()
     file = models.FileField(upload_to="question", blank=True, null=True)
+    pinned_by = models.ManyToManyField("User", related_name="pinned_questions", blank=True)
 
     def clean(self):
         check_one_field(self, "forum", "group")
