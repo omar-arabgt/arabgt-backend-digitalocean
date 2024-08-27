@@ -4,6 +4,7 @@ from django.conf import settings
 
 from .models import *
 from .choices import MobilePlatform, CAR_SORTING, CAR_BRANDS
+from .utils import get_detailed_list
 
 
 class UserSerializer(serializers.ModelSerializer):
@@ -52,10 +53,10 @@ class UserSerializer(serializers.ModelSerializer):
         return [dict(INTERESTS).get(interest) for interest in obj.interests] if obj.interests else []
 
     def get_car_sorting(self, obj):
-        return [dict(CAR_SORTING).get(car) for car in obj.car_sorting] if obj.car_sorting else []
+        return get_detailed_list(obj.favorite_cars, s3_directory="sort_cars", list=CAR_SORTING)
 
     def get_favorite_cars(self, obj):
-        return [dict(CAR_BRANDS).get(car) for car in obj.favorite_cars] if obj.favorite_cars else []
+        return get_detailed_list(obj.favorite_cars, s3_directory="car_brand", list=CAR_BRANDS)
 
 
 class UserUpdateSerializer(serializers.ModelSerializer):
