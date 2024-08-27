@@ -1,27 +1,16 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
-</head>
-<body>
-    <h1>Confirm E-mail Address</h1>
+{% extends "authentication/templates/base_email.html" %}
 
+{% block title %}تأكيد عنوان البريد الإلكتروني{% endblock %}
+
+{% block content %}
     {% if confirmation %}
-    
-    
-    <p>Please confirm that <a href="mailto:{{ email }}">{{ email }}</a> is an e-mail address for user {{ user_display }}.</p>
-    
+    <p>الرجاء تأكيد أن <a href="mailto:{{ email }}">{{ email }}</a> هو عنوان البريد الإلكتروني للمستخدم {{ user_display }}.</p>
     <form method="post" action="{% url 'account_confirm_email' confirmation.key %}">
-    {% csrf_token %}
-        <button type="submit">Confirm</button>
+        {% csrf_token %}
+        <button type="submit" style="background-color: #E2072C; color: #ffffff; border: none; padding: 10px 20px; border-radius: 0.375rem; cursor: pointer; transition: background-color 0.2s;">تأكيد</button>
     </form>
-    
     {% else %}
-        
-    <p>This e-mail confirmation link expired or is invalid.</p>
-    
+    <h2>فشل تأكيد البريد الإلكتروني</h2>
+    <p>رابط تأكيد البريد الإلكتروني منتهي الصلاحية أو غير صالح.</p>
     {% endif %}
-</body>
-</html>
+{% endblock %}
