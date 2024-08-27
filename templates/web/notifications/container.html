@@ -69,53 +69,49 @@
     </div>
 </div>
 
-<script>
+  <script>
     document.addEventListener("DOMContentLoaded", function () {
-        const tabs = document.querySelectorAll(".tab-content");
-        const tabLinks = document.querySelectorAll(".border-b a");
+      const tabs = document.querySelectorAll(".tab-content");
+      const tabLinks = document.querySelectorAll(".border-b a");
+     
+      function activateTab(tabId) {
+          tabs.forEach(tab => tab.classList.add("hidden"));
+          document.querySelector(tabId).classList.remove("hidden");
 
-        function activateTab(tabId) {
-            tabs.forEach(tab => tab.classList.add("hidden"));
-            document.querySelector(tabId).classList.remove("hidden");
+          tabLinks.forEach(link => {
+              link.classList.remove("active-tab", "bg-gray-200");
+              link.classList.add("bg-white");
+          });
 
-            tabLinks.forEach(link => {
-                link.classList.remove("active-tab", "bg-gray-200");
-                link.classList.add("bg-white");
-            });
+          document.querySelector(`a[href="${tabId}"]`).classList.add("active-tab", "bg-gray-200");
+          document.querySelector(`a[href="${tabId}"]`).classList.remove("bg-white");
+      }
 
-            const activeLink = document.querySelector(`a[href="${tabId}"]`);
-            if (activeLink) {
-                activeLink.classList.add("active-tab", "bg-gray-200");
-                activeLink.classList.remove("bg-white");
-            }
-        }
+     
+      const storedTabId = localStorage.getItem("activeTab");
+      const activeTab = storedTabId || "#tab1";
 
-        const urlParams = new URLSearchParams(window.location.search);
-        const tabParam = urlParams.get('tab');
-        let activeTab;
-        if (tabParam === "2") {
-            activeTab = "#tab2";
-            localStorage.setItem("activeTab", activeTab);
-        } else {
-            const storedTabId = localStorage.getItem("activeTab");
-            activeTab = storedTabId || "#tab1";
-        }
+     
+      activateTab(activeTab);
 
-        activateTab(activeTab);
+      tabLinks.forEach(link => {
+          link.addEventListener("click", function (e) {
+              e.preventDefault();
+              const targetTab = this.getAttribute("href");
+              activateTab(targetTab);
+             
+              localStorage.setItem("activeTab", targetTab);
+          });
+      });
 
-        tabLinks.forEach(link => {
-            link.addEventListener("click", function (e) {
-                e.preventDefault();
-                const targetTab = this.getAttribute("href");
-                activateTab(targetTab);
+     
+      if (window.location.search.includes("page=")) {
+          const currentTab = localStorage.getItem("activeTab") || "#tab1";
+          activateTab(currentTab);
+      }
+  });
 
-                localStorage.setItem("activeTab", targetTab);
-            });
-        });
+  </script>
 
-    });
-</script>
-  
-
-{% endblock %}
+  {% endblock %}
 </div>
