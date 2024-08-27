@@ -77,9 +77,10 @@ class CustomAuthenticationForm(AuthenticationForm, CustomFormMixin):
 class GroupForm(CustomFormMixin, forms.ModelForm):
     class Meta:
         model = Forum
-        fields = ['name', 'image']
+        fields = ['name', 'description', 'image' ]
         labels = {
             'name': 'اسم المجموعة',
+            'description': 'وصف المجموعة',
             'image': 'صورة',   
         }
 
@@ -120,9 +121,10 @@ class GroupForm(CustomFormMixin, forms.ModelForm):
 class ForumForm(CustomFormMixin, forms.ModelForm):
     class Meta:
         model = Forum
-        fields = ['name', 'image']
+        fields = ['name', 'description', 'image' ]
         labels = {
             'name': 'اسم المنتدى',
+            'description': 'وصف المنتدى',
             'image': 'صورة',   
         }
 
