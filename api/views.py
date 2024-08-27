@@ -1,6 +1,6 @@
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from rest_framework.exceptions import NotFound
+from rest_framework.exceptions import NotFound,PermissionDenied
 from rest_framework.generics import ListAPIView, RetrieveUpdateAPIView, UpdateAPIView, RetrieveAPIView, \
     ListCreateAPIView, DestroyAPIView, RetrieveUpdateDestroyAPIView, CreateAPIView
 from rest_framework import status
@@ -410,8 +410,10 @@ class SectionPostsView(ListAPIView):
        categories = sections[section_name]
        user = self.request.user
 
-       if section_name == 'خصيصاً لك' and user.is_authenticated:
-           queryset = Post.objects.filter(tag__overlap=user.favorite_cars)
+       if section_name == 'خصيصاً لك':
+            if not user.is_authenticated:
+                raise PermissionDenied("You must be logged in to view this section")
+            queryset = Post.objects.filter(tag__overlap=user.favorite_cars)
        elif categories[0] in ["videos", "car_reviews"]:
            queryset = Post.objects.filter(post_type=categories[0])
        else:

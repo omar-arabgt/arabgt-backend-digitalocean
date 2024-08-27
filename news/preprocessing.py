@@ -433,7 +433,7 @@ def preprocess_video_article(article):
 
     output_data = {
         "thumbnail": thumbnail_url_with_base,
-        "content": content,
+        "content": [content],
     }
 
     return output_data
