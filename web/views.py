@@ -1,5 +1,5 @@
 from django.contrib.auth import views as auth_views
-from django.views.generic import ListView, UpdateView, TemplateView, DeleteView, CreateView
+from django.views.generic import ListView, UpdateView, TemplateView, DeleteView, CreateView, FormView
 from django.urls import reverse_lazy
 from django.shortcuts import get_object_or_404, redirect
 from django.contrib.auth.mixins import LoginRequiredMixin
@@ -443,13 +443,13 @@ class NotificationView(LoginRequiredMixin, FormView):
     - Paginates sent notifications.
 
     Output:
-    - Renders the 'your_template.html' template.
+    - Renders the 'web/notifications/container.html' template.
     """
 
-    template_name = 'your_template.html'
+    template_name = 'web/notifications/container.html'
     form_class = NotificationForm
     paginate_by = 10
-    success_url = 'send-notification'
+    success_url = '?tab=2&page=1'
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
