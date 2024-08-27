@@ -12,7 +12,9 @@ from django.template.loader import render_to_string
 from django.views.decorators.cache import cache_page
 from django.utils.decorators import method_decorator
 from django.db.models import Q
+from django.utils.translation import gettext as _
 from django.shortcuts import get_object_or_404
+from django.http import Http404
 
 from .models import *
 from .serializers import *
@@ -46,9 +48,13 @@ class UserUpdateView(RetrieveUpdateAPIView):
         return self.request.user
     
     def update(self, request, *args, **kwargs):
-        subscribe = request.data.pop("subscribe_newsletter")
+        subscribe = request.data.pop("subscribe_newsletter", None)
         if subscribe:
-            subscribe_newsletter(request.user.email)
+            try:
+                subscribe_newsletter(request.user.email)
+            except Exception as e:
+                return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+            set_point.delay(request.user.id, PointType.FILL_PROFILE_FIELD.name)
         return super().update(request, *args, **kwargs)
 
 
@@ -163,21 +169,17 @@ class PostRetrieveView(RetrieveAPIView):
     queryset = Post.objects.all()
 
 
-class SavedPostListCreateView(ListCreateAPIView):
+class PostActionUpdateView(UpdateAPIView):
+    lookup_url_kwarg = "post_id"
+    serializer_class = PostActionSerializer
 
-    def get_serializer_class(self):
-        if self.request.method == "GET":
-            return SavedPostReadSerializer
-        return SavedPostWriteSerializer
-
-    def get_queryset(self):
-        querset = SavedPost.objects.filter(user=self.request.user).select_related("post")
-        return querset
-
-
-class SavedPostUpdateView(UpdateAPIView):
-    serializer_class = SavedPostWriteSerializer
-    queryset = SavedPost.objects.all()
+    def get_object(self):
+        try:
+            post = Post.objects.get(id=self.kwargs.get("post_id"))
+        except:
+            raise Http404
+        post_action, _ = PostAction.objects.get_or_create(user=self.request.user, post=post)
+        return post_action
 
 
 class SubscribeNewsletter(APIView):
@@ -491,3 +493,16 @@ class NotificationList(ListAPIView):
 class ForumListView(ListAPIView):
     serializer_class = ForumSerializer
     queryset = Forum.objects.all()
+
+
+class SetPointView(APIView):
+
+    def post(self, request, *args, **kwargs):
+        point_types = PointType.get_api_points()
+        point_type = str(request.data.get("point_type")).upper()
+        
+        if point_type not in point_types:
+            return Response(_(f"point_type is not correct. Choices: {point_types}"), status=status.HTTP_400_BAD_REQUEST)
+        
+        set_point.delay(request.user.id, point_type)
+        return Response("OK")
