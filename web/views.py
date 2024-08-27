@@ -1,5 +1,5 @@
 from django.contrib.auth import views as auth_views
-from django.views.generic import ListView, UpdateView, TemplateView, DeleteView, CreateView
+from django.views.generic import ListView, UpdateView, TemplateView, DeleteView, CreateView, FormView
 from django.urls import reverse_lazy
 from django.shortcuts import get_object_or_404, redirect
 from django.contrib.auth.mixins import LoginRequiredMixin
@@ -429,15 +429,32 @@ class NotificationView(LoginRequiredMixin, TemplateView):
     Output:
     - Renders the 'web/notifications/container.html' template.
     """
-    template_name = "web/notifications/container.html"
-    paginate_by = 10  # Number of notifications per page
+
+class NotificationView(LoginRequiredMixin, FormView):
+    """
+    Displays the home/notifications page for logged-in users.
+
+    Input:
+    - No specific input required.
+
+    Functionality:
+    - Renders the notification page for authenticated users.
+    - Handles the submission of the notification form.
+    - Paginates sent notifications.
+
+    Output:
+    - Renders the 'web/notifications/container.html' template.
+    """
+
+    template_name = 'web/notifications/container.html'
+    form_class = NotificationForm
+    paginate_by = 10
+    success_url = '?tab=2&page=1'
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['page_name'] = 'إرسال التنبيهات'
-        context['form'] = NotificationForm()
 
-        # Fetching sent notifications with pagination
         notifications = Notification.objects.all().order_by('-created_at')
         paginator = Paginator(notifications, self.paginate_by)
         page_number = self.request.GET.get('page')
@@ -446,12 +463,17 @@ class NotificationView(LoginRequiredMixin, TemplateView):
         context['page_obj'] = page_obj
         return context
 
+    def form_valid(self, form):
+        title = form.cleaned_data.get("title")
+        content = form.cleaned_data.get("content")
+        link = form.cleaned_data.get("link")
+        send_push_notification.delay(NOTIFICATION_ALL, title, content, link)
+
+        return super().form_valid(form)
+
     def post(self, request, *args, **kwargs):
-        form = NotificationForm(request.POST)
+        form = self.get_form()
         if form.is_valid():
-            title = form.cleaned_data.get("title")
-            content = form.cleaned_data.get("content")
-            link = form.cleaned_data.get("link")
-            send_push_notification.delay(NOTIFICATION_ALL, title, content, link)
-            return redirect(reverse_lazy("send-notification"))
-        return self.render_to_response(self.get_context_data(form=form))
+            return self.form_valid(form)
+        else:
+            return self.form_invalid(form)

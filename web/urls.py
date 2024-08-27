@@ -28,5 +28,4 @@ urlpatterns = [
     path('download_newsletter_excel/', download_newsletter_excel, name='download_newsletter_excel'),
     path('newsletter/', NewsletterListView.as_view(), name='newsletter_list'),
     path('term-of-use-privacy-policy/', TermsOfUsePrivacyPolicy.as_view(), name='term_of_use_privacy_policy'),
-    path('notification/', NotificationView.as_view(), name='send-notification')
 ]
