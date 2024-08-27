@@ -123,14 +123,12 @@ class SavedPost(TimeStampedModel):
 
 class Forum(TimeStampedModel):
     name = models.CharField(max_length=255)
-    description = models.TextField(default="")
     image = models.ImageField(upload_to="forum")
     is_active = models.BooleanField(default=True)
 
 
 class Group(TimeStampedModel):
     name = models.CharField(max_length=255)
-    description = models.TextField(default="")
     members = models.ManyToManyField("User", through="GroupMembership")
     image = models.ImageField(upload_to="group")
     is_active = models.BooleanField(default=True)
