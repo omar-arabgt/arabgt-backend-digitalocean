@@ -833,7 +833,7 @@
 				"header": [],
 				"body": {
 					"mode": "raw",
-					"raw": "",
+					"raw": "{\n    \n    \"unsubscribe\": \"false\",\n    \"email\": \"your-email@email.com\"\n}",
 					"options": {
 						"raw": {
 							"language": "json"

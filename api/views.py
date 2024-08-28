@@ -194,8 +194,8 @@ class SubscribeNewsletter(APIView):
     - Returns success or fail message
     """
     def post(self, request):
-        email = request.GET.get("email")
-        unsubscribe = request.GET.get("unsubscribe")
+        email = request.data.get("email")
+        unsubscribe = request.data.get("unsubscribe")
 
         try:
             if not email:
