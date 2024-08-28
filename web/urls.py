@@ -8,11 +8,11 @@ urlpatterns = [
     path('logout/', auth_views.LogoutView.as_view(), name='logout'),
     path("home/", HomeView.as_view(), name="home"),
     path('users/', UserListView.as_view(), name='user_list'),
-    path('users/edit/<int:pk>/', UserUpdateView.as_view(), name='user_edit'),
+    path('users/<int:pk>/view/', ViewUserView.as_view(), name='user_view'),
+    path('users/<int:pk>/delete/', UserDeleteView.as_view(), name='user_delete'),
     path('deleted_user/', DeletedUserListView.as_view(), name='deleted_user_list'),
     path('export_users/', ExportUserListView.as_view(), name='export_user_list'),
     path('export_users_excel/', ExportUserToExcelView.as_view(), name='export_users_excel'),
-    path('users/<int:pk>/delete/', UserDeleteView.as_view(), name='user_delete'),
 
     path('forums/', ForumListView.as_view(), name='forum_list'),
     path('forums/create', ForumCreateView.as_view(), name='forum_create'),
