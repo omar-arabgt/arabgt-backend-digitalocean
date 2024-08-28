@@ -2,13 +2,14 @@ from django.utils.translation import gettext_lazy as _
 from django.core.exceptions import ValidationError
 from django.conf import settings
 
-from .choices import MobilePlatform, CAR_SORTING
 
 ONE_FIELD_MESSAGE = _("Fill only one field among these")
+
 
 def check_one_field(model, field1, field2):
     if getattr(model, field1) and getattr(model, field2):
         raise ValidationError(f"{ONE_FIELD_MESSAGE} ({field1}, {field2})")
+
 
 def get_detailed_list(keys=None, s3_directory="", list=None):
     if list is None:
@@ -25,3 +26,22 @@ def get_detailed_list(keys=None, s3_directory="", list=None):
         }
         for en_label, ar_label in list if en_label in keys
     ]
+
+
+def subscribe_newsletter(email, unsubscribe=False):
+    from .models import Newsletter
+    from .serializers import NewsletterSerializer
+
+    if unsubscribe:
+        try:
+            subscription = Newsletter.objects.get(email=email)
+        except Newsletter.DoesNotExist:
+            raise Exception("Subscription not found!")
+        subscription.delete()
+    else:
+        if Newsletter.objects.filter(email=email).exists():
+            raise Exception("Email is already subscribed!")
+
+        serializer = NewsletterSerializer(data={"email": email})
+        serializer.is_valid(raise_exception=True)
+        serializer.save()

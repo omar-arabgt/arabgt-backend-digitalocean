@@ -44,6 +44,13 @@ class UserUpdateView(RetrieveUpdateAPIView):
 
     def get_object(self):
         return self.request.user
+    
+    def update(self, request, *args, **kwargs):
+        subscribe = request.data.pop("subscribe_newsletter")
+        if subscribe:
+            subscribe_newsletter(request.user.email)
+        return super().update(request, *args, **kwargs)
+
 
 class UserDeleteAPIView(DestroyAPIView):
     """
@@ -178,54 +185,30 @@ class SubscribeNewsletter(APIView):
     Subscribes a user to the newsletter.
 
     Input:
-    - Email address in the GET request parameters.
+    - email and unsubscribe in the GET request parameters.
 
     Functionality:
-    - Validates and creates a new newsletter subscription.
+    - Create or delete a new newsletter subscription.
 
     Output:
-    - Returns the created subscription details or an error message if email is not provided.
+    - Returns success or fail message
     """
     def post(self, request):
-        email = request.GET.get('email')
-        if not email:
-            return Response({'error': 'Email is required.'}, status=status.HTTP_400_BAD_REQUEST)
-        if Newsletter.objects.filter(email=email).exists():
-            return Response({'error': 'Email is already subscribed.'}, status=status.HTTP_400_BAD_REQUEST)
-        data = {'email': email}
-        serializer = NewsletterSerializer(data=data)
-        serializer.is_valid(raise_exception=True)
-        serializer.save()
-        
-        return Response(serializer.data, status=status.HTTP_201_CREATED)
-    
+        email = request.GET.get("email")
+        unsubscribe = request.GET.get("unsubscribe")
 
-class UnsubscribeNewsletter(APIView):
-    """ 
-    Unsubscribes a user from the newsletter.
-
-    Input:
-    - Email address in the GET request parameters.
-
-    Functionality:
-    - Validates and deletes an existing newsletter subscription.
-
-    Output:
-    - Returns a success message or an error message if email is not provided or subscription is not found.
-    """
-
-    def post(self, request):
-        email = request.GET.get('email')
-        if not email:
-            return Response({'error': 'Email is required.'}, status=status.HTTP_400_BAD_REQUEST)
         try:
-            subscription = Newsletter.objects.get(email=email)
-        except Newsletter.DoesNotExist:
-            return Response({'error': 'Subscription not found.'}, status=status.HTTP_404_NOT_FOUND)
-        
-        subscription.delete()
-        return Response({'message': 'Successfully unsubscribed.'}, status=status.HTTP_200_OK)
+            if not email:
+                raise Exception("Email is required")
 
+            if unsubscribe:
+                subscribe_newsletter(email, unsubscribe=True)
+            else:
+                subscribe_newsletter(email)
+        except Exception as e:
+            return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+        
+        return Response("OK")
 
 
 class ChoicesView(APIView):
