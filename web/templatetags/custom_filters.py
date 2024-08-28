@@ -10,3 +10,8 @@ def gender_translation(gender_code):
     }
     return translations.get(gender_code, '')
 
+@register.filter(name='get_display')
+def get_display(value, choices):
+    if value:
+        return ', '.join([dict(choices).get(val, val) for val in value])
+    return 'لا توجد بيانات'

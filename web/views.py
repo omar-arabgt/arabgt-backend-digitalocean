@@ -15,7 +15,7 @@ import openpyxl
 from api.models import User, Newsletter, DeletedUser, Group, Forum
 from api.tasks import send_push_notification, NOTIFICATION_ALL
 from .utils import get_merged_user_data
-from api.choices import COUNTRIES, GENDERS, STATUS
+from api.choices import COUNTRIES, GENDERS, STATUS, HOBBIES, INTERESTS, CAR_BRANDS, CAR_SORTING
 from .forms import *
 
 class GroupListView(LoginRequiredMixin, ListView):
@@ -81,31 +81,32 @@ class UserListView(LoginRequiredMixin, ListView):
         context['page_name'] = 'قائمة المستخدمين'
         return context
 
-class UserUpdateView(LoginRequiredMixin, UpdateView):
+from django.views.generic.detail import DetailView
+
+class ViewUserView(LoginRequiredMixin, DetailView):
     """
-    Updates the details of a specific user.
+    Displays the details of a specific user.
 
     Input:
-    - User ID in the URL and form data for updating the user.
+    - User ID in the URL to retrieve and display user data.
 
     Functionality:
-    - Retrieves the user by ID and updates their details using the provided form data.
+    - Retrieves the user by ID and displays their details.
 
     Output:
-    - Renders the 'web/users/edit.html' template with the user data.
-    - Redirects to the user list view upon successful update.
+    - Renders the 'web/users/view.html' template with the user data.
     """
     model = User
-    form_class = UserForm
-    template_name = 'web/users/edit.html'
-    success_url = reverse_lazy('user_list')
-
-    def get_object(self):
-        return get_object_or_404(User, pk=self.kwargs['pk'])
+    template_name = 'web/users/view.html'
+    context_object_name = 'user'
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['page_name'] = 'تعديل المستخدم'
+        context['page_name'] = 'تفاصيل المستخدم'
+        context['HOBBIES'] = HOBBIES
+        context['INTERESTS'] = INTERESTS
+        context['CAR_BRANDS'] = CAR_BRANDS
+        context['CAR_SORTING'] = CAR_SORTING
         return context
 
 class ForumListView(LoginRequiredMixin, ListView):
