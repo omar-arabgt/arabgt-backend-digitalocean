@@ -252,8 +252,11 @@ class Reaction(TimeStampedModel):
 
     def save(self, *args, **kwargs):
         self.clean()
-        super().save(*args, **kwargs)
-        set_point.delay(self.user_id, PointType.REACTION.name)
+        if not self.id:
+            set_point.delay(self.user_id, PointType.REACTION.name)
+            model = self.question or self.reply
+            send_push_notification.delay(model.user_id, "title", "content")
+        return super().save(*args, **kwargs)
 
 
 class MobileRelease(TimeStampedModel):
