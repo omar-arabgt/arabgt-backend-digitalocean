@@ -557,6 +557,7 @@ class QuestionDetailView(LoginRequiredMixin, DetailView):
         context['replies'] = self.annotate_replies_with_likes(replies)
         context['no_sidebar'] = True
         context['page_name'] = 'تفاصيل السؤال'
+        context['total_comments'] = count_replies(question)
 
         return context
 
@@ -568,19 +569,17 @@ class QuestionDetailView(LoginRequiredMixin, DetailView):
         return replies
 
 #  for getting nested reply count
-# def count_replies(question):
-#     """Recursively count all replies and nested replies for a given question."""
-#     total_replies = question.replies.count()
-#     for reply in question.replies.all():
-#         total_replies += count_nested_replies(reply)
-#     return total_replies
+def count_replies(question):
+    total_replies = question.replies.count()
+    for reply in question.replies.all():
+        total_replies += count_nested_replies(reply)
+    return total_replies
 
-# def count_nested_replies(reply):
-#     """Recursively count all nested replies for a given reply."""
-#     total_replies = reply.replies.count()
-#     for nested_reply in reply.replies.all():
-#         total_replies += count_nested_replies(nested_reply)
-#     return total_replies
+def count_nested_replies(reply):
+    total_replies = reply.replies.count()
+    for nested_reply in reply.replies.all():
+        total_replies += count_nested_replies(nested_reply)
+    return total_replies
 
 @login_required
 def delete_reply(request, reply_id):
