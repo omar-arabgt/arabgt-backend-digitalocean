@@ -1,18 +1,20 @@
 from django.contrib.auth import views as auth_views
 from django.views.generic import ListView, UpdateView, TemplateView, DeleteView, CreateView
-from django.urls import reverse_lazy
+from django.urls import reverse_lazy, reverse
+from django.views.generic.detail import DetailView
+from django.contrib.auth.decorators import login_required
 from django.shortcuts import get_object_or_404, redirect
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.utils.timezone import localtime
 from django.utils.dateparse import parse_date
 from django.http import HttpResponse
 from django.utils.dateparse import parse_date
-from django.db.models import Q
+from django.db.models import Q, Count
 from django.core.paginator import Paginator
 from django.utils.timezone import localtime
 import openpyxl
 
-from api.models import User, Newsletter, DeletedUser, Group, Forum
+from api.models import User, Newsletter, DeletedUser, Group, Forum, Question, Reply
 from api.tasks import send_push_notification, NOTIFICATION_ALL
 from .utils import get_merged_user_data
 from api.choices import COUNTRIES, GENDERS, STATUS, HOBBIES, INTERESTS, CAR_BRANDS, CAR_SORTING
@@ -81,7 +83,6 @@ class UserListView(LoginRequiredMixin, ListView):
         context['page_name'] = 'قائمة المستخدمين'
         return context
 
-from django.views.generic.detail import DetailView
 
 class ViewUserView(LoginRequiredMixin, DetailView):
     """
@@ -431,14 +432,14 @@ class NotificationView(LoginRequiredMixin, TemplateView):
     - Renders the 'web/notifications/container.html' template.
     """
     template_name = "web/notifications/container.html"
-    paginate_by = 10  # Number of notifications per page
+    paginate_by = 10
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['page_name'] = 'إرسال التنبيهات'
         context['form'] = NotificationForm()
 
-        # Fetching sent notifications with pagination
+      
         notifications = Notification.objects.all().order_by('-created_at')
         paginator = Paginator(notifications, self.paginate_by)
         page_number = self.request.GET.get('page')
@@ -456,3 +457,149 @@ class NotificationView(LoginRequiredMixin, TemplateView):
             send_push_notification.delay(NOTIFICATION_ALL, title, content, link)
             return redirect(reverse_lazy("send-notification"))
         return self.render_to_response(self.get_context_data(form=form))
+
+class ForumGroupQuestionsView(LoginRequiredMixin, TemplateView):
+    """
+    Displays the home/questions page for logged-in users.
+
+    Input:
+    - No specific input required.
+
+    Functionality:
+    - Renders the questions for (group & fourms) page for authenticated users.
+
+    Output:
+    - Renders the 'web/questions.html' template.
+    """
+
+    template_name = "web/questions/questions.html"
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        tab = self.request.GET.get('tab', 'forums')
+        
+        if tab == 'forums':
+            questions = self.get_filtered_questions(tab)
+            paginator = Paginator(questions, 10)
+            page_number = self.request.GET.get('page')
+            context['page_obj'] = paginator.get_page(page_number)
+            context['forums_questions'] = context['page_obj']
+        elif tab == 'groups':
+            questions = self.get_filtered_questions(tab)
+            paginator = Paginator(questions, 10)
+            page_number = self.request.GET.get('page')
+            context['page_obj'] = paginator.get_page(page_number)
+            context['groups_questions'] = context['page_obj']
+
+        context['active_tab'] = tab
+        context[f'{tab}_search_query'] = self.request.GET.get('q', '')
+        context[f'{tab}_question_id'] = self.request.GET.get('question_id', '')
+        context[f'{tab}_group_filter'] = self.request.GET.get('forum_group', '')
+        context[f'{tab}_date_filter'] = self.request.GET.get('date', '')
+        context['forums'] = Forum.objects.all()
+        context['groups'] = Group.objects.all()
+        context['page_name'] = 'الأسئلة و النقاشات'
+
+        return context
+
+    def get_filtered_questions(self, tab):
+        if tab == 'forums':
+            questions = Question.objects.filter(forum__isnull=False)
+            search_query = self.request.GET.get('q', '')
+            question_id = self.request.GET.get('question_id', '')
+            group_filter = self.request.GET.get('forum_group', '')
+            date_filter = self.request.GET.get('date', '')
+
+            if search_query:
+                questions = questions.filter(
+                    Q(user__username__icontains=search_query) | Q(user__id__icontains=search_query)
+                )
+            if question_id:
+                questions = questions.filter(id=question_id)
+            if group_filter:
+                questions = questions.filter(forum__id=group_filter)
+            if date_filter:
+                questions = questions.filter(created_at__date=date_filter)
+
+        elif tab == 'groups':
+            questions = Question.objects.filter(group__isnull=False)
+            search_query = self.request.GET.get('q', '')
+            question_id = self.request.GET.get('question_id', '')
+            group_filter = self.request.GET.get('forum_group', '')
+            date_filter = self.request.GET.get('date', '')
+
+            if search_query:
+                questions = questions.filter(
+                    Q(user__username__icontains=search_query) | Q(user__id__icontains=search_query)
+                )
+            if question_id:
+                questions = questions.filter(id=question_id)
+            if group_filter:
+                questions = questions.filter(group__id=group_filter)
+            if date_filter:
+                questions = questions.filter(created_at__date=date_filter)
+
+        return questions
+
+class QuestionDetailView(LoginRequiredMixin, DetailView):
+    model = Question
+    template_name = 'web/questions/question_detail.html'
+    context_object_name = 'question'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        question = self.get_object()
+        
+        replies = question.replies.filter(parent_reply__isnull=True).annotate(
+            total_likes=Count('reactions', filter=Q(reactions__reaction_type='like'))
+        )
+        
+        context['replies'] = self.annotate_replies_with_likes(replies)
+        context['no_sidebar'] = True
+        context['page_name'] = 'تفاصيل السؤال'
+
+        return context
+
+    def annotate_replies_with_likes(self, replies):
+        for reply in replies:
+            reply.total_likes = reply.reactions.filter(reaction_type='like').count()
+            if reply.replies.exists():
+                reply.nested_replies = self.annotate_replies_with_likes(reply.replies.all())
+        return replies
+
+#  for getting nested reply count
+# def count_replies(question):
+#     """Recursively count all replies and nested replies for a given question."""
+#     total_replies = question.replies.count()
+#     for reply in question.replies.all():
+#         total_replies += count_nested_replies(reply)
+#     return total_replies
+
+# def count_nested_replies(reply):
+#     """Recursively count all nested replies for a given reply."""
+#     total_replies = reply.replies.count()
+#     for nested_reply in reply.replies.all():
+#         total_replies += count_nested_replies(nested_reply)
+#     return total_replies
+
+@login_required
+def delete_reply(request, reply_id):
+    reply = get_object_or_404(Reply, id=reply_id)
+    question_id = reply.question.id if reply.question else reply.parent_reply.question.id
+
+    if request.method == 'POST':
+        reply.delete()
+        return redirect(reverse('question_detail', args=[question_id]))
+
+    return redirect(reverse('question_detail', args=[question_id]))
+
+@login_required
+def delete_question(request, question_id):
+    question = get_object_or_404(Question, id=question_id)
+    
+    if request.method == 'POST':
+        question.delete()
+        return redirect(reverse('question'))
+    
+    return redirect(reverse('question_detail', args=[question_id]))
+

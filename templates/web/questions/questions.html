@@ -1,0 +1,124 @@
+{% extends "web/partials/base.html" %}
+{% load static %}
+{% block title %}الأسئلة والنقاشات{% endblock %}
+{% block content %}
+<div class="container mx-auto p-4">
+
+    <!-- Tab Navigation -->
+    <div class="border-b border-gray-200 mb-10">
+        <ul class="flex">
+            <li class="mr-1">
+                <a href="?tab=forums" class="inline-block text-center py-3 px-5 text-gray-800 font-bold {% if active_tab == 'forums' %}active-tab bg-gray-200{% else %}bg-white{% endif %}">
+                    المنتديات
+                </a>
+            </li>
+            <li class="mr-1">
+                <a href="?tab=groups" class="inline-block text-center py-3 px-5 text-gray-800 font-bold {% if active_tab == 'groups' %}active-tab bg-gray-200{% else %}bg-white{% endif %}">
+                    المجموعات
+                </a>
+            </li>
+        </ul>
+    </div>
+
+    <!-- Search Form -->
+    <form method="get" class="mb-8">
+        <input type="hidden" name="tab" value="{{ active_tab }}">
+        <div class="flex flex-col md:flex-row gap-4 justify-between items-start">
+            <div class="flex flex-wrap md:flex-row gap-4 w-full">
+                {% if active_tab == 'forums' %}
+                    <input type="text" name="question_id" value="{{ forum_question_id }}" placeholder="بحث عن هوية المنشور" class="px-2 py-1 w-full md:w-60 agt-default-input">
+                    <input type="text" name="q" value="{{ forum_search_query }}" placeholder="بحث عن اسم أو هوية المستخدم" class="px-2 py-1 w-full md:w-60 agt-default-input">
+                {% elif active_tab == 'groups' %}
+                    <input type="text" name="question_id" value="{{ group_question_id }}" placeholder="بحث عن هوية المنشور" class="px-2 py-1 w-full md:w-60 agt-default-input">
+                    <input type="text" name="q" value="{{ group_search_query }}" placeholder="بحث عن اسم أو هوية المستخدم" class="px-2 py-1 w-full md:w-60 agt-default-input">
+                {% endif %}
+                <select name="forum_group" class="custom-select w-full md:w-60 px-2 py-1 tom-select agt-default-input">
+                    <option value="">{% if active_tab == 'forums' %}في كافة الاقسام{% else %}في كافة المجموعات{% endif %}</option>
+                    {% if active_tab == 'forums' %}
+                        {% for forum in forums %}
+                            <option value="{{ forum.id }}" {% if forum.id == forum_group_filter %}selected{% endif %}>
+                                {{ forum.name }}
+                            </option>
+                        {% endfor %}
+                    {% elif active_tab == 'groups' %}
+                        {% for group in groups %}
+                            <option value="{{ group.id }}" {% if group.id == group_group_filter %}selected{% endif %}>
+                                {{ group.name }}
+                            </option>
+                        {% endfor %}
+                    {% endif %}
+                </select>
+                <input type="date" name="date" value="{% if active_tab == 'forums' %}{{ forum_date_filter }}{% else %}{{ group_date_filter }}{% endif %}" class="w-full md:w-60 px-2 py-1 agt-default-input">
+            </div>
+            <button type="submit" class="font-bold w-full md:w-60 rounded agt-bg-red-900 text-white px-4 py-2">بحث</button>
+        </div>
+    </form>
+
+    <!-- Questions Table -->
+    <div class="overflow-x-auto">
+        <table class="w-full border-collapse border border-gray-300">
+            <thead>
+                <tr class="bg-gray-200">
+                    <th class="border border-gray-300 px-4 py-2">ID</th>
+                    <th class="border border-gray-300 px-4 py-2">{% if active_tab == 'forums' %}القسم{% else %}المجموعة{% endif %}</th>
+                    <th class="border border-gray-300 px-4 py-2">ID المستخدم</th>
+                    <th class="border border-gray-300 px-4 py-2">تاريخ النشر</th>
+                    <th class="border border-gray-300 px-4 py-2">عدد الردود</th>
+                    <th class="border border-gray-300 px-4 py-2">عدد الإعجابات</th>
+                    <th class="border border-gray-300 px-4 py-2">الإجراءات</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% if active_tab == 'forums' %}
+                    {% for question in forums_questions %}
+                        <tr class="hover:bg-gray-100">
+                            <td class="border border-gray-300 font-bold px-4 py-2 text-center">{{ question.id }}</td>
+                            <td class="border border-gray-300 font-bold px-4 py-2 text-center">{{ question.forum.name }}</td>
+                            <td class="border border-gray-300 font-bold px-4 py-2 text-center">{{ question.user.id }}</td>
+                            <td class="border border-gray-300 font-bold px-4 py-2 text-center">{{ question.created_at|date:"Y-m-d" }}</td>
+                            <td class="border border-gray-300 font-bold px-4 py-2 text-center">{{ question.replies.count }}</td>
+                            <td class="border border-gray-300 font-bold px-4 py-2 text-center">{{ question.reactions.count }}</td>
+                            <td class="border border-gray-300 font-bold px-4 py-2 text-center">
+                                <div class="w-full flex gap-4">
+                                    <a href="{% url 'question_detail' question.id %}" class="text-center w-full border border-2 border-red-600 hover:bg-red-600 hover:text-white text-red-600 font-bold py-2 px-4 rounded-md">
+                                        التفاصيل
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+                    {% empty %}
+                        <tr>
+                            <td colspan="7" class="text-center py-3 px-4 text-gray-500">لا توجد أسئلة في هذا القسم</td>
+                        </tr>
+                    {% endfor %}
+                {% elif active_tab == 'groups' %}
+                    {% for question in groups_questions %}
+                        <tr class="hover:bg-gray-100">
+                            <td class="border border-gray-300 font-bold px-4 py-2 text-center">{{ question.id }}</td>
+                            <td class="border border-gray-300 font-bold px-4 py-2 text-center">{{ question.group.name }}</td>
+                            <td class="border border-gray-300 font-bold px-4 py-2 text-center">{{ question.user.id }}</td>
+                            <td class="border border-gray-300 font-bold px-4 py-2 text-center">{{ question.created_at|date:"Y-m-d" }}</td>
+                            <td class="border border-gray-300 font-bold px-4 py-2 text-center">{{ question.replies.count }}</td>
+                            <td class="border border-gray-300 font-bold px-4 py-2 text-center">{{ question.reactions.count }}</td>
+                            <td class="border border-gray-300 font-bold px-4 py-2 text-center">
+                                <div class="w-full flex gap-4">
+                                    <a href="{% url 'question_detail' question.id %}" class="text-center w-full border border-2 border-red-600 hover:bg-red-600 hover:text-white text-red-600 font-bold py-2 px-4 rounded-md">
+                                        التفاصيل
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+                    {% empty %}
+                        <tr>
+                            <td colspan="7" class="text-center py-3 px-4 text-gray-500">لا توجد أسئلة في هذا القسم</td>
+                        </tr>
+                    {% endfor %}
+                {% endif %}
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Pagination -->
+    {% include "web/partials/pagination.html" with page_obj=page_obj %}
+</div>
+{% endblock %}
