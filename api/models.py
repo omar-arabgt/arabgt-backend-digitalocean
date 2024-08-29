@@ -193,6 +193,7 @@ class Group(TimeStampedModel):
 class GroupMembership(TimeStampedModel):
     user = models.ForeignKey("User", on_delete=models.CASCADE)
     group = models.ForeignKey("Group", on_delete=models.CASCADE)
+    is_active = models.BooleanField(default=True)
 
     class Meta:
         unique_together = ("user", "group")
