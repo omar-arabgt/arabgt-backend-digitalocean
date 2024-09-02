@@ -146,6 +146,7 @@ class Post(TimeStampedModel):
     thumbnail = models.CharField(max_length=255)
     content = models.JSONField(default=dict)
     post_type = models.CharField(max_length=255)
+    modify_date = models.DateTimeField()
 
 
 class PostAction(TimeStampedModel):
