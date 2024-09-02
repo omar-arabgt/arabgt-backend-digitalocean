@@ -233,3 +233,17 @@ class ForumSerializer(serializers.ModelSerializer):
     class Meta:
         model = Forum
         fields = "__all__"
+
+
+class GroupSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = Group
+        exclude = ["members"]
+
+
+class GroupMembershipSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = GroupMembership
+        fields = ["is_active"]

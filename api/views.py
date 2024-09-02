@@ -495,7 +495,7 @@ class NotificationList(ListAPIView):
 
 class ForumListView(ListAPIView):
     serializer_class = ForumSerializer
-    queryset = Forum.objects.all()
+    queryset = Forum.objects.filter(is_active=True)
 
 
 class SetPointView(APIView):
@@ -539,3 +539,26 @@ class VerifyOTP(APIView):
             cache.set(CACHE_KEY, otp, 180)
 
         return Response("OK")
+
+
+class GroupListView(ListAPIView):
+    serializer_class = GroupSerializer
+    queryset = Group.objects.filter(is_active=True)
+
+
+class GroupMembershipView(UpdateAPIView):
+    permission_classes = [IsAuthenticated]
+    serializer_class = GroupMembershipSerializer
+    lookup_url_kwarg = "post_id"
+    
+    def get_object(self):
+        group_id = self.kwargs.get("group_id")
+        user = self.request.user
+
+        try:
+            group = Group.objects.get(id=group_id, is_active=True)
+        except Group.DoesNotExist:
+            raise Http404
+
+        obj, _ = GroupMembership.objects.get_or_create(user=user, group=group)
+        return obj

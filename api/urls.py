@@ -26,4 +26,6 @@ urlpatterns = [
     path('forums/', ForumListView.as_view(), name='forums'),
     path('set_point/', SetPointView.as_view(), name='set-point'),
     path('verify_otp/', VerifyOTP.as_view(), name='verify_otp'),
+    path('groups/', GroupListView.as_view(), name='groups'),
+    path('group_membership/<group_id>/', GroupMembershipView.as_view(), name='group_membership'),
 ]
