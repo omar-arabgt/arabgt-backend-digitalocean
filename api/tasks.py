@@ -2,7 +2,12 @@ from onesignal import ApiClient, Configuration
 from onesignal.api import default_api
 from onesignal.model.notification import Notification as OneSignalNotification
 from django.conf import settings
+from django.core.cache import cache
+from django.db.models import F
+from django.db import transaction
 from celery import shared_task
+
+from .choices import PointType
 
 
 NOTIFICATION_ALL = "notification_all"
@@ -47,3 +52,20 @@ def send_push_notification(user_id, title, content, link=None):
         notifications.append(n)
 
     Notification.objects.bulk_create(notifications)
+
+
+@shared_task
+def set_point(user_id, point_type):
+    point, cache_key, limit, expire = getattr(PointType, point_type).value
+    if cache_key and limit and expire:
+        KEY = f"{cache_key}:{user_id}"
+        count = cache.get_or_set(KEY, 0, 60*60*expire)
+        if count >= limit:
+            return
+        cache.set(KEY, count + 1)
+
+    with transaction.atomic():
+        from .models import User
+        user = User.objects.select_for_update().get(id=user_id)
+        user.point = F("point") + point
+        user.save(update_fields=["point"])

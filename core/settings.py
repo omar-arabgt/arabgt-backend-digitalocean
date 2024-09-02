@@ -124,6 +124,14 @@ DATABASES = {
 DATABASE_ROUTERS = ['core.routers.ReadOnlyRouter']
 
 
+CACHES = {
+    'default': {
+        "BACKEND": "django.core.cache.backends.redis.RedisCache",
+        "LOCATION": env("REDIS_URL"),
+    }
+}
+
+
 # Password validation
 # https://docs.djangoproject.com/en/4.2/ref/settings/#auth-password-validators
 

@@ -6,8 +6,7 @@ urlpatterns = [
     path("home/", HomePageView.as_view(), name="home-page"),
     path("posts/", PostListView.as_view(), name="post-list"),
     path("posts/<int:pk>/", PostRetrieveView.as_view(), name="post-detail"),
-    path("saved_posts/", SavedPostListCreateView.as_view(), name="saved-post-list-create"),
-    path("saved_posts/<int:pk>/", SavedPostUpdateView.as_view(), name="saved-post-update"),
+    path("post_action/<int:post_id>/", PostActionUpdateView.as_view(), name="post-action-update"),
     path("profile/", UserUpdateView.as_view(), name="user-update"),
     path('user/<int:pk>/delete', UserDeleteAPIView.as_view(), name='user_delete'),
     path("favorite_presenters/", FavoritePresenterListView.as_view(), name="favorite-presenter-list"),
@@ -25,4 +24,5 @@ urlpatterns = [
     path('sections-posts/', SectionPostsView.as_view(), name='section-posts'),
     path('notifications/', NotificationList.as_view(), name='notifications'),
     path('forums/', ForumListView.as_view(), name='forums'),
+    path('set_point/', SetPointView.as_view(), name='set-point'),
 ]

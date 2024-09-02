@@ -6,6 +6,7 @@ from .choices import *
 from .utils import *
 from .tasks import *
 
+
 class TimeStampedModel(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -34,7 +35,25 @@ class User(TimeStampedModel, AbstractUser):
     car_sorting = ArrayField(models.CharField(max_length=30, choices=CAR_SORTING), default=list, blank=True)
     favorite_presenter = models.ForeignKey("FavoritePresenter", blank=True, null=True, on_delete=models.SET_NULL)
     favorite_show = models.ForeignKey("FavoriteShow", blank=True, null=True, on_delete=models.SET_NULL)
+    point = models.IntegerField(default=5)
 
+    def save(self, *args, **kwargs):
+        created = False
+        if not self.id:
+            created = True
+        super().save(*args, **kwargs)
+        if created:
+            UserProfilePoint.objects.create(user_id=self.id)
+
+        point_fields = [
+            "first_name", "last_name", "nick_name", "birth_date", "nationality", "country", "gender", "phone_number", 
+            "favorite_presenter", "favorite_show", "hobbies", "interests", "favorite_cars", "car_sorting", "has_car", "car_type",
+        ]
+        for field in point_fields:
+            if not getattr(self.userprofilepoint, field) and getattr(self, field):
+                set_point.delay(self.id, PointType.FILL_PROFILE_FIELD.name)
+                setattr(self.userprofilepoint, field, True)
+        self.userprofilepoint.save()
 
     def delete(self, *args, **kwargs):
         DeletedUser.objects.create(
@@ -83,6 +102,26 @@ class DeletedUser(TimeStampedModel):
     favorite_show = models.CharField(max_length=255, blank=True)
 
 
+class UserProfilePoint(models.Model):
+    user = models.OneToOneField("User", on_delete=models.CASCADE)
+    first_name = models.BooleanField(default=False)
+    last_name = models.BooleanField(default=False)
+    nick_name = models.BooleanField(default=False)
+    birth_date = models.BooleanField(default=False)
+    nationality = models.BooleanField(default=False)
+    country = models.BooleanField(default=False)
+    gender = models.BooleanField(default=False)
+    phone_number = models.BooleanField(default=False)
+    favorite_presenter = models.BooleanField(default=False)
+    favorite_show = models.BooleanField(default=False)
+    hobbies = models.BooleanField(default=False)
+    interests = models.BooleanField(default=False)
+    favorite_cars = models.BooleanField(default=False)
+    car_sorting = models.BooleanField(default=False)
+    has_car = models.BooleanField(default=False)
+    car_type = models.BooleanField(default=False)
+
+
 class FavoritePresenter(TimeStampedModel):
     name = models.CharField(max_length=255, blank=True)
     image = models.CharField(max_length=255, blank=True)
@@ -108,17 +147,30 @@ class Post(TimeStampedModel):
     post_type = models.CharField(max_length=255)
 
 
-class PostManager(models.Manager):
-    def get_queryset(self):
-        return super().get_queryset().filter(unsaved=False)
-
-
-class SavedPost(TimeStampedModel):
-    post = models.ForeignKey("Post", on_delete=models.CASCADE)
+class PostAction(TimeStampedModel):
     user = models.ForeignKey("User", on_delete=models.CASCADE)
-    unsaved = models.BooleanField(default=False)
+    post = models.ForeignKey("Post", on_delete=models.CASCADE)
+    is_saved = models.BooleanField(default=False)
+    is_read = models.BooleanField(default=False)
+    is_shared = models.BooleanField(default=False)
 
-    objects = PostManager()
+    class Meta:
+        unique_together = ("user", "post")
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._is_read = self.is_read
+        self._is_shared = self.is_shared
+
+    def save(self, *args, **kwargs):
+        super().save(*args, **kwargs)
+        point_type = None
+        if not self._is_read and self.is_read:
+            point_type = PointType.READ_ARTICLE.name
+        if not self._is_shared and self.is_shared:
+            point_type = PointType.SHARE_ARTICLE.name
+        if point_type:
+            set_point.delay(self.user_id, point_type)
 
 
 class Forum(TimeStampedModel):
@@ -143,6 +195,11 @@ class GroupMembership(TimeStampedModel):
     class Meta:
         unique_together = ("user", "group")
 
+    def save(self, *args, **kwargs):
+        if not self.id:
+            set_point.delay(self.user_id, PointType.GROUP_MEMBERSHIP.name)
+        super().save(*args, **kwargs)
+
 
 class Question(TimeStampedModel):
     user = models.ForeignKey("User", related_name="questions", on_delete=models.CASCADE)
@@ -158,7 +215,8 @@ class Question(TimeStampedModel):
 
     def save(self, *args, **kwargs):
         self.clean()
-        return super().save(*args, **kwargs)
+        super().save(*args, **kwargs)
+        set_point.delay(self.user_id, PointType.QUESTION.name)
 
 
 class Reply(TimeStampedModel):
@@ -173,11 +231,11 @@ class Reply(TimeStampedModel):
 
     def save(self, *args, **kwargs):
         self.clean()
+        super().save(*args, **kwargs)
+        set_point.delay(self.user_id, PointType.REPLY.name)
         if not self.id:
             model = self.question or self.parent_reply
             send_push_notification.delay(model.user_id, "title", "content")
-
-        return super().save(*args, **kwargs)
 
 
 class Reaction(TimeStampedModel):
@@ -194,7 +252,8 @@ class Reaction(TimeStampedModel):
 
     def save(self, *args, **kwargs):
         self.clean()
-        return super().save(*args, **kwargs)
+        super().save(*args, **kwargs)
+        set_point.delay(self.user_id, PointType.REACTION.name)
 
 
 class MobileRelease(TimeStampedModel):
