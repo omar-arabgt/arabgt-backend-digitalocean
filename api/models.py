@@ -36,6 +36,7 @@ class User(TimeStampedModel, AbstractUser):
     favorite_presenter = models.ForeignKey("FavoritePresenter", blank=True, null=True, on_delete=models.SET_NULL)
     favorite_show = models.ForeignKey("FavoriteShow", blank=True, null=True, on_delete=models.SET_NULL)
     point = models.IntegerField(default=5)
+    send_notification = models.BooleanField(default=True)
 
     def save(self, *args, **kwargs):
         created = False
