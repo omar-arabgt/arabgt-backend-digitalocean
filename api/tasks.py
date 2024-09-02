@@ -1,6 +1,7 @@
 from onesignal import ApiClient, Configuration
 from onesignal.api import default_api
 from onesignal.model.notification import Notification as OneSignalNotification
+from twilio.rest import Client
 from django.conf import settings
 from django.core.cache import cache
 from django.db.models import F
@@ -68,3 +69,13 @@ def set_point(user_id, point_type):
         user = User.objects.select_for_update().get(id=user_id)
         user.point = F("point") + point
         user.save(update_fields=["point"])
+
+
+@shared_task
+def send_sms_notification(phone_number, body):
+    client = Client(settings.TWILIO_ACCOUNT_SID, settings.TWILIO_AUTH_TOKEN)
+    client.messages.create(
+        from_=settings.TWILIO_FROM_NUMBER,
+        to=phone_number,
+        body=body,
+    )

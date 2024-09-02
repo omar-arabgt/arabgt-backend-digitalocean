@@ -1,3 +1,5 @@
+import random
+
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.exceptions import NotFound,PermissionDenied
@@ -15,6 +17,7 @@ from django.db.models import Q
 from django.utils.translation import gettext as _
 from django.shortcuts import get_object_or_404
 from django.http import Http404
+from django.core.cache import cache
 
 from .models import *
 from .serializers import *
@@ -505,4 +508,34 @@ class SetPointView(APIView):
             return Response(_(f"point_type is not correct. Choices: {point_types}"), status=status.HTTP_400_BAD_REQUEST)
         
         set_point.delay(request.user.id, point_type)
+        return Response("OK")
+
+
+class VerifyOTP(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        user = self.request.user
+        phone_number = request.data.get("phone_number")
+        otp = request.data.get("otp")
+
+        if not phone_number:
+            return Response({"error": "phone_number can not be empty!"}, status=status.HTTP_400_BAD_REQUEST)
+
+        CACHE_KEY = f"otp:{user.id}:{phone_number}"
+
+        if otp:
+            stored_otp = cache.get(CACHE_KEY)
+            if otp == stored_otp:
+                cache.delete(CACHE_KEY)
+                user.phone_number = phone_number
+                user.save(update_fields=["phone_number"])
+            else:
+                return Response({"error": "Invalid OTP"}, status=status.HTTP_400_BAD_REQUEST)
+        else:
+            otp = random.randint(1000, 9999)
+            body = f"Verification code: {otp}"
+            send_sms_notification(phone_number, body)
+            cache.set(CACHE_KEY, otp, 180)
+
         return Response("OK")

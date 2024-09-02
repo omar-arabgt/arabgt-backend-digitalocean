@@ -25,4 +25,5 @@ urlpatterns = [
     path('notifications/', NotificationList.as_view(), name='notifications'),
     path('forums/', ForumListView.as_view(), name='forums'),
     path('set_point/', SetPointView.as_view(), name='set-point'),
+    path('verify_otp/', VerifyOTP.as_view(), name='verify_otp'),
 ]
