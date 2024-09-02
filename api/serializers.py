@@ -31,6 +31,7 @@ class UserSerializer(serializers.ModelSerializer):
     interests = serializers.SerializerMethodField()
     favorite_cars = serializers.SerializerMethodField()
     rank = serializers.SerializerMethodField()
+    is_verified = serializers.SerializerMethodField()
     favorite_presenter = FavoritePresenterSerializer()
     favorite_show = FavoriteShowSerializer()
 
@@ -58,6 +59,7 @@ class UserSerializer(serializers.ModelSerializer):
             "favorite_show",
             "point",
             "rank",
+            "is_verified",
             "send_notification",
             "profile_photo",
         ]
@@ -92,6 +94,9 @@ class UserSerializer(serializers.ModelSerializer):
         for rank in ranks:
             if obj.point >= rank.value:
                 return rank.name
+            
+    def get_is_verified(self, obj):
+        return obj.userprofilepoint.is_all_done
 
 
 class UserUpdateSerializer(serializers.ModelSerializer):
