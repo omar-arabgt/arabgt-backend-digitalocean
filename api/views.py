@@ -61,6 +61,12 @@ class UserUpdateView(RetrieveUpdateAPIView):
         return super().update(request, *args, **kwargs)
 
 
+class UserRetrieveView(RetrieveAPIView):
+    serializer_class = UserSerializer
+    permission_classes = [IsAuthenticated]
+    queryset = User.objects.all()
+
+
 class UserDeleteAPIView(DestroyAPIView):
     """
     Delete a specific user's information.
