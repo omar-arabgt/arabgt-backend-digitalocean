@@ -125,13 +125,13 @@ class UserProfilePoint(models.Model):
 
 class FavoritePresenter(TimeStampedModel):
     name = models.CharField(max_length=255, blank=True)
-    image = models.CharField(max_length=255, blank=True)
+    image = models.ImageField(upload_to="favorite_presenter")
     video = models.CharField(max_length=255, blank=True)
 
 
 class FavoriteShow(TimeStampedModel):
     name = models.CharField(max_length=255, blank=True)
-    image = models.CharField(max_length=255, blank=True)
+    image = models.ImageField(upload_to="favorite_show")
 
 
 class Post(TimeStampedModel):
