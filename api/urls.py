@@ -8,6 +8,7 @@ urlpatterns = [
     path("posts/<int:pk>/", PostRetrieveView.as_view(), name="post-detail"),
     path("post_action/<int:post_id>/", PostActionUpdateView.as_view(), name="post-action-update"),
     path("profile/", UserUpdateView.as_view(), name="user-update"),
+    path("user/<int:pk>/", UserRetrieveView.as_view(), name="user-retrieve"),
     path('user/<int:pk>/delete', UserDeleteAPIView.as_view(), name='user_delete'),
     path("favorite_presenters/", FavoritePresenterListView.as_view(), name="favorite-presenter-list"),
     path("favorite_shows/", FavoriteShowListView.as_view(), name="favorite-show-list"),
