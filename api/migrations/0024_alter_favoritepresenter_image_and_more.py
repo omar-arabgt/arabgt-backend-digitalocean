@@ -6,7 +6,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('api', '0022_groupmembership_is_active'),
+        ('api', '0023_user_profile_photo'),
     ]
 
     operations = [
