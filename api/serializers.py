@@ -42,6 +42,8 @@ class UserSerializer(serializers.ModelSerializer):
             "favorite_show",
             "point",
             "rank",
+            "send_notification",
+            "profile_photo",
         ]
 
     def get_gender(self, obj):
@@ -97,6 +99,8 @@ class UserUpdateSerializer(serializers.ModelSerializer):
             "car_sorting",
             "favorite_presenter",
             "favorite_show",
+            "send_notification",
+            "profile_photo",
         ]
 
 
