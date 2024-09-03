@@ -37,6 +37,7 @@ class User(TimeStampedModel, AbstractUser):
     favorite_show = models.ForeignKey("FavoriteShow", blank=True, null=True, on_delete=models.SET_NULL)
     point = models.IntegerField(default=5)
     send_notification = models.BooleanField(default=True)
+    profile_photo = models.ImageField(blank=True, null=True)
 
     def save(self, *args, **kwargs):
         created = False
