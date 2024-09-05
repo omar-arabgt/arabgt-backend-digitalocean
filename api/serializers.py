@@ -7,6 +7,20 @@ from .choices import MobilePlatform, CAR_SORTING, CAR_BRANDS
 from .utils import get_detailed_list
 
 
+class FavoritePresenterSerializer(serializers.ModelSerializer):
+    
+    class Meta:
+        model = FavoritePresenter
+        fields = "__all__"
+
+
+class FavoriteShowSerializer(serializers.ModelSerializer):
+    
+    class Meta:
+        model = FavoriteShow
+        fields = "__all__"
+
+
 class UserSerializer(serializers.ModelSerializer):
     car_sorting = serializers.SerializerMethodField()
     gender = serializers.SerializerMethodField()
@@ -17,6 +31,8 @@ class UserSerializer(serializers.ModelSerializer):
     interests = serializers.SerializerMethodField()
     favorite_cars = serializers.SerializerMethodField()
     rank = serializers.SerializerMethodField()
+    favorite_presenter = FavoritePresenterSerializer()
+    favorite_show = FavoriteShowSerializer()
 
     class Meta:
         model = User
@@ -104,18 +120,6 @@ class UserUpdateSerializer(serializers.ModelSerializer):
         ]
 
 
-class FavoritePresenterSerializer(serializers.ModelSerializer):
-    
-    class Meta:
-        model = FavoritePresenter
-        fields = "__all__"
-
-
-class FavoriteShowSerializer(serializers.ModelSerializer):
-    
-    class Meta:
-        model = FavoriteShow
-        fields = "__all__"
 
 
 class PostListSerializer(serializers.ModelSerializer):
