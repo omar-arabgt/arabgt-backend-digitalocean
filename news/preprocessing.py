@@ -8,130 +8,204 @@ from api.models import Post
 from .models import WpPosts, WpPostmeta
 
 
+# def extract_elements(element):
+#     """
+#     Extracts structured elements from HTML content.
+
+#     Input:
+#     - element: A BeautifulSoup element representing the HTML content to be parsed.
+
+#     Functionality:
+#     - Parses the HTML content to extract text, headings, media elements (such as images, iframes, YouTube videos), and external links.
+#     - Processes various HTML tags (<strong>, <a>, <h1> to <h6>, <ul>, <ol>, <iframe>, and <img>) to structure the content into elements.
+
+#     Output:
+#     - Returns a tuple:
+#       - elements: A list of dictionaries representing structured content elements.
+#       - external_links: A list of external links found in the content.
+#     """
+#     elements = []
+#     text_buffer = []
+#     external_links = []
+
+#     def add_text_buffer_to_elements():
+#         if text_buffer:
+#             text = ''.join(text_buffer).strip()
+#             if text:
+#                 elements.append({
+#                     "text": text,
+#                     "media": {},
+#                     "heading": ""
+#                 })
+#             text_buffer.clear()
+
+#     def handle_strong_tag(child):
+#         text = child.get_text(strip=True)
+#         if (child.previous_sibling and '\n' in child.previous_sibling) or (child.next_sibling and '\n' in child.next_sibling):
+#             add_text_buffer_to_elements()
+#             elements.append({
+#                 "media": {},
+#                 "heading": text,
+#                 "text": "",
+#             })
+#         else:
+#             text_buffer.append(text)
+
+#     for child in element.children:
+#         if isinstance(child, str):
+#             text_buffer.append(child)
+#         else:
+#             tag_name = child.name
+#             attributes = child.attrs
+#             text = child.get_text(strip=True)
+
+#             if tag_name == 'strong':
+#                 handle_strong_tag(child)
+#             elif tag_name == 'a':
+#                 href = attributes.get('href', '')
+#                 if href:
+#                     external_links.append(href)
+#                 if child.find('strong') and (
+#                     (child.previous_sibling is None or (isinstance(child.previous_sibling, str) and child.previous_sibling.strip() == "")) or
+#                     (child.next_sibling is None or (isinstance(child.next_sibling, str) and child.next_sibling.strip() == ""))
+#                 ):
+#                     add_text_buffer_to_elements()
+#                     elements.append({
+#                         "text": "",
+#                         "media": {},
+#                         "heading": text
+#                     })
+#                 else:
+#                     text_buffer.append(child.get_text())
+#             elif tag_name in ['h1', 'h2', 'h3', 'h4', 'h5', 'h6']:
+#                 add_text_buffer_to_elements()
+#                 elements.append({
+#                     "text": "",
+#                     "media": {},
+#                     "heading": text
+#                 })
+#             elif tag_name in ['ul', 'ol']:
+#                 add_text_buffer_to_elements()
+#                 bullets = "\n".join([f"• {li.get_text(strip=True)}" for li in child.find_all('li')])
+#                 elements.append({
+#                     "text": bullets,
+#                     "media": {},
+#                     "heading": ""
+#                 })
+#                 for li in child.find_all('li'):
+#                     a_tag = li.find('a')
+#                     if a_tag and 'href' in a_tag.attrs:
+#                         external_links.append(a_tag['href'])
+#             elif tag_name == 'iframe':
+#                 add_text_buffer_to_elements()
+#                 src = attributes.get('src', '')
+#                 if 'youtube' in src:
+#                     youtube_id = re.search(r"embed/([^?]+)", src).group(1)
+#                     elements.append({
+#                         "text": "",
+#                         "media": {"youtube": f"https://www.youtube.com/watch?v={youtube_id}"},
+#                         "heading": ""
+#                     })
+#                 else:
+#                     elements.append({
+#                         "text": "",
+#                         "media": {"iframe": src},
+#                         "heading": ""
+#                     })
+#             elif tag_name == 'img':
+#                 add_text_buffer_to_elements()
+#                 src = attributes.get('src', '')
+#                 elements.append({
+#                     "text": "",
+#                     "media": {"image": src},
+#                     "heading": ""
+#                 })
+#             else:
+#                 add_text_buffer_to_elements()
+#                 elements.append({
+#                     "text": text,
+#                     "media": {},
+#                     "heading": ""
+#                 })
+
+#     add_text_buffer_to_elements()
+#     elements = [element for element in elements if element['text'] or element['media'] or element['heading']]
+#     return elements, external_links
+
 def extract_elements(element):
     """
-    Extracts structured elements from HTML content.
-
-    Input:
-    - element: A BeautifulSoup element representing the HTML content to be parsed.
-
-    Functionality:
-    - Parses the HTML content to extract text, headings, media elements (such as images, iframes, YouTube videos), and external links.
-    - Processes various HTML tags (<strong>, <a>, <h1> to <h6>, <ul>, <ol>, <iframe>, and <img>) to structure the content into elements.
-
-    Output:
-    - Returns a tuple:
-      - elements: A list of dictionaries representing structured content elements.
-      - external_links: A list of external links found in the content.
+    Extract structured elements from HTML content recursively.
+    Returns a list of content elements with text, media, and headings.
     """
     elements = []
-    text_buffer = []
     external_links = []
+    youtube_pattern = re.compile(r'https?://(www\.)?(youtube\.com|youtu\.be)/[^\s]+')
 
-    def add_text_buffer_to_elements():
-        if text_buffer:
-            text = ''.join(text_buffer).strip()
-            if text:
-                elements.append({
-                    "text": text,
-                    "media": {},
-                    "heading": ""
-                })
-            text_buffer.clear()
-
-    def handle_strong_tag(child):
-        text = child.get_text(strip=True)
-        if (child.previous_sibling and '\n' in child.previous_sibling) or (child.next_sibling and '\n' in child.next_sibling):
-            add_text_buffer_to_elements()
+    # Helper function to process text and heading elements
+    def add_element(text='', media=None, heading=''):
+        # Only add if the element has content (text, media, or heading)
+        if text.strip() or media or heading.strip():
             elements.append({
-                "media": {},
-                "heading": text,
-                "text": "",
+                'text': text.strip() if text else '',
+                'media': media or {},
+                'heading': heading.strip() if heading else ''
             })
-        else:
-            text_buffer.append(text)
+
+    previous_text = ""
 
     for child in element.children:
+        # Handle direct text nodes
         if isinstance(child, str):
-            text_buffer.append(child)
-        else:
-            tag_name = child.name
-            attributes = child.attrs
-            text = child.get_text(strip=True)
-
-            if tag_name == 'strong':
-                handle_strong_tag(child)
-            elif tag_name == 'a':
-                href = attributes.get('href', '')
-                if href:
-                    external_links.append(href)
-                if child.find('strong') and (
-                    (child.previous_sibling is None or (isinstance(child.previous_sibling, str) and child.previous_sibling.strip() == "")) or
-                    (child.next_sibling is None or (isinstance(child.next_sibling, str) and child.next_sibling.strip() == ""))
-                ):
-                    add_text_buffer_to_elements()
-                    elements.append({
-                        "text": "",
-                        "media": {},
-                        "heading": text
-                    })
-                else:
-                    text_buffer.append(child.get_text())
-            elif tag_name in ['h1', 'h2', 'h3', 'h4', 'h5', 'h6']:
-                add_text_buffer_to_elements()
-                elements.append({
-                    "text": "",
-                    "media": {},
-                    "heading": text
-                })
-            elif tag_name in ['ul', 'ol']:
-                add_text_buffer_to_elements()
-                bullets = "\n".join([f"• {li.get_text(strip=True)}" for li in child.find_all('li')])
-                elements.append({
-                    "text": bullets,
-                    "media": {},
-                    "heading": ""
-                })
-                for li in child.find_all('li'):
-                    a_tag = li.find('a')
-                    if a_tag and 'href' in a_tag.attrs:
-                        external_links.append(a_tag['href'])
-            elif tag_name == 'iframe':
-                add_text_buffer_to_elements()
-                src = attributes.get('src', '')
-                if 'youtube' in src:
-                    youtube_id = re.search(r"embed/([^?]+)", src).group(1)
-                    elements.append({
-                        "text": "",
-                        "media": {"youtube": f"https://www.youtube.com/watch?v={youtube_id}"},
-                        "heading": ""
-                    })
-                else:
-                    elements.append({
-                        "text": "",
-                        "media": {"iframe": src},
-                        "heading": ""
-                    })
-            elif tag_name == 'img':
-                add_text_buffer_to_elements()
-                src = attributes.get('src', '')
-                elements.append({
-                    "text": "",
-                    "media": {"image": src},
-                    "heading": ""
-                })
+            previous_text += child  # Accumulate text for processing later
+            # Check if the text contains a YouTube link
+            youtube_match = youtube_pattern.search(child)
+            if youtube_match:
+                youtube_link = youtube_match.group(0)
+                add_element(media={"youtube": youtube_link})
+                previous_text = previous_text.replace(youtube_link, '').strip()  # Remove YouTube link from text
+            # Add the accumulated text as an element if it's not empty
+            if previous_text.strip():
+                add_element(text=previous_text.strip())
+                previous_text = ""  # Reset previous_text to avoid duplication
+        # Handle specific HTML tags
+        elif child.name in ['h1', 'h2', 'h3', 'h4', 'h5', 'h6']:
+            add_element(heading=child.get_text())
+        elif child.name == 'strong':
+            # Treat <strong> as heading if it seems isolated or standalone
+            if not previous_text.strip():  # Check if previous_text is empty or only whitespace
+                add_element(heading=child.get_text(strip=True))
             else:
-                add_text_buffer_to_elements()
-                elements.append({
-                    "text": text,
-                    "media": {},
-                    "heading": ""
-                })
+                # Otherwise, add it as text
+                add_element(text=child.get_text(strip=True))
+        elif child.name == 'a':
+            href = child.get('href', '')
+            if href and youtube_pattern.match(href):
+                # Transform YouTube links into media elements
+                add_element(media={"youtube": href})
+            else:
+                external_links.append(href)
+                add_element(text=child.get_text())
+        elif child.name == 'iframe':
+            src = child.get('src', '')
+            if 'youtube' in src:
+                youtube_id = re.search(r"embed/([^?]+)", src).group(1)
+                add_element(media={"youtube": f"https://www.youtube.com/watch?v={youtube_id}"})
+            else:
+                add_element(media={"iframe": src})
+        elif child.name == 'img':
+            src = child.get('src', '')
+            add_element(media={"image": src})
+        elif child.name in ['ul', 'ol']:
+            # Handle lists
+            bullets = "\n".join([f"• {li.get_text(strip=True)}" for li in child.find_all('li')])
+            add_element(text=bullets)
+        else:
+            # Recurse for any other nested elements
+            nested_elements, nested_links = extract_elements(child)
+            elements.extend(nested_elements)
+            external_links.extend(nested_links)
 
-    add_text_buffer_to_elements()
-    elements = [element for element in elements if element['text'] or element['media'] or element['heading']]
     return elements, external_links
-
 
 def handle_galleries(text):
     """
@@ -335,6 +409,7 @@ def preprocess_article(article):
 
     soup = BeautifulSoup(post_content, "html.parser")
     structured_data, external_links = extract_elements(soup.body if soup.body else soup)
+    print("Structured Data:", structured_data)  # This will help inspect the parsed content
 
     final_elements = []
     for element in structured_data:
