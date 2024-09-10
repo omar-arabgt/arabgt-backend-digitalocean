@@ -141,50 +141,103 @@ def extract_elements(element):
     external_links = []
     youtube_pattern = re.compile(r'https?://(www\.)?(youtube\.com|youtu\.be)/[^\s]+')
 
-    # Helper function to process text and heading elements
-    def add_element(text='', media=None, heading=''):
-        # Only add if the element has content (text, media, or heading)
-        if text.strip() or media or heading.strip():
-            elements.append({
+    # Helper function to process text, media, and heading elements
+    def add_element(text='', media=None, heading='', url=None, type=None, rich_data=None):
+        if text.strip() or media or heading.strip() or rich_data:
+            element = {
                 'text': text.strip() if text else '',
                 'media': media or {},
                 'heading': heading.strip() if heading else ''
-            })
+            }
+            if url:
+                element['url'] = url
+            if type == 'rich' or type == 'rich_heading':
+                element['type'] = type
+                element['data'] = rich_data
+            elements.append(element)
 
     previous_text = ""
 
     for child in element.children:
         # Handle direct text nodes
         if isinstance(child, str):
-            previous_text += child  # Accumulate text for processing later
-            # Check if the text contains a YouTube link
+            previous_text += child
             youtube_match = youtube_pattern.search(child)
             if youtube_match:
                 youtube_link = youtube_match.group(0)
                 add_element(media={"youtube": youtube_link})
-                previous_text = previous_text.replace(youtube_link, '').strip()  # Remove YouTube link from text
-            # Add the accumulated text as an element if it's not empty
+                previous_text = previous_text.replace(youtube_link, '').strip()
             if previous_text.strip():
                 add_element(text=previous_text.strip())
-                previous_text = ""  # Reset previous_text to avoid duplication
-        # Handle specific HTML tags
-        elif child.name in ['h1', 'h2', 'h3', 'h4', 'h5', 'h6']:
-            add_element(heading=child.get_text())
-        elif child.name == 'strong':
-            # Treat <strong> as heading if it seems isolated or standalone
-            if not previous_text.strip():  # Check if previous_text is empty or only whitespace
-                add_element(heading=child.get_text(strip=True))
-            else:
-                # Otherwise, add it as text
-                add_element(text=child.get_text(strip=True))
+                previous_text = ""
+
+        # Handle <p> tag with text and an <a> tag or <img> with additional text
+        elif child.name == 'p':
+            rich_data = []
+            paragraph_text = ""
+            for p_child in child.children:
+                if isinstance(p_child, str):
+                    paragraph_text += p_child.strip() + " "
+                elif p_child.name == 'a':
+                    url = p_child.get('href', '')
+                    if p_child.get_text(strip=True):
+                        if paragraph_text.strip():
+                            rich_data.append({"text": paragraph_text.strip(), "heading": "", "media": {}})
+                            paragraph_text = ""
+                        rich_data.append({"text": p_child.get_text(strip=True), "url": url, "heading": "", "media": {}})
+                elif p_child.name == 'img':
+                    if paragraph_text.strip():
+                        add_element(text=paragraph_text.strip())
+                        paragraph_text = ""
+                    add_element(media={"image": p_child.get('src', '')})
+
+            if paragraph_text.strip():
+                rich_data.append({"text": paragraph_text.strip(), "heading": "", "media": {}})
+  
+            if len(rich_data) > 1:
+                add_element(type='rich', rich_data=rich_data)
+            elif len(rich_data) == 1:
+                add_element(text=rich_data[0]['text'], url=rich_data[0].get('url', None))
+
+        # Handle <a> tags alone or inside paragraphs or headings
         elif child.name == 'a':
             href = child.get('href', '')
-            if href and youtube_pattern.match(href):
-                # Transform YouTube links into media elements
-                add_element(media={"youtube": href})
+            external_links.append(href)
+            if child.parent.name in ['h1', 'h2', 'h3', 'h4', 'h5', 'h6']:
+                add_element(heading=child.get_text(strip=True), url=href)
             else:
-                external_links.append(href)
-                add_element(text=child.get_text())
+                add_element(text=child.get_text(strip=True), url=href)
+
+        # Handle specific HTML tags for headings (h1, h2, ..., h6)
+        elif child.name in ['h1', 'h2', 'h3', 'h4', 'h5', 'h6']:
+            heading_rich_data = []
+            heading_text = ""
+            for h_child in child.children:
+                if isinstance(h_child, str):
+                    heading_text += h_child.strip() + " "
+                elif h_child.name == 'a':
+                    url = h_child.get('href', '')
+                    if heading_text.strip():
+                        heading_rich_data.append({"text": heading_text.strip(), "heading": "", "media": {}})
+                        heading_text = ""
+                    heading_rich_data.append({"text": h_child.get_text(strip=True), "url": url, "heading": "", "media": {}})
+            
+            if heading_text.strip():
+                heading_rich_data.append({"text": heading_text.strip(), "heading": "", "media": {}})
+            
+            if len(heading_rich_data) > 1:
+                add_element(type='rich_heading', rich_data=heading_rich_data)
+            else:
+                add_element(heading=heading_rich_data[0]['text'], url=heading_rich_data[0].get('url', None))
+
+        # Handle <strong> tag
+        elif child.name == 'strong':
+            if not previous_text.strip():
+                add_element(heading=child.get_text(strip=True))
+            else:
+                add_element(text=child.get_text(strip=True))
+
+        # Handle <iframe> tags
         elif child.name == 'iframe':
             src = child.get('src', '')
             if 'youtube' in src:
@@ -192,15 +245,23 @@ def extract_elements(element):
                 add_element(media={"youtube": f"https://www.youtube.com/watch?v={youtube_id}"})
             else:
                 add_element(media={"iframe": src})
+
+        # Handle <img> tags
         elif child.name == 'img':
             src = child.get('src', '')
             add_element(media={"image": src})
+
+        # Handle <ul> and <ol> for lists
         elif child.name in ['ul', 'ol']:
-            # Handle lists
             bullets = "\n".join([f"• {li.get_text(strip=True)}" for li in child.find_all('li')])
             add_element(text=bullets)
+
+        # Handle gallery shortcode in <p>
+        elif '[gallery' in str(child):
+            gallery_elements = handle_galleries(str(child))
+            elements.extend(gallery_elements)
+
         else:
-            # Recurse for any other nested elements
             nested_elements, nested_links = extract_elements(child)
             elements.extend(nested_elements)
             external_links.extend(nested_links)
