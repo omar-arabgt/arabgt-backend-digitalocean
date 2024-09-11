@@ -154,11 +154,16 @@ class PostListView(ListAPIView):
     - Returns a paginated list of posts using the PostListSerializer.
     """
     serializer_class = PostListSerializer
-    queryset = Post.objects.all().order_by('-publish_date')
     filterset_class = PostFilter
     filter_backends = [DjangoFilterBackend, SearchFilter]
     search_fields = ["title"]
     pagination_class = CustomPagination
+
+    def get_queryset(self):
+        queryset = Post.objects.all()
+        if self.request.GET.get("is_saved"):
+            queryset = queryset.filter(postaction__is_saved=True, postaction__user=self.request.user.id)
+        return queryset.order_by("-publish_date")
 
 
 class PostRetrieveView(RetrieveAPIView):
