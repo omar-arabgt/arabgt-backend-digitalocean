@@ -47,10 +47,7 @@ class User(TimeStampedModel, AbstractUser):
         if created:
             UserProfilePoint.objects.create(user_id=self.id)
 
-        point_fields = [
-            "first_name", "last_name", "nick_name", "birth_date", "nationality", "country", "gender", "phone_number", 
-            "favorite_presenter", "favorite_show", "hobbies", "interests", "favorite_cars", "car_sorting", "has_car", "car_type",
-        ]
+        point_fields = UserProfilePoint._all_fields()
         for field in point_fields:
             if not getattr(self.userprofilepoint, field) and getattr(self, field):
                 set_point.delay(self.id, PointType.FILL_PROFILE_FIELD.name)
@@ -122,6 +119,24 @@ class UserProfilePoint(models.Model):
     car_sorting = models.BooleanField(default=False)
     has_car = models.BooleanField(default=False)
     car_type = models.BooleanField(default=False)
+
+    @property
+    def is_all_done(self):
+        fields = self._all_fields()
+        for field in fields:
+            if not getattr(self, field):
+                return False
+        return True
+
+    @classmethod
+    def _all_fields(cls):
+        _fields = cls._meta.get_fields()
+        fields = []
+        for field in _fields:
+            if field.auto_created or field.is_relation:
+                continue
+            fields.append(field.name)
+        return fields
 
 
 class FavoritePresenter(TimeStampedModel):
