@@ -2,22 +2,47 @@ from django.utils.translation import gettext_lazy as _
 from django.core.exceptions import ValidationError
 from django.conf import settings
 
-
+# A constant message used for validation error when more than one field is filled
 ONE_FIELD_MESSAGE = _("Fill only one field among these")
 
 
 def check_one_field(model, field1, field2):
+    """
+    Ensures that only one of the two specified fields is filled on the given model instance.
+
+    Raises:
+    - ValidationError: If both fields are filled.
+
+    Args:
+    - model: The model instance to check.
+    - field1: The name of the first field.
+    - field2: The name of the second field.
+    """
     if getattr(model, field1) and getattr(model, field2):
         raise ValidationError(f"{ONE_FIELD_MESSAGE} ({field1}, {field2})")
 
 
 def get_detailed_list(keys=None, s3_directory="", list=None):
+    """
+    Generates a detailed list of items, including labels, values, and image URLs.
+
+    Args:
+    - keys: Specific keys to include in the list. Defaults to all keys if None.
+    - s3_directory: The S3 directory where images are stored.
+    - list: A list of tuples containing English and Arabic labels.
+
+    Returns:
+    - A list of dictionaries containing 'label', 'value', and 'image_url' for each item.
+
+    Raises:
+    - ValueError: If the 'list' argument is not provided.
+    """
     if list is None:
         raise ValueError("A list of car brands must be provided.")
 
     if keys is None:
         keys = [en_label for en_label, _ in list]
-    
+
     return [
         {
             'label': ar_label,
@@ -29,6 +54,16 @@ def get_detailed_list(keys=None, s3_directory="", list=None):
 
 
 def subscribe_newsletter(email, unsubscribe=False):
+    """
+    Subscribes or unsubscribes a user from the newsletter.
+
+    Args:
+    - email: The email to subscribe or unsubscribe.
+    - unsubscribe: If True, the email is unsubscribed.
+
+    Raises:
+    - Exception: If the subscription is not found during unsubscribe or if the email is already subscribed.
+    """
     from .models import Newsletter
     from .serializers import NewsletterSerializer
 

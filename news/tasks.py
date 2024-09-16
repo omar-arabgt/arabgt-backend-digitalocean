@@ -60,7 +60,8 @@ def fetch_and_process_post(post, override_existing=False):
                     "post_type": post["post_type"],
                     "author": author,
                     "category": categories,
-                    "tag": tags
+                    "tag": tags,
+                    "modify_date": post["post_modified"],
                 }
             )
         else:
@@ -74,7 +75,8 @@ def fetch_and_process_post(post, override_existing=False):
                 post_type=post["post_type"],
                 author=author,
                 category=categories,
-                tag=tags
+                tag=tags,
+                modify_date=post["post_modified"],
             )
 
         related_articles = processed_article.get("related_articles")
@@ -116,12 +118,12 @@ def fetch_and_process_wp_posts(post_id=None):
         query_filter["id"] = post_id
         override_existing = True
     else:
-        #  check latest post id on postgres and retrieve new posts from mysql
-        latest_post = Post.objects.order_by("post_id").last()
+        #  check latest modify date on postgres and retrieve new posts from mysql
+        latest_post = Post.objects.order_by("modify_date").last()
         if latest_post:
-            query_filter["id__gt"] = latest_post.post_id
+            query_filter["post_modified__gt"] = latest_post.modify_date
 
-    wp_posts = WpPosts.objects.filter(**query_filter).values("id", "post_content", "post_date", "post_title", "post_modified", "post_author", "post_type")
+    wp_posts = WpPosts.objects.filter(**query_filter).values("id", "post_content", "post_date", "post_title", "post_modified", "post_author", "post_type", "post_modified")
 
     if not wp_posts:
         logger.info("No posts found.")
