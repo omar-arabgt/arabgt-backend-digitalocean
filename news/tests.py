@@ -24,6 +24,8 @@ class TestPostContentProcessing(unittest.TestCase):
                 <p><a href="www.link.com">paragraph with a link</a></p>
                 <h1><a href="www.link.com">paragraph with a link</a></h1>
                 <h1>click <a href="https://www.google.com">here</a> to continue</h1>
+                <ul><li>one</li><li>two</li><li>three</li></ul>
+                <ul><li>one <a href="www.audteye.com">link</a></li><li>two</li><li>three</li></ul>
             ''',
             'post_date': '2024-01-01',
             'post_modified': '2024-01-01',
@@ -86,7 +88,48 @@ class TestPostContentProcessing(unittest.TestCase):
                     {"text": "to continue", "heading": "", "media": {}}
                 ]
             },
+            {"text": "• one\n• two\n• three", "heading": "", "media": {}},
+            {
+                "text": "",
+                "heading": "",
+                "media": {},
+                "type": "rich",
+                "data": [
+                    {"text": "• one", "heading": "", "media": {}},
+                    {"text": "link\n", "url": "www.audteye.com", "heading": "", "media": {}},
+                    {"text": "• two\n• three", "heading": "", "media": {}}
+                ]
+            },
+            {'external_links': ['https://www.google.com', 'www.link.com', 'www.link.com', 'https://www.google.com']}
         ]
-
+        [
+          {'text': 'هذه هي أجدد سيارات بورش 2024.', 'media': {}, 'heading': ''},
+          {'text': '', 'media': {}, 'heading': 'نظرة عامة'},
+          {'text': '', 'media': {'youtube': 'https://www.youtube.com/watch?v=FTfuQyc7IEw'}, 'heading': ''},
+          {'text': '', 'media': {}, 'heading': 'قد يهمك هذه آخر تغطيات عرب جي تي مع سيارات جديدة :'},
+          {'text': '', 'media': {'image': 'https://example.com/porsche.jpg'}, 'heading': ''},
+          {'text': 'hello world', 'media': {}, 'heading': ''},
+          {'text': '', 'media': {'image': 'https://example.com/porsche.jpg'}, 'heading': ''},
+          {'text': 'End', 'media': {}, 'heading': ''},
+          {'text': '', 'media': {'youtube': 'https://www.youtube.com/watch?v=sK6dEN73n0E'}, 'heading': ''},
+          {'text': '[gallery link="file" ids="354716,354713"]', 'media': {}, 'heading': ''},
+          {'text': '', 'media': {}, 'heading': '', 'type': 'rich', 'data': [
+              {'text': 'click', 'heading': '', 'media': {}},
+              {'text': 'here', 'url': 'https://www.google.com', 'heading': '', 'media': {}},
+              {'text': 'to continue', 'heading': '', 'media': {}}
+            ]
+          },
+          {'text': 'paragraph with a link', 'media': {}, 'heading': '', 'url': 'www.link.com'},
+          {'text': '', 'media': {}, 'heading': 'paragraph with a link', 'url': 'www.link.com'},
+          {'text': '', 'media': {}, 'heading': '', 'type': 'rich_heading', 'data': [
+              {'text': 'click', 'heading': '', 'media': {}},
+              {'text': 'here', 'url': 'https://www.google.com', 'heading': '', 'media': {}},
+              {'text': 'to continue', 'heading': '', 'media': {}}
+            ]
+          },
+          {'text': '', 'media': {}, 'heading': '', 'type': 'rich', 'data': [
+              {'text': '• one\n• two\n• three', 'heading': '', 'media': {}}
+            ]},
+          {'text': '', 'media': {}, 'heading': '', 'type': 'rich', 'data': [{'text': '• two\n• three', 'heading': '', 'media': {}}]}]
         # Compare the actual content with expected content
         self.assertEqual(created_post['content'], expected_content)

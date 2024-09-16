@@ -132,6 +132,96 @@ from .models import WpPosts, WpPostmeta
 #     elements = [element for element in elements if element['text'] or element['media'] or element['heading']]
 #     return elements, external_links
 
+def process_list_item(li):
+    """
+    Recursively processes a list item (<li>) and returns the formatted text.
+    If an <a> tag is found, it will properly split the text around the link.
+    """
+    text_before_link = ""
+    text_after_link = ""
+    link_data = []
+    link_found = False
+
+    for child in li.children:
+        if isinstance(child, str):
+            if not link_found:
+                text_before_link += f"• {child.strip()} "
+            else:
+                text_after_link += f"{child.strip()} "
+        elif child.name == 'a':
+            # Process the <a> tag (link)
+            url = child.get('href', '')
+            link_text = child.get_text(strip=True)
+            link_data.append({
+                "text": f"{link_text}\n",  # Adding a newline after the link text
+                "url": url,
+                "heading": "",
+                "media": {}
+            })
+            link_found = True
+        else:
+            # Recursively process any nested tags (for example, nested lists or other elements inside <li>)
+            nested_text_before, nested_links, nested_text_after = process_list_item(child)
+            if not link_found:
+                text_before_link += f"{nested_text_before} "
+            else:
+                text_after_link += f"{nested_text_after} "
+                link_data.extend(nested_links)
+
+    return text_before_link.strip(), link_data, text_after_link.strip()
+
+def handle_list(child):
+    """
+    Processes <ul> and <ol> tags by recursively processing each <li>.
+    If no links are present, it will join the items into bullet points.
+    If links are present, they will be handled properly with separation.
+    """
+    bullet_points = []
+    rich_data = []
+
+    for li in child.find_all('li'):
+        text_before_link, link_data, text_after_link = process_list_item(li)
+
+        # If no link is found, just add the whole text as bullet points
+        if not link_data:
+            bullet_points.append(text_before_link)  # Collect all bullet points together
+        else:
+            # Add the merged bullet points before links, if there are any
+            if bullet_points:
+                rich_data.append({
+                    "text": "\n".join(bullet_points),  # Join the bullets into a single string
+                    "heading": "",
+                    "media": {}
+                })
+                bullet_points = []  # Clear the bullet points after adding them
+
+            # Add text before link, then the link itself, and then the text after link
+            if text_before_link:
+                rich_data.append({
+                    "text": text_before_link,
+                    "heading": "",
+                    "media": {}
+                })
+            rich_data.extend(link_data)
+            if text_after_link:
+                rich_data.append({
+                    "text": text_after_link,
+                    "heading": "",
+                    "media": {}
+                })
+
+    # Finally, if there are any leftover bullet points (with no links), merge and add them
+    if bullet_points:
+        return [{
+            "text": "\n".join(bullet_points),
+            "heading": "",
+            "media": {}
+        }]
+
+    # Return rich data if links were found
+    return rich_data
+
+
 def extract_elements(element):
     """
     Extract structured elements from HTML content recursively.
@@ -171,6 +261,12 @@ def extract_elements(element):
                 add_element(text=previous_text.strip())
                 previous_text = ""
 
+        # Handle <ul> and <li> tags for lists with and without links
+        elif child.name in ['ul', 'ol']:
+            list_elements = handle_list(child)
+            if list_elements:
+                add_element(type='rich', rich_data=list_elements)
+
         # Handle <p> tag with text and an <a> tag or <img> with additional text
         elif child.name == 'p':
             rich_data = []
@@ -185,6 +281,7 @@ def extract_elements(element):
                             rich_data.append({"text": paragraph_text.strip(), "heading": "", "media": {}})
                             paragraph_text = ""
                         rich_data.append({"text": p_child.get_text(strip=True), "url": url, "heading": "", "media": {}})
+                        external_links.append(url)
                 elif p_child.name == 'img':
                     if paragraph_text.strip():
                         add_element(text=paragraph_text.strip())
@@ -221,6 +318,7 @@ def extract_elements(element):
                         heading_rich_data.append({"text": heading_text.strip(), "heading": "", "media": {}})
                         heading_text = ""
                     heading_rich_data.append({"text": h_child.get_text(strip=True), "url": url, "heading": "", "media": {}})
+                    external_links.append(url)
             
             if heading_text.strip():
                 heading_rich_data.append({"text": heading_text.strip(), "heading": "", "media": {}})
@@ -251,11 +349,6 @@ def extract_elements(element):
             src = child.get('src', '')
             add_element(media={"image": src})
 
-        # Handle <ul> and <ol> for lists
-        elif child.name in ['ul', 'ol']:
-            bullets = "\n".join([f"• {li.get_text(strip=True)}" for li in child.find_all('li')])
-            add_element(text=bullets)
-
         # Handle gallery shortcode in <p>
         elif '[gallery' in str(child):
             gallery_elements = handle_galleries(str(child))
@@ -267,6 +360,7 @@ def extract_elements(element):
             external_links.extend(nested_links)
 
     return elements, external_links
+
 
 def handle_galleries(text):
     """
