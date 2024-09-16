@@ -7,6 +7,20 @@ from .choices import MobilePlatform, CAR_SORTING, CAR_BRANDS
 from .utils import get_detailed_list
 
 
+class FavoritePresenterSerializer(serializers.ModelSerializer):
+    
+    class Meta:
+        model = FavoritePresenter
+        fields = "__all__"
+
+
+class FavoriteShowSerializer(serializers.ModelSerializer):
+    
+    class Meta:
+        model = FavoriteShow
+        fields = "__all__"
+
+
 class UserSerializer(serializers.ModelSerializer):
     car_sorting = serializers.SerializerMethodField()
     gender = serializers.SerializerMethodField()
@@ -16,23 +30,39 @@ class UserSerializer(serializers.ModelSerializer):
     hobbies = serializers.SerializerMethodField()
     interests = serializers.SerializerMethodField()
     favorite_cars = serializers.SerializerMethodField()
+    rank = serializers.SerializerMethodField()
+    is_verified = serializers.SerializerMethodField()
+    favorite_presenter = FavoritePresenterSerializer()
+    favorite_show = FavoriteShowSerializer()
 
     class Meta:
         model = User
-        exclude = [
-            "username",
-            "password",
-            "is_active",
-            "is_staff",
-            "is_superuser",
-            "date_joined",
-            "last_login",
-            "groups",
-            "user_permissions",
+        fields = [
+            "id",
+            "first_name",
+            "last_name",
+            "email",
+            "nick_name",
+            "phone_number",
+            "birth_date",
+            "gender",
+            "nationality",
+            "country",
+            "has_business",
+            "has_car",
+            "car_type",
+            "hobbies",
+            "interests",
+            "favorite_cars",
+            "car_sorting",
+            "favorite_presenter",
+            "favorite_show",
+            "point",
+            "rank",
+            "is_verified",
+            "send_notification",
+            "profile_photo",
         ]
-        extra_kwargs = {
-            "email": {"read_only": True},
-        }
 
     def get_gender(self, obj):
         return obj.get_gender_display() if obj.gender else None
@@ -57,38 +87,44 @@ class UserSerializer(serializers.ModelSerializer):
 
     def get_favorite_cars(self, obj):
         return get_detailed_list(obj.favorite_cars, s3_directory="car_brand", list=CAR_BRANDS)
+    
+    def get_rank(self, obj):
+        ranks = list(UserRank)
+        ranks.reverse()
+        for rank in ranks:
+            if obj.point >= rank.value:
+                return rank.name
+            
+    def get_is_verified(self, obj):
+        return obj.userprofilepoint.is_all_done
 
 
 class UserUpdateSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
-        exclude = [
-            "username",
-            "password",
-            "is_active",
-            "is_staff",
-            "is_superuser",
-            "date_joined",
-            "last_login",
-            "groups",
-            "user_permissions",
+        fields = [
+            "first_name",
+            "last_name",
+            "nick_name",
+            "phone_number",
+            "birth_date",
+            "gender",
+            "nationality",
+            "country",
+            "has_business",
+            "has_car",
+            "car_type",
+            "hobbies",
+            "interests",
+            "favorite_cars",
+            "car_sorting",
+            "favorite_presenter",
+            "favorite_show",
+            "send_notification",
+            "profile_photo",
         ]
-        extra_kwargs = {
-            "email": {"read_only": True},
-        }
-
-class FavoritePresenterSerializer(serializers.ModelSerializer):
-    
-    class Meta:
-        model = FavoritePresenter
-        fields = "__all__"
 
 
-class FavoriteShowSerializer(serializers.ModelSerializer):
-    
-    class Meta:
-        model = FavoriteShow
-        fields = "__all__"
 
 
 class PostListSerializer(serializers.ModelSerializer):
@@ -100,9 +136,18 @@ class PostListSerializer(serializers.ModelSerializer):
 
 class PostSerializer(serializers.ModelSerializer):
     related_articles = PostListSerializer(many=True)
+    is_saved = serializers.SerializerMethodField()
+
     class Meta:
         model = Post
         fields = "__all__"
+
+    def get_is_saved(self, obj):
+        user = self.context.get("request").user
+        if user.is_authenticated:
+            saved_post = PostAction.objects.filter(post_id=obj.id, user_id=user.id, is_saved=True)
+            return saved_post.exists()
+        return False
 
 
 class HomepageSectionSerializer(serializers.Serializer):
@@ -110,29 +155,11 @@ class HomepageSectionSerializer(serializers.Serializer):
     posts = PostListSerializer(many=True)
 
 
-class SavedPostReadSerializer(serializers.ModelSerializer):
-    post = PostListSerializer()
+class PostActionSerializer(serializers.ModelSerializer):
 
     class Meta:
-        model = SavedPost
-        fields = "__all__"
-
-
-class SavedPostWriteSerializer(serializers.ModelSerializer):
-
-    class Meta:
-        model = SavedPost
-        fields = ["post", "unsaved"]
-
-    def create(self, validated_data):
-        user = self.context["request"].user
-        post_id = validated_data["post"]
-
-        if SavedPost.objects.filter(user=user, post=post_id).exists():
-            raise ValidationError("This post is already saved!")
-
-        validated_data["user"] = user
-        return super().create(validated_data)
+        model = PostAction
+        exclude = ["user", "post"]
 
 
 class NewsletterSerializer(serializers.ModelSerializer):
@@ -219,3 +246,17 @@ class ForumSerializer(serializers.ModelSerializer):
     class Meta:
         model = Forum
         fields = "__all__"
+
+
+class GroupSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = Group
+        exclude = ["members"]
+
+
+class GroupMembershipSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = GroupMembership
+        fields = ["is_active"]

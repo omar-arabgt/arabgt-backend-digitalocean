@@ -124,6 +124,14 @@ DATABASES = {
 DATABASE_ROUTERS = ['core.routers.ReadOnlyRouter']
 
 
+CACHES = {
+    'default': {
+        "BACKEND": "django.core.cache.backends.redis.RedisCache",
+        "LOCATION": env("REDIS_URL"),
+    }
+}
+
+
 # Password validation
 # https://docs.djangoproject.com/en/4.2/ref/settings/#auth-password-validators
 
@@ -145,6 +153,7 @@ AUTH_PASSWORD_VALIDATORS = [
 AUTH_USER_MODEL = "api.User"
 
 REST_FRAMEWORK = {
+    'EXCEPTION_HANDLER': 'core.utils.custom_exception_handler',
     'DEFAULT_AUTHENTICATION_CLASSES': ['rest_framework_simplejwt.authentication.JWTAuthentication'],
     'DEFAULT_FILTER_BACKENDS': ['django_filters.rest_framework.DjangoFilterBackend'],
     'DEFAULT_THROTTLE_CLASSES': [
@@ -309,3 +318,7 @@ ANDROID_STORE_URL = env("ANDROID_STORE_URL")
 
 ONESIGNAL_API_KEY = env("ONESIGNAL_API_KEY")
 ONESIGNAL_APP_ID = env("ONESIGNAL_APP_ID")
+
+TWILIO_ACCOUNT_SID = env("TWILIO_ACCOUNT_SID")
+TWILIO_AUTH_TOKEN = env("TWILIO_AUTH_TOKEN")
+TWILIO_FROM_NUMBER = env("TWILIO_FROM_NUMBER")

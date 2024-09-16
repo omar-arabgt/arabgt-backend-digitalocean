@@ -1,4 +1,33 @@
+from enum import Enum
 from django.db import models
+
+
+class UserRank(Enum):
+   USER = 0
+   RED = 6
+   SILVER = 2500
+   GOLD = 10000
+   PLATINUM = 25000
+
+
+class PointType(Enum):
+    # name = point, cache_key, limit, expire
+    OPEN_APP = 5, "open_app", 1, 1
+    USE_APP = 10, "use_app", 1, 1
+    READ_ARTICLE = 5, "read_article", 5, 1
+    SHARE_ARTICLE = 5, "share_article", 5, 1
+    REACTION = 5, "reaction", 5, 1
+    REPLY = 10, "reply", 4, 1
+    QUESTION = 10, "question", 4, 1
+    ADMIN_NOTIFICATION = 10, "admin_notification", 2, 1
+    POST_VIDEO = 10, "post_video", 5, 1
+    PRESENTER_VIDEO = 5, "presenter_video", 1, 1
+    GROUP_MEMBERSHIP = 5, None, None, None
+    FILL_PROFILE_FIELD = 5, None, None, None
+
+    @classmethod
+    def get_api_points(self):
+        return ["OPEN_APP", "USE_APP", "POST_VIDEO", "PRESENTER_VIDEO"]
 
 
 class ReactionType(models.TextChoices):
