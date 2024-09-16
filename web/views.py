@@ -653,6 +653,7 @@ class NotificationView(LoginRequiredMixin, FormView):
     Output:
     - Renders the 'web/notifications/container.html' template with the notification form and list of sent notifications.
     """
+
     template_name = 'web/notifications/container.html'
     form_class = NotificationForm
     paginate_by = 10
@@ -685,12 +686,9 @@ class NotificationView(LoginRequiredMixin, FormView):
         form = self.get_form()
 
         if form.is_valid():
-            title = form.cleaned_data.get("title")
-            content = form.cleaned_data.get("content")
-            link = form.cleaned_data.get("link")
-            send_push_notification.delay(NOTIFICATION_ALL, title, content, link)
-            return redirect(reverse_lazy("send-notification"))
-        return self.render_to_response(self.get_context_data(form=form))
+            return self.form_valid(form)
+        else:
+            return self.form_invalid(form)
 
 class ForumGroupQuestionsView(LoginRequiredMixin, TemplateView):
     """
