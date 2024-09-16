@@ -8,7 +8,7 @@ def custom_exception_handler(exc, context):
         for key, value in response.data.items():
             if isinstance(value, list):
                 value = value[0]
-            response.data = {"error": value}
+            response.data = {"error": f"{key} - {value}"}
             return response
     
     return response
