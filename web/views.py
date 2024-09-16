@@ -1,5 +1,5 @@
 from django.contrib.auth import views as auth_views
-from django.views.generic import ListView, UpdateView, TemplateView, DeleteView, CreateView
+from django.views.generic import ListView, UpdateView, TemplateView, DeleteView, CreateView, FormView
 from django.urls import reverse_lazy, reverse
 from django.views.generic.detail import DetailView
 from django.contrib.auth.decorators import login_required
@@ -640,23 +640,23 @@ class TermsOfUsePrivacyPolicy(TemplateView):
         context['no_sidebar'] = True
         return context
 
-
-class NotificationView(LoginRequiredMixin, TemplateView):
+class NotificationView(LoginRequiredMixin, FormView):
     """
-    Displays the notifications page for logged-in users and allows sending notifications.
-
+    Displays the home/notifications page for logged-in users.
     Input:
-    - Form data containing notification details such as title, content, and link.
-
+    - No specific input required.
     Functionality:
-    - Renders the notifications page with the form to send new notifications.
-    - Lists all sent notifications with pagination.
+    - Renders the notification page for authenticated users.
+    - Handles the submission of the notification form.
+    - Paginates sent notifications.
 
     Output:
     - Renders the 'web/notifications/container.html' template with the notification form and list of sent notifications.
     """
-    template_name = "web/notifications/container.html"
+    template_name = 'web/notifications/container.html'
+    form_class = NotificationForm
     paginate_by = 10
+    success_url = '?tab=2&page=1'
 
     def get_context_data(self, **kwargs):
         """
@@ -664,22 +664,26 @@ class NotificationView(LoginRequiredMixin, TemplateView):
         """
         context = super().get_context_data(**kwargs)
         context['page_name'] = 'إرسال التنبيهات'
-        context['form'] = NotificationForm()
-
-      
         notifications = Notification.objects.all().order_by('-created_at')
         paginator = Paginator(notifications, self.paginate_by)
         page_number = self.request.GET.get('page')
         page_obj = paginator.get_page(page_number)
-
         context['page_obj'] = page_obj
         return context
-
+  
+    def form_valid(self, form):
+        title = form.cleaned_data.get("title")
+        content = form.cleaned_data.get("content")
+        link = form.cleaned_data.get("link")
+        send_push_notification.delay(NOTIFICATION_ALL, title, content, link)
+        return super().form_valid(form)
+  
     def post(self, request, *args, **kwargs):
         """
         Handles the submission of the notification form and sends notifications to all users.
         """
-        form = NotificationForm(request.POST)
+        form = self.get_form()
+
         if form.is_valid():
             title = form.cleaned_data.get("title")
             content = form.cleaned_data.get("content")
