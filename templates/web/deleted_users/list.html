@@ -26,6 +26,7 @@
                     <th class="border border-gray-300 px-4 py-2">الهاتف</th>
                     <th class="border border-gray-300 px-4 py-2">نقاط<br>المستخدم</th>
                     <th class="border border-gray-300 px-4 py-2">رتبة<br>المستخدم</th>
+                    <th class="border border-gray-300 px-4 py-2">سبب الحذف</th>
                 </tr>
             </thead>
             <tbody>
@@ -40,6 +41,7 @@
                     <td class="border border-gray-300 font-bold px-4 py-2">{{ user.phone_number }}</td>
                     <td class="border border-gray-300 font-bold px-4 py-2"></td>
                     <td class="border border-gray-300 font-bold px-4 py-2"></td>
+                    <td class="border border-gray-300 font-bold px-4 py-2">{{ user.delete_reason }}</td>
                 </tr>
                 {% endfor %}
             </tbody>

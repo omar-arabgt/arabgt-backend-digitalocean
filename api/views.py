@@ -27,7 +27,7 @@ from . import choices as choices_module
 from .pagination import *
 
 
-class UserUpdateView(RetrieveUpdateAPIView):
+class UserRetrieveUpdateDestroyView(RetrieveUpdateDestroyAPIView):
     """
     Retrieves and updates the currently authenticated user's information.
 
@@ -41,6 +41,7 @@ class UserUpdateView(RetrieveUpdateAPIView):
     Output:
     - Returns the user's information or the updated user information.
     """
+    permission_classes = [IsAuthenticated]
     
     def get_serializer_class(self):
         """
@@ -69,56 +70,32 @@ class UserUpdateView(RetrieveUpdateAPIView):
                 return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
             set_point.delay(request.user.id, PointType.FILL_PROFILE_FIELD.name)
         return super().update(request, *args, **kwargs)
+    
+    def destroy(self, request, *args, **kwargs):
+        """Delete user profile"""
+        confirmation = request.data.get('confirmation')
+        delete_reason = request.data.get('delete_reason')
+        if confirmation != "تأكيد حذف الحساب":
+            return Response(
+                {'error': 'The confirmation text does not match.'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        instance = self.get_object()
+        if instance.is_superuser or instance.is_staff:
+            return Response({
+                'error': 'You cannot delete a superuser or staff member.'},
+                status=status.HTTP_403_FORBIDDEN
+            )
+        instance.delete(delete_reason=delete_reason)
+
+        return Response(status=status.HTTP_204_NO_CONTENT)
 
 
 class UserRetrieveView(RetrieveAPIView):
     serializer_class = UserSerializer
     permission_classes = [IsAuthenticated]
     queryset = User.objects.all()
-
-
-class UserDeleteAPIView(DestroyAPIView):
-    """
-    Delete a specific user's information.
-
-    Input:
-    - User ID is passed in the URL.
-    - Confirmation input that has to be typed before deleting.
-
-    Functionality:
-    - Retrieves the user by ID and deletes their information.
-
-    Output:
-    - Returns a confirmation message upon successful deletion.
-    """
-    queryset = User.objects.all()
-    serializer_class = UserSerializer
-    permission_classes = [IsAuthenticated]
-
-    def perform_destroy(self, instance):
-        """
-        Prevents deletion of superuser or staff members and deletes the user.
-        """
-        if instance.is_superuser or instance.is_staff:
-            raise Response({
-                'error': 'You cannot delete a superuser or staff member.'},
-                status=status.HTTP_403_FORBIDDEN
-            )
-        instance.delete()
-
-    def delete(self, request, *args, **kwargs):
-        """
-        Validates the confirmation input before deleting the user.
-        """
-        confirmation = request.data.get('confirmation')
-        if confirmation != "تأكيد حذف الحساب":
-            return Response({
-                'error': 'The confirmation text does not match.'
-            }, status=status.HTTP_400_BAD_REQUEST)
-        instance = self.get_object()
-        self.perform_destroy(instance)
-
-        return Response({'message': 'User deleted successfully'}, status=status.HTTP_200_OK)
 
 
 class FavoritePresenterListView(ListAPIView):
