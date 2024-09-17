@@ -378,6 +378,7 @@ class ExportUserToExcelView(LoginRequiredMixin, ListView):
             'Nationality', # دولة الإقامة
             'Country', # الجنس
             'Rank', # فئة
+            'Delete Reason',
         ]
 
         ws.append(headers)
@@ -393,7 +394,8 @@ class ExportUserToExcelView(LoginRequiredMixin, ListView):
                 "ذكر" if user['gender'] == "M" else "انثي",
                 user['get_nationality_display'],
                 user['get_country_display'],
-                ""
+                "",
+                user["delete_reason"],
             ])
 
         response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')

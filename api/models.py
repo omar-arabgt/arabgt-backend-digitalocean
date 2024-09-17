@@ -54,7 +54,7 @@ class User(TimeStampedModel, AbstractUser):
                 setattr(self.userprofilepoint, field, True)
         self.userprofilepoint.save()
 
-    def delete(self, *args, **kwargs):
+    def delete(self, delete_reason=None, *args, **kwargs):
         DeletedUser.objects.create(
             username=self.username,
             email=self.email,
@@ -75,6 +75,7 @@ class User(TimeStampedModel, AbstractUser):
             car_sorting=self.car_sorting,
             favorite_presenter=str(self.favorite_presenter) if self.favorite_presenter else '',
             favorite_show=str(self.favorite_show) if self.favorite_show else '',
+            delete_reason=delete_reason,
         )
         return super().delete(*args, **kwargs)
 
@@ -99,6 +100,7 @@ class DeletedUser(TimeStampedModel):
     car_sorting = ArrayField(models.CharField(max_length=30, choices=CAR_SORTING), default=list, blank=True)
     favorite_presenter = models.CharField(max_length=255, blank=True)
     favorite_show = models.CharField(max_length=255, blank=True)
+    delete_reason = models.TextField(blank=True)
 
 
 class UserProfilePoint(models.Model):
