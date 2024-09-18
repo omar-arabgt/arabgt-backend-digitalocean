@@ -76,8 +76,33 @@ class User(TimeStampedModel, AbstractUser):
             favorite_presenter=str(self.favorite_presenter) if self.favorite_presenter else '',
             favorite_show=str(self.favorite_show) if self.favorite_show else '',
             delete_reason=delete_reason,
+            point=self.point,
+            rank=self.rank,
         )
         return super().delete(*args, **kwargs)
+
+    @property
+    def is_verified(self):
+        return self.userprofilepoint.is_all_done
+
+    @property
+    def rank(self):
+        ranks = list(UserRank)
+        ranks.reverse()
+        for rank in ranks:
+            if self.point >= rank.value:
+                return rank.name
+
+    @property
+    def remaining_point(self):
+        ranks = list(UserRank.__members__)
+        index = ranks.index(self.rank)
+        next_index = index + 1
+        if next_index < len(ranks):
+            next_rank = ranks[next_index]
+            next_rank_value = UserRank[next_rank].value
+            return next_rank_value - self.point
+        return None
 
 
 class DeletedUser(TimeStampedModel):
@@ -101,6 +126,8 @@ class DeletedUser(TimeStampedModel):
     favorite_presenter = models.CharField(max_length=255, blank=True)
     favorite_show = models.CharField(max_length=255, blank=True)
     delete_reason = models.TextField(blank=True)
+    point = models.IntegerField(blank=True, null=True)
+    rank = models.CharField(max_length=8, blank=True, null=True)
 
 
 class UserProfilePoint(models.Model):

@@ -81,7 +81,7 @@
                     <td class="border border-gray-300 font-bold px-4 py-2">{{ user.get_nationality_display }}</td>
                     <td class="border border-gray-300 font-bold px-4 py-2">{{ user.get_country_display }}</td>
                     <td class="border border-gray-300 font-bold px-4 py-2">{{ user.gender|gender_translation }}</td>
-                    <td class="border border-gray-300 font-bold px-4 py-2"></td>
+                    <td class="border border-gray-300 font-bold px-4 py-2">{{ user.rank }}</td>
                 </tr>
                 {% endfor %}
             </tbody>
