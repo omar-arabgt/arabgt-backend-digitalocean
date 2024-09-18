@@ -394,7 +394,7 @@ class ExportUserToExcelView(LoginRequiredMixin, ListView):
                 "ذكر" if user['gender'] == "M" else "انثي",
                 user['get_nationality_display'],
                 user['get_country_display'],
-                "",
+                user["rank"],
                 user["delete_reason"],
             ])
 

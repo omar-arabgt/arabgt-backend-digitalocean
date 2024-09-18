@@ -54,7 +54,8 @@ def get_merged_user_data(query='', nationality=None, country=None, birthdate=Non
     # Adding display fields for nationality and country
     user_data = [
         dict(user, get_nationality_display=User.objects.get(pk=user['id']).get_nationality_display(),
-             get_country_display=User.objects.get(pk=user['id']).get_country_display())
+             get_country_display=User.objects.get(pk=user['id']).get_country_display(),
+             rank=User.objects.get(pk=user['id']).rank)
         for user in users
     ]
 
@@ -78,7 +79,7 @@ def get_merged_user_data(query='', nationality=None, country=None, birthdate=Non
 
     # Querying deleted users and annotating them with status 'deleted'
     deleted_users = DeletedUser.objects.filter(deleted_user_filters).values(
-        'id', 'first_name', 'last_name', 'nick_name', 'birth_date', 'gender', 'delete_reason'
+        'id', 'first_name', 'last_name', 'nick_name', 'birth_date', 'gender', 'delete_reason', 'rank'
     ).annotate(
         status=Value('deleted', output_field=CharField())
     )
