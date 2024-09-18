@@ -1,4 +1,5 @@
 import re
+import json
 import urllib.parse
 from bs4 import BeautifulSoup
 
@@ -8,218 +9,80 @@ from api.models import Post
 from .models import WpPosts, WpPostmeta
 
 
-# def extract_elements(element):
-#     """
-#     Extracts structured elements from HTML content.
-
-#     Input:
-#     - element: A BeautifulSoup element representing the HTML content to be parsed.
-
-#     Functionality:
-#     - Parses the HTML content to extract text, headings, media elements (such as images, iframes, YouTube videos), and external links.
-#     - Processes various HTML tags (<strong>, <a>, <h1> to <h6>, <ul>, <ol>, <iframe>, and <img>) to structure the content into elements.
-
-#     Output:
-#     - Returns a tuple:
-#       - elements: A list of dictionaries representing structured content elements.
-#       - external_links: A list of external links found in the content.
-#     """
-#     elements = []
-#     text_buffer = []
-#     external_links = []
-
-#     def add_text_buffer_to_elements():
-#         if text_buffer:
-#             text = ''.join(text_buffer).strip()
-#             if text:
-#                 elements.append({
-#                     "text": text,
-#                     "media": {},
-#                     "heading": ""
-#                 })
-#             text_buffer.clear()
-
-#     def handle_strong_tag(child):
-#         text = child.get_text(strip=True)
-#         if (child.previous_sibling and '\n' in child.previous_sibling) or (child.next_sibling and '\n' in child.next_sibling):
-#             add_text_buffer_to_elements()
-#             elements.append({
-#                 "media": {},
-#                 "heading": text,
-#                 "text": "",
-#             })
-#         else:
-#             text_buffer.append(text)
-
-#     for child in element.children:
-#         if isinstance(child, str):
-#             text_buffer.append(child)
-#         else:
-#             tag_name = child.name
-#             attributes = child.attrs
-#             text = child.get_text(strip=True)
-
-#             if tag_name == 'strong':
-#                 handle_strong_tag(child)
-#             elif tag_name == 'a':
-#                 href = attributes.get('href', '')
-#                 if href:
-#                     external_links.append(href)
-#                 if child.find('strong') and (
-#                     (child.previous_sibling is None or (isinstance(child.previous_sibling, str) and child.previous_sibling.strip() == "")) or
-#                     (child.next_sibling is None or (isinstance(child.next_sibling, str) and child.next_sibling.strip() == ""))
-#                 ):
-#                     add_text_buffer_to_elements()
-#                     elements.append({
-#                         "text": "",
-#                         "media": {},
-#                         "heading": text
-#                     })
-#                 else:
-#                     text_buffer.append(child.get_text())
-#             elif tag_name in ['h1', 'h2', 'h3', 'h4', 'h5', 'h6']:
-#                 add_text_buffer_to_elements()
-#                 elements.append({
-#                     "text": "",
-#                     "media": {},
-#                     "heading": text
-#                 })
-#             elif tag_name in ['ul', 'ol']:
-#                 add_text_buffer_to_elements()
-#                 bullets = "\n".join([f"• {li.get_text(strip=True)}" for li in child.find_all('li')])
-#                 elements.append({
-#                     "text": bullets,
-#                     "media": {},
-#                     "heading": ""
-#                 })
-#                 for li in child.find_all('li'):
-#                     a_tag = li.find('a')
-#                     if a_tag and 'href' in a_tag.attrs:
-#                         external_links.append(a_tag['href'])
-#             elif tag_name == 'iframe':
-#                 add_text_buffer_to_elements()
-#                 src = attributes.get('src', '')
-#                 if 'youtube' in src:
-#                     youtube_id = re.search(r"embed/([^?]+)", src).group(1)
-#                     elements.append({
-#                         "text": "",
-#                         "media": {"youtube": f"https://www.youtube.com/watch?v={youtube_id}"},
-#                         "heading": ""
-#                     })
-#                 else:
-#                     elements.append({
-#                         "text": "",
-#                         "media": {"iframe": src},
-#                         "heading": ""
-#                     })
-#             elif tag_name == 'img':
-#                 add_text_buffer_to_elements()
-#                 src = attributes.get('src', '')
-#                 elements.append({
-#                     "text": "",
-#                     "media": {"image": src},
-#                     "heading": ""
-#                 })
-#             else:
-#                 add_text_buffer_to_elements()
-#                 elements.append({
-#                     "text": text,
-#                     "media": {},
-#                     "heading": ""
-#                 })
-
-#     add_text_buffer_to_elements()
-#     elements = [element for element in elements if element['text'] or element['media'] or element['heading']]
-#     return elements, external_links
-
-def process_list_item(li):
+def process_list_item_with_regex(html):
     """
-    Recursively processes a list item (<li>) and returns the formatted text.
-    If an <a> tag is found, it will properly split the text around the link.
+    Processes <ul> or <ol> elements to extract bullet points with and without links using regex.
+    Returns structured content, treating lists with links as 'rich' and lists without links as plain text.
     """
-    text_before_link = ""
-    text_after_link = ""
-    link_data = []
-    link_found = False
 
-    for child in li.children:
-        if isinstance(child, str):
-            if not link_found:
-                text_before_link += f"• {child.strip()} "
-            else:
-                text_after_link += f"{child.strip()} "
-        elif child.name == 'a':
-            # Process the <a> tag (link)
-            url = child.get('href', '')
-            link_text = child.get_text(strip=True)
-            link_data.append({
-                "text": f"{link_text}\n",  # Adding a newline after the link text
-                "url": url,
+    li_pattern = r'<li>(.*?)</li>'
+    link_pattern = r'<a href="(.*?)">(.*?)</a>'
+    
+    list_items = re.findall(li_pattern, html, re.DOTALL)
+    rich_data = []  
+    has_link = False  
+
+    for item in list_items:
+        link_match = re.search(link_pattern, item)
+
+        if link_match:
+            has_link = True  
+            text_before_link = item.split(link_match.group(0))[0].strip()
+            link_url = link_match.group(1)
+            link_text = link_match.group(2)
+            text_after_link = item.split(link_match.group(0))[1].strip()
+
+            if text_before_link:
+                rich_data.append({
+                    "text": f"• {text_before_link}",
+                    "heading": "",
+                    "media": {}
+                })
+
+            if not text_after_link:
+                link_text += '\n'
+
+            rich_data.append({
+                "text": f"{link_text}",
+                "url": link_url,
                 "heading": "",
                 "media": {}
             })
-            link_found = True
-        else:
-            # Recursively process any nested tags (for example, nested lists or other elements inside <li>)
-            nested_text_before, nested_links, nested_text_after = process_list_item(child)
-            if not link_found:
-                text_before_link += f"{nested_text_before} "
-            else:
-                text_after_link += f"{nested_text_after} "
-                link_data.extend(nested_links)
-
-    return text_before_link.strip(), link_data, text_after_link.strip()
-
-def handle_list(child):
-    """
-    Processes <ul> and <ol> tags by recursively processing each <li>.
-    If no links are present, it will join the items into bullet points.
-    If links are present, they will be handled properly with separation.
-    """
-    bullet_points = []
-    rich_data = []
-
-    for li in child.find_all('li'):
-        text_before_link, link_data, text_after_link = process_list_item(li)
-
-        # If no link is found, just add the whole text as bullet points
-        if not link_data:
-            bullet_points.append(text_before_link)  # Collect all bullet points together
-        else:
-            # Add the merged bullet points before links, if there are any
-            if bullet_points:
-                rich_data.append({
-                    "text": "\n".join(bullet_points),  # Join the bullets into a single string
-                    "heading": "",
-                    "media": {}
-                })
-                bullet_points = []  # Clear the bullet points after adding them
-
-            # Add text before link, then the link itself, and then the text after link
-            if text_before_link:
-                rich_data.append({
-                    "text": text_before_link,
-                    "heading": "",
-                    "media": {}
-                })
-            rich_data.extend(link_data)
+            
             if text_after_link:
                 rich_data.append({
-                    "text": text_after_link,
+                    "text": f"{text_after_link}\n",
                     "heading": "",
                     "media": {}
                 })
-
-    # Finally, if there are any leftover bullet points (with no links), merge and add them
-    if bullet_points:
+        else:
+            bullet_point = f"• {item.strip()}"
+            if rich_data and 'url' not in rich_data[-1]:
+                rich_data[-1]['text'] += f"\n{bullet_point}"
+            else:
+                rich_data.append({
+                    "text": bullet_point,
+                    "heading": "",
+                    "media": {}
+                })
+    
+    if not has_link:
+        merged_bullet_points = "\n".join([item['text'] for item in rich_data])
         return [{
-            "text": "\n".join(bullet_points),
+            "text": merged_bullet_points,
             "heading": "",
             "media": {}
         }]
+    
+    result = [{
+        "text": "",
+        "heading": "",
+        "media": {},
+        "type": "rich",
+        "data": rich_data
+    }]
 
-    # Return rich data if links were found
-    return rich_data
+    return result
 
 
 def extract_elements(element):
@@ -231,7 +94,6 @@ def extract_elements(element):
     external_links = []
     youtube_pattern = re.compile(r'https?://(www\.)?(youtube\.com|youtu\.be)/[^\s]+')
 
-    # Helper function to process text, media, and heading elements
     def add_element(text='', media=None, heading='', url=None, type=None, rich_data=None):
         if text.strip() or media or heading.strip() or rich_data:
             element = {
@@ -249,7 +111,6 @@ def extract_elements(element):
     previous_text = ""
 
     for child in element.children:
-        # Handle direct text nodes
         if isinstance(child, str):
             previous_text += child
             youtube_match = youtube_pattern.search(child)
@@ -261,13 +122,11 @@ def extract_elements(element):
                 add_element(text=previous_text.strip())
                 previous_text = ""
 
-        # Handle <ul> and <li> tags for lists with and without links
         elif child.name in ['ul', 'ol']:
-            list_elements = handle_list(child)
+            list_elements = process_list_item_with_regex(str(child))
             if list_elements:
-                add_element(type='rich', rich_data=list_elements)
+                elements.extend(list_elements)
 
-        # Handle <p> tag with text and an <a> tag or <img> with additional text
         elif child.name == 'p':
             rich_data = []
             paragraph_text = ""
@@ -296,7 +155,6 @@ def extract_elements(element):
             elif len(rich_data) == 1:
                 add_element(text=rich_data[0]['text'], url=rich_data[0].get('url', None))
 
-        # Handle <a> tags alone or inside paragraphs or headings
         elif child.name == 'a':
             href = child.get('href', '')
             external_links.append(href)
@@ -305,7 +163,6 @@ def extract_elements(element):
             else:
                 add_element(text=child.get_text(strip=True), url=href)
 
-        # Handle specific HTML tags for headings (h1, h2, ..., h6)
         elif child.name in ['h1', 'h2', 'h3', 'h4', 'h5', 'h6']:
             heading_rich_data = []
             heading_text = ""
@@ -327,15 +184,13 @@ def extract_elements(element):
                 add_element(type='rich_heading', rich_data=heading_rich_data)
             else:
                 add_element(heading=heading_rich_data[0]['text'], url=heading_rich_data[0].get('url', None))
-
-        # Handle <strong> tag
+        
         elif child.name == 'strong':
             if not previous_text.strip():
                 add_element(heading=child.get_text(strip=True))
             else:
                 add_element(text=child.get_text(strip=True))
-
-        # Handle <iframe> tags
+        
         elif child.name == 'iframe':
             src = child.get('src', '')
             if 'youtube' in src:
@@ -343,13 +198,11 @@ def extract_elements(element):
                 add_element(media={"youtube": f"https://www.youtube.com/watch?v={youtube_id}"})
             else:
                 add_element(media={"iframe": src})
-
-        # Handle <img> tags
+        
         elif child.name == 'img':
             src = child.get('src', '')
             add_element(media={"image": src})
-
-        # Handle gallery shortcode in <p>
+        
         elif '[gallery' in str(child):
             gallery_elements = handle_galleries(str(child))
             elements.extend(gallery_elements)
@@ -560,11 +413,12 @@ def preprocess_article(article):
       - related_articles: A list of related article links.
     """
     post_content = article['post_content']
+    post_content = post_content.replace('\t', '')
     post_id = article['id']
 
     soup = BeautifulSoup(post_content, "html.parser")
     structured_data, external_links = extract_elements(soup.body if soup.body else soup)
-    print("Structured Data:", structured_data)  # This will help inspect the parsed content
+    print("Structured Data:", structured_data)
 
     final_elements = []
     for element in structured_data:
@@ -606,19 +460,19 @@ def preprocess_video_article(article):
 
     media_content = None
     
-    # Extract YouTube URL
+    
     youtube_match = youtube_pattern.search(post_content)
     if youtube_match:
         media_content = youtube_match.group(0)
         post_content = youtube_pattern.sub('', post_content)
 
-    # Extract Facebook iframe
+    
     facebook_match = facebook_pattern.search(post_content)
     if facebook_match:
         media_content = facebook_match.group(0)
         post_content = facebook_pattern.sub('', post_content)
 
-    # Extract Twitter media URL
+    
     twitter_match = twitter_pattern.search(post_content)
     if twitter_match:
         tweet_content = twitter_match.group(0)
@@ -627,7 +481,7 @@ def preprocess_video_article(article):
             media_content = media_match.group(1)
         post_content = twitter_pattern.sub('', post_content)
 
-    # Extract Instagram post URL
+    
     instagram_match = instagram_pattern.search(post_content)
     if instagram_match:
         instagram_content = instagram_match.group(0)
@@ -636,16 +490,16 @@ def preprocess_video_article(article):
             media_content = permalink_match.group(1)
         post_content = instagram_pattern.sub('', post_content)
 
-    # Clean the text
+    
     soup = BeautifulSoup(post_content, "html.parser")
     
-    # Remove all script tags
+    
     for script in soup(["script", "style"]):
         script.decompose()
 
     text_content = soup.get_text(separator=" ").strip()
 
-    # Replace non-breaking spaces with regular spaces
+    
     text_content = text_content.replace('\xa0', ' ')
 
     content = {
