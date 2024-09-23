@@ -28,4 +28,6 @@ urlpatterns = [
     path('verify_otp/', VerifyOTP.as_view(), name='verify_otp'),
     path('groups/', GroupListView.as_view(), name='groups'),
     path('group_membership/<group_id>/', GroupMembershipView.as_view(), name='group_membership'),
+    path('reactions/', ReactionCreateView.as_view(), name='reaction-create'),
+    path('reactions/<str:content_type>/<int:object_id>/', ReactionDestroyView.as_view(), name='reaction-destroy'),
 ]

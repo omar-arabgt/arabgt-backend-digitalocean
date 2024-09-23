@@ -1,6 +1,8 @@
 from django.db import models
 from django.contrib.auth.models import AbstractUser
 from django.contrib.postgres.fields import ArrayField
+from django.contrib.contenttypes.models import ContentType
+from django.contrib.contenttypes.fields import GenericForeignKey
 
 from .choices import *
 from .utils import *
@@ -258,13 +260,15 @@ class Question(TimeStampedModel):
     file = models.FileField(upload_to="question", blank=True, null=True)
     pinned_by = models.ManyToManyField("User", related_name="pinned_questions", blank=True)
 
-    def clean(self):
-        check_one_field(self, "forum", "group")
-
     def save(self, *args, **kwargs):
         self.clean()
         super().save(*args, **kwargs)
         set_point.delay(self.user_id, PointType.QUESTION.name)
+
+    @property
+    def like_count(self):
+        content_type = ContentType.objects.get_for_model(self)
+        return Reaction.objects.filter(content_type=content_type, object_id=self.id).count()
 
 
 class Reply(TimeStampedModel):
@@ -274,9 +278,6 @@ class Reply(TimeStampedModel):
     content = models.TextField()
     file = models.FileField(upload_to="reply", blank=True, null=True)
 
-    def clean(self):
-        check_one_field(self, "question", "parent_reply")
-
     def save(self, *args, **kwargs):
         self.clean()
         super().save(*args, **kwargs)
@@ -285,25 +286,27 @@ class Reply(TimeStampedModel):
             model = self.question or self.parent_reply
             send_push_notification.delay(model.user_id, "title", "content")
 
+    @property
+    def like_count(self):
+        content_type = ContentType.objects.get_for_model(self)
+        return Reaction.objects.filter(content_type=content_type, object_id=self.id).count()
+
 
 class Reaction(TimeStampedModel):
     user = models.ForeignKey("User", on_delete=models.CASCADE)
-    question = models.ForeignKey("Question", blank=True, null=True, related_name='reactions', on_delete=models.CASCADE)
-    reply = models.ForeignKey("Reply", blank=True, null=True, related_name='reactions', on_delete=models.CASCADE)
-    reaction_type = models.CharField(max_length=8, choices=ReactionType.choices)
+    content_type = models.ForeignKey(ContentType, on_delete=models.CASCADE)
+    object_id = models.PositiveIntegerField()
+    content_object = GenericForeignKey("content_type", "object_id")
+    reaction_type = models.CharField(max_length=8, choices=ReactionType.choices, default=ReactionType.LIKE)
 
     class Meta:
-        unique_together = ("user", "question", "reply")
-    
-    def clean(self):
-        check_one_field(self, "question", "reply")
+        unique_together = ("user", "content_type", "object_id")
 
     def save(self, *args, **kwargs):
         self.clean()
         if not self.id:
             set_point.delay(self.user_id, PointType.REACTION.name)
-            model = self.question or self.reply
-            send_push_notification.delay(model.user_id, "title", "content")
+            send_push_notification.delay(self.content_object.user_id, "title", "content")
         return super().save(*args, **kwargs)
 
 

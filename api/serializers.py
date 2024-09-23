@@ -181,7 +181,16 @@ class ReplyReadSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Reply
-        fields = "__all__"
+        fields = [
+            "id",
+            "user",
+            "question",
+            "parent_reply",
+            "content",
+            "file",
+            "replies",
+            "like_count",
+        ]
 
 
 class QuestionWriteSerializer(serializers.ModelSerializer):
@@ -201,7 +210,18 @@ class QuestionReadSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Question
-        fields = "__all__"
+        fields = [
+            "id",
+            "user",
+            "pinned_by",
+            "replies",
+            "title",
+            "content",
+            "group",
+            "forum",
+            "file",
+            "like_count",
+        ]
 
     def get_pinned_by(self, obj):
         user = self.context["request"].user
@@ -249,3 +269,30 @@ class GroupMembershipSerializer(serializers.ModelSerializer):
     class Meta:
         model = GroupMembership
         fields = ["is_active"]
+
+
+class ReactionSerializer(serializers.ModelSerializer):
+    content_type = serializers.CharField()
+
+    class Meta:
+        model = Reaction
+        fields = ["content_type", "object_id"]
+
+    def validate(self, data):
+        data = super().validate(data)
+        try:
+            content_type_model = ContentType.objects.get(model=data["content_type"])
+        except ContentType.DoesNotExist:
+            raise serializers.ValidationError("Invalid content type")
+
+        model_class = content_type_model.model_class()
+        if not model_class.objects.filter(id=data["object_id"]).exists():
+            raise serializers.ValidationError("The object with this ID does not exist")
+
+        user = self.context["request"].user
+        if self.Meta.model.objects.filter(user=user, content_type=content_type_model, object_id=data['object_id']).exists():
+            raise serializers.ValidationError("You have already liked this item.")
+
+        data["content_type"] = content_type_model
+        data["user"] = user
+        return data
