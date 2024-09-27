@@ -58,7 +58,7 @@ class UserSerializer(serializers.ModelSerializer):
             "point",
             "rank",
             "is_verified",
-            "remaining_point",
+            "next_rank_value",
             "send_notification",
             "profile_photo",
         ]
