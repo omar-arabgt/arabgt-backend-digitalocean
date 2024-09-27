@@ -82,7 +82,7 @@ class UserSerializer(serializers.ModelSerializer):
         return [dict(INTERESTS).get(interest) for interest in obj.interests] if obj.interests else []
 
     def get_car_sorting(self, obj):
-        return get_detailed_list(obj.favorite_cars, s3_directory="sort_cars", list=CAR_SORTING)
+        return get_detailed_list(obj.car_sorting, s3_directory="sort_cars", list=CAR_SORTING)
 
     def get_favorite_cars(self, obj):
         return get_detailed_list(obj.favorite_cars, s3_directory="car_brand", list=CAR_BRANDS)
