@@ -2,25 +2,6 @@ from django.utils.translation import gettext_lazy as _
 from django.core.exceptions import ValidationError
 from django.conf import settings
 
-# A constant message used for validation error when more than one field is filled
-ONE_FIELD_MESSAGE = _("Fill only one field among these")
-
-
-def check_one_field(model, field1, field2):
-    """
-    Ensures that only one of the two specified fields is filled on the given model instance.
-
-    Raises:
-    - ValidationError: If both fields are filled.
-
-    Args:
-    - model: The model instance to check.
-    - field1: The name of the first field.
-    - field2: The name of the second field.
-    """
-    if getattr(model, field1) and getattr(model, field2):
-        raise ValidationError(f"{ONE_FIELD_MESSAGE} ({field1}, {field2})")
-
 
 def get_detailed_list(keys=None, s3_directory="", list=None):
     """

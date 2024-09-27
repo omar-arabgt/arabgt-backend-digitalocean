@@ -32,9 +32,6 @@ class PointType(Enum):
 
 class ReactionType(models.TextChoices):
     LIKE = "like"
-    DISLIKE = "dislike"
-    HEART = "heart"
-    APPLAUSE = "applause",
 
 
 class MobilePlatform(models.TextChoices):

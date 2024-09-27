@@ -819,3 +819,22 @@ class GroupMembershipView(UpdateAPIView):
 
         obj, _ = GroupMembership.objects.get_or_create(user=user, group=group)
         return obj
+
+
+class ReactionCreateView(CreateAPIView):
+    permission_classes = [IsAuthenticated]
+    serializer_class = ReactionSerializer
+
+
+class ReactionDestroyView(DestroyAPIView):
+    permission_classes = [IsAuthenticated]
+
+    def get_object(self):
+        content_type = self.kwargs.get("content_type")
+        object_id = self.kwargs.get("object_id")
+        try:
+            content_type_model = ContentType.objects.get(model=content_type)
+            reaction = Reaction.objects.get(user=self.request.user, content_type=content_type_model, object_id=object_id)
+        except (Reaction.DoesNotExist, ContentType.DoesNotExist):
+            raise Http404
+        return reaction
