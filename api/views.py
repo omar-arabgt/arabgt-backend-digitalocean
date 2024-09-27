@@ -504,6 +504,7 @@ class QuestionListCreateView(ListCreateAPIView):
     - Returns a list of questions or the created question details.
     """
     filterset_fields = ["group_id", "forum_id"]
+    search_fields = ["content"]
 
     def get_serializer_class(self):
         """

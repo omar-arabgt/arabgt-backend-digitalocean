@@ -197,7 +197,7 @@ class QuestionWriteSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Question
-        fields = ["title", "content", "group", "forum", "file"]
+        fields = ["content", "group", "forum", "file"]
 
     def create(self, validated_data):
         validated_data["user"] = self.context["request"].user
@@ -215,7 +215,6 @@ class QuestionReadSerializer(serializers.ModelSerializer):
             "user",
             "pinned_by",
             "replies",
-            "title",
             "content",
             "group",
             "forum",
