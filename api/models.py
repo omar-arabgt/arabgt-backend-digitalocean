@@ -254,7 +254,6 @@ class Question(TimeStampedModel):
     user = models.ForeignKey("User", related_name="questions", on_delete=models.CASCADE)
     forum = models.ForeignKey("Forum", related_name="questions", blank=True, null=True, on_delete=models.SET_NULL)
     group = models.ForeignKey("Group", related_name="questions", blank=True, null=True, on_delete=models.SET_NULL)
-    title = models.CharField(max_length=255)
     content = models.TextField()
     file = models.FileField(upload_to="question", blank=True, null=True)
     pinned_by = models.ManyToManyField("User", related_name="pinned_questions", blank=True)
