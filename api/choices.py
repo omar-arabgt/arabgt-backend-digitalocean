@@ -1,6 +1,7 @@
 from enum import Enum
 from django.db import models
 
+from .utils import get_detailed_item_dict
 
 class UserRank(Enum):
    USER = 0
@@ -174,7 +175,7 @@ CARS = [
     ('كونيجسيج', 'كونيجسيج'),
 ]
 
-CAR_BRANDS = [
+CAR_BRANDS_ITEMS = [
     ('dodge', 'دودج'),
     ('genesis', 'جينيسيس'),
     ('ram', 'رام'),
@@ -508,7 +509,7 @@ INTERESTS = [
 ]
 
 
-CAR_SORTING = [
+CAR_SORTING_ITEMS = [
     ('coupe_cars', 'سيارات كوبيه'),
     ('sports_cars', 'سيارات رياضية'),
     ('hyper_cars', 'سيارات هايبر كارز'),
@@ -524,3 +525,11 @@ CAR_SORTING = [
     ('electric_cars', 'سيارات كهربائية'),
     ('hybrid_cars', 'سيارات هايبرد'),
 ]
+
+
+CAR_SORTING_DICT = get_detailed_item_dict(CAR_SORTING_ITEMS, "sort_cars")
+CAR_SORTING = list(CAR_SORTING_DICT.values())
+
+
+CAR_BRAND_DICT = get_detailed_item_dict(CAR_BRANDS_ITEMS, "car_brand")
+CAR_BRANDS = list(CAR_BRAND_DICT.values())

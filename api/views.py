@@ -21,7 +21,6 @@ from django.core.cache import cache
 
 from .models import *
 from .serializers import *
-from .utils import get_detailed_list
 from .filters import *
 from . import choices as choices_module
 from .pagination import *
@@ -269,14 +268,7 @@ class ChoicesView(APIView):
         Retrieves the requested choice list based on the choice type provided in the query parameters.
         """
         choice_type = request.GET.get("type", "").lower()
-        
-        if choice_type == "car_sorting":
-            choices = get_detailed_list(s3_directory="sort_cars", list=choices_module.CAR_SORTING)
-        elif choice_type == "car_brands":
-            choices = get_detailed_list(s3_directory="car_brand", list=choices_module.CAR_BRANDS)
-        else:
-            choices = getattr(choices_module, str(choice_type).upper(), [])
-
+        choices = getattr(choices_module, str(choice_type).upper(), [])
         return Response(choices)
 
 

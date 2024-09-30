@@ -17,7 +17,7 @@ import openpyxl
 from api.models import User, Newsletter, DeletedUser, Group, Forum, Question, Reply
 from api.tasks import send_push_notification, NOTIFICATION_ALL
 from .utils import get_merged_user_data
-from api.choices import COUNTRIES, GENDERS, STATUS, HOBBIES, INTERESTS, CAR_BRANDS, CAR_SORTING
+from api.choices import COUNTRIES, GENDERS, STATUS, HOBBIES, INTERESTS, CAR_BRANDS_ITEMS, CAR_SORTING_ITEMS
 from .forms import *
 
 class GroupListView(LoginRequiredMixin, ListView):
@@ -180,8 +180,8 @@ class ViewUserView(LoginRequiredMixin, DetailView):
         context['page_name'] = 'تفاصيل المستخدم'
         context['HOBBIES'] = HOBBIES
         context['INTERESTS'] = INTERESTS
-        context['CAR_BRANDS'] = CAR_BRANDS
-        context['CAR_SORTING'] = CAR_SORTING
+        context['CAR_BRANDS'] = CAR_BRANDS_ITEMS
+        context['CAR_SORTING'] = CAR_SORTING_ITEMS
         return context
 
 
