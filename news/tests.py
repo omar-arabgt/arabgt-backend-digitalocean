@@ -4,7 +4,6 @@ from .preprocessing import preprocess_article
 from .tasks import fetch_and_process_post
 
 class TestPostContentProcessing(unittest.TestCase):
-
     def setUp(self):
         self.maxDiff = None
         self.sample_post = {
@@ -12,6 +11,7 @@ class TestPostContentProcessing(unittest.TestCase):
             'post_type': 'post',
             'post_title': 'Test Title',
             'post_content': '''
+                first<a href="https://arabgt.com/" target="_blank" rel="noopener"><strong>link</strong></a>second
                 <p>هذه هي أجدد سيارات بورش \t2024.</p>
                 <h2>نظرة عامة</h2>
                 https://www.youtube.com/watch?v=FTfuQyc7IEw
@@ -51,6 +51,17 @@ class TestPostContentProcessing(unittest.TestCase):
         created_post = mock_create.call_args[1]
 
         expected_content = [
+            {
+                "text": "",
+                "heading": "",
+                "media": {},
+                "type": "rich",
+                "data": [
+                    {"text": "first", "heading": "", "media": {}},
+                    {"text": "link", "url": "https://arabgt.com/", "heading": "", "media": {}},
+                    {"text": "second", "heading": "", "media": {}}
+                ]
+            },
             {'text': 'هذه هي أجدد سيارات بورش 2024.', 'media': {}, 'heading': ''},
             {'text': '', 'media': {}, 'heading': 'نظرة عامة'},
             {'text': '', 'media': {'youtube': 'https://www.youtube.com/watch?v=FTfuQyc7IEw'}, 'heading': ''},
@@ -100,7 +111,7 @@ class TestPostContentProcessing(unittest.TestCase):
                     {"text": "• two\n• three", "heading": "", "media": {}}
                 ]
             },
-            {'external_links': ['https://www.google.com', 'www.link.com', 'www.link.com', 'https://www.google.com']}
+            {'external_links': ['https://www.google.com', 'www.link.com']}
         ]
         
         # Compare the actual content with expected content

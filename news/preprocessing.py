@@ -91,13 +91,20 @@ def extract_elements(element):
     Returns a list of content elements with text, media, and headings.
     """
     elements = []
-    external_links = []
+    external_links = set()
+    accumilated_rich = []
+
     youtube_pattern = re.compile(r'https?://(www\.)?(youtube\.com|youtu\.be)/[^\s]+')
 
     def add_element(text='', media=None, heading='', url=None, type=None, rich_data=None):
         if text.strip() or media or heading.strip() or rich_data:
+            text = text.strip() if text else ''
+            if text and youtube_pattern.match(text):
+                media = media or {}
+                media['youtube'] = text
+                text = ''
             element = {
-                'text': text.strip() if text else '',
+                'text': text,
                 'media': media or {},
                 'heading': heading.strip() if heading else ''
             }
@@ -108,111 +115,134 @@ def extract_elements(element):
                 element['data'] = rich_data
             elements.append(element)
 
-    previous_text = ""
-
     for child in element.children:
         if isinstance(child, str):
-            previous_text += child
-            youtube_match = youtube_pattern.search(child)
-            if youtube_match:
-                youtube_link = youtube_match.group(0)
-                add_element(media={"youtube": youtube_link})
-                previous_text = previous_text.replace(youtube_link, '').strip()
-            if previous_text.strip():
-                add_element(text=previous_text.strip())
-                previous_text = ""
+            text = child.strip()
+            if text:
+                accumilated_rich.append({"text": text, "heading": "", "media": {}})
+        elif child.name == 'a' and child.parent.name not in ['h1', 'h2', 'h3', 'h4', 'h5', 'h6']:
+            url = child.get('href', '')
+            link_text = child.get_text(strip=True)
+            external_links.add(url)
+            accumilated_rich.append({"text": link_text, "url": url, "heading": "", "media": {}})
+        else:
+            if accumilated_rich:
+                has_link = any('url' in item for item in accumilated_rich)
+                if has_link:
+                    add_element(type='rich', rich_data=accumilated_rich.copy())
+                else:
+                    for item in accumilated_rich:
+                        add_element(text=item['text'])
+                accumilated_rich.clear()
 
-        elif child.name in ['ul', 'ol']:
-            list_elements = process_list_item_with_regex(str(child))
-            if list_elements:
-                elements.extend(list_elements)
+            if child.name in ['ul', 'ol']:
+                list_elements = process_list_item_with_regex(str(child))
+                if list_elements:
+                    elements.extend(list_elements)
 
-        elif child.name == 'p':
-            rich_data = []
-            paragraph_text = ""
-            for p_child in child.children:
-                if isinstance(p_child, str):
-                    paragraph_text += p_child.strip() + " "
-                elif p_child.name == 'a':
-                    url = p_child.get('href', '')
-                    if p_child.get_text(strip=True):
+            elif child.name == 'p':
+                rich_data = []
+                paragraph_text = ""
+                for p_child in child.children:
+                    if isinstance(p_child, str):
+                        paragraph_text += p_child.strip() + " "
+                    elif p_child.name == 'a':
+                        url = p_child.get('href', '')
                         if paragraph_text.strip():
                             rich_data.append({"text": paragraph_text.strip(), "heading": "", "media": {}})
                             paragraph_text = ""
                         rich_data.append({"text": p_child.get_text(strip=True), "url": url, "heading": "", "media": {}})
-                        external_links.append(url)
-                elif p_child.name == 'img':
-                    if paragraph_text.strip():
-                        add_element(text=paragraph_text.strip())
-                        paragraph_text = ""
-                    add_element(media={"image": p_child.get('src', '')})
+                        external_links.add(url)
+                    elif p_child.name == 'img':
+                        if paragraph_text.strip():
+                            add_element(text=paragraph_text.strip())
+                            paragraph_text = ""
+                        add_element(media={"image": p_child.get('src', '')})
 
-            if paragraph_text.strip():
-                rich_data.append({"text": paragraph_text.strip(), "heading": "", "media": {}})
-  
-            if len(rich_data) > 1:
-                add_element(type='rich', rich_data=rich_data)
-            elif len(rich_data) == 1:
-                add_element(text=rich_data[0]['text'], url=rich_data[0].get('url', None))
+                if paragraph_text.strip():
+                    rich_data.append({"text": paragraph_text.strip(), "heading": "", "media": {}})
 
-        elif child.name == 'a':
-            href = child.get('href', '')
-            external_links.append(href)
-            if child.parent.name in ['h1', 'h2', 'h3', 'h4', 'h5', 'h6']:
-                add_element(heading=child.get_text(strip=True), url=href)
-            else:
-                add_element(text=child.get_text(strip=True), url=href)
+                if len(rich_data) > 1:
+                    add_element(type='rich', rich_data=rich_data)
+                elif len(rich_data) == 1:
+                    if 'url' in rich_data[0]:
+                        add_element(text=rich_data[0]['text'], url=rich_data[0]['url'])
+                    else:
+                        add_element(text=rich_data[0]['text'])
 
-        elif child.name in ['h1', 'h2', 'h3', 'h4', 'h5', 'h6']:
-            heading_rich_data = []
-            heading_text = ""
-            for h_child in child.children:
-                if isinstance(h_child, str):
-                    heading_text += h_child.strip() + " "
-                elif h_child.name == 'a':
-                    url = h_child.get('href', '')
-                    if heading_text.strip():
-                        heading_rich_data.append({"text": heading_text.strip(), "heading": "", "media": {}})
-                        heading_text = ""
-                    heading_rich_data.append({"text": h_child.get_text(strip=True), "url": url, "heading": "", "media": {}})
-                    external_links.append(url)
-            
-            if heading_text.strip():
-                heading_rich_data.append({"text": heading_text.strip(), "heading": "", "media": {}})
-            
-            if len(heading_rich_data) > 1:
-                add_element(type='rich_heading', rich_data=heading_rich_data)
-            else:
-                add_element(heading=heading_rich_data[0]['text'], url=heading_rich_data[0].get('url', None))
-        
-        elif child.name == 'strong':
-            if not previous_text.strip():
-                add_element(heading=child.get_text(strip=True))
-            else:
-                add_element(text=child.get_text(strip=True))
-        
-        elif child.name == 'iframe':
-            src = child.get('src', '')
-            if 'youtube' in src:
-                youtube_id = re.search(r"embed/([^?]+)", src).group(1)
-                add_element(media={"youtube": f"https://www.youtube.com/watch?v={youtube_id}"})
-            else:
-                add_element(media={"iframe": src})
-        
-        elif child.name == 'img':
-            src = child.get('src', '')
-            add_element(media={"image": src})
-        
-        elif '[gallery' in str(child):
-            gallery_elements = handle_galleries(str(child))
-            elements.extend(gallery_elements)
+            elif child.name == 'a':
+                href = child.get('href', '')
+                external_links.add(href)
+                if child.parent.name in ['h1', 'h2', 'h3', 'h4', 'h5', 'h6']:
+                    add_element(heading=child.get_text(strip=True), url=href)
+                else:
+                    add_element(text=child.get_text(strip=True), url=href)
 
+            elif child.name in ['h1', 'h2', 'h3', 'h4', 'h5', 'h6']:
+                heading_rich_data = []
+                heading_text = ""
+                for h_child in child.children:
+                    if isinstance(h_child, str):
+                        heading_text += h_child.strip() + " "
+                    elif h_child.name == 'a':
+                        url = h_child.get('href', '')
+                        if heading_text.strip():
+                            heading_rich_data.append({"text": heading_text.strip(), "heading": "", "media": {}})
+                            heading_text = ""
+                        heading_rich_data.append({"text": h_child.get_text(strip=True), "url": url, "heading": "", "media": {}})
+                        external_links.add(url)
+
+                if heading_text.strip():
+                    heading_rich_data.append({"text": heading_text.strip(), "heading": "", "media": {}})
+
+                if len(heading_rich_data) > 1:
+                    add_element(type='rich_heading', rich_data=heading_rich_data)
+                elif len(heading_rich_data) == 1:
+                    add_element(heading=heading_rich_data[0]['text'], url=heading_rich_data[0].get('url', None))
+                else:
+                    add_element(heading=child.get_text(strip=True))
+
+            elif child.name == 'strong':
+                if not accumilated_rich:
+                    add_element(heading=child.get_text(strip=True))
+                else:
+                    accumilated_rich.append({"text": child.get_text(strip=True), "heading": "", "media": {}})
+
+            elif child.name == 'iframe':
+                src = child.get('src', '')
+                if 'youtube' in src:
+                    youtube_id_match = re.search(r"embed/([^?]+)", src)
+                    if youtube_id_match:
+                        youtube_id = youtube_id_match.group(1)
+                        youtube_url = f"https://www.youtube.com/watch?v={youtube_id}"
+                        add_element(media={"youtube": youtube_url})
+                else:
+                    add_element(media={"iframe": src})
+
+            elif child.name == 'img':
+                src = child.get('src', '')
+                add_element(media={"image": src})
+
+            elif '[gallery' in str(child):
+                gallery_elements = handle_galleries(str(child))
+                elements.extend(gallery_elements)
+
+            else:
+                nested_elements, nested_links = extract_elements(child)
+                elements.extend(nested_elements)
+                external_links.update(nested_links)
+
+    if accumilated_rich:
+        has_link = any('url' in item for item in accumilated_rich)
+        if has_link:
+            add_element(type='rich', rich_data=accumilated_rich.copy())
         else:
-            nested_elements, nested_links = extract_elements(child)
-            elements.extend(nested_elements)
-            external_links.extend(nested_links)
+            for item in accumilated_rich:
+                add_element(text=item['text'])
+        accumilated_rich.clear()
 
-    return elements, external_links
+    return elements, list(external_links)
+
 
 
 def handle_galleries(text):
@@ -435,7 +465,7 @@ def preprocess_article(article):
         final_elements.append({
             "external_links": cleaned_external_links
         })
-        
+
     thumbnail_url = get_thumbnail(post_id)
     thumbnail_url_with_base = f'https://arabgt.com/wp-content/uploads/{thumbnail_url}'
 
