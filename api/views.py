@@ -21,7 +21,6 @@ from django.core.cache import cache
 
 from .models import *
 from .serializers import *
-from .utils import get_detailed_list
 from .filters import *
 from . import choices as choices_module
 from .pagination import *
@@ -42,13 +41,14 @@ class UserRetrieveUpdateDestroyView(RetrieveUpdateDestroyAPIView):
     - Returns the user's information or the updated user information.
     """
     permission_classes = [IsAuthenticated]
+    serializer_class = UserSerializer
     
     def get_serializer_class(self):
         """
         Returns the appropriate serializer class based on the HTTP method.
         """
         if self.request.method == 'GET':
-            return UserSerializer
+            return self.serializer_class
         return UserUpdateSerializer
 
     def get_object(self):
@@ -69,7 +69,19 @@ class UserRetrieveUpdateDestroyView(RetrieveUpdateDestroyAPIView):
             except Exception as e:
                 return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
             set_point.delay(request.user.id, PointType.FILL_PROFILE_FIELD.name)
-        return super().update(request, *args, **kwargs)
+
+        # we copy same code as super().update and just use different serializer class on response 
+        partial = kwargs.pop('partial', False)
+        instance = self.get_object()
+        serializer = self.get_serializer(instance, data=request.data, partial=partial)
+        serializer.is_valid(raise_exception=True)
+        self.perform_update(serializer)
+
+        if getattr(instance, '_prefetched_objects_cache', None):
+            instance._prefetched_objects_cache = {}
+
+        serializer = self.serializer_class(instance)
+        return Response(serializer.data)
     
     def destroy(self, request, *args, **kwargs):
         """Delete user profile"""
@@ -256,14 +268,7 @@ class ChoicesView(APIView):
         Retrieves the requested choice list based on the choice type provided in the query parameters.
         """
         choice_type = request.GET.get("type", "").lower()
-        
-        if choice_type == "car_sorting":
-            choices = get_detailed_list(s3_directory="sort_cars", list=choices_module.CAR_SORTING)
-        elif choice_type == "car_brands":
-            choices = get_detailed_list(s3_directory="car_brand", list=choices_module.CAR_BRANDS)
-        else:
-            choices = getattr(choices_module, str(choice_type).upper(), [])
-
+        choices = getattr(choices_module, str(choice_type).upper(), [])
         return Response(choices)
 
 

@@ -3,8 +3,6 @@ from rest_framework import serializers
 from django.conf import settings
 
 from .models import *
-from .choices import MobilePlatform, CAR_SORTING, CAR_BRANDS
-from .utils import get_detailed_list
 
 
 class FavoritePresenterSerializer(serializers.ModelSerializer):
@@ -58,22 +56,22 @@ class UserSerializer(serializers.ModelSerializer):
             "point",
             "rank",
             "is_verified",
-            "remaining_point",
+            "next_rank_value",
             "send_notification",
             "profile_photo",
         ]
 
     def get_gender(self, obj):
-        return obj.get_gender_display() if obj.gender else None
+        return obj.get_gender_display()
 
     def get_nationality(self, obj):
-        return obj.get_nationality_display() if obj.nationality else None
+        return obj.get_nationality_display()
 
     def get_country(self, obj):
-        return obj.get_country_display() if obj.country else None
+        return obj.get_country_display()
 
     def get_car_type(self, obj):
-        return dict(CARS).get(obj.car_type) if obj.car_type else None
+        return obj.get_car_type_display()
 
     def get_hobbies(self, obj):
         return [dict(HOBBIES).get(hobby) for hobby in obj.hobbies] if obj.hobbies else []
@@ -82,10 +80,10 @@ class UserSerializer(serializers.ModelSerializer):
         return [dict(INTERESTS).get(interest) for interest in obj.interests] if obj.interests else []
 
     def get_car_sorting(self, obj):
-        return get_detailed_list(obj.favorite_cars, s3_directory="sort_cars", list=CAR_SORTING)
+        return [CAR_SORTING_DICT[key] for key in obj.car_sorting] if obj.car_sorting else []
 
     def get_favorite_cars(self, obj):
-        return get_detailed_list(obj.favorite_cars, s3_directory="car_brand", list=CAR_BRANDS)
+        return [CAR_BRAND_DICT[key] for key in obj.favorite_cars] if obj.favorite_cars else []
 
 
 class UserUpdateSerializer(serializers.ModelSerializer):

@@ -33,8 +33,8 @@ class User(TimeStampedModel, AbstractUser):
     car_type = models.CharField(max_length=255, blank=True, choices=CARS)
     hobbies = ArrayField(models.CharField(max_length=30, choices=HOBBIES), default=list, blank=True)
     interests = ArrayField(models.CharField(max_length=30, choices=INTERESTS), default=list, blank=True)
-    favorite_cars = ArrayField(models.CharField(max_length=30, choices=CAR_BRANDS), default=list, blank=True)
-    car_sorting = ArrayField(models.CharField(max_length=30, choices=CAR_SORTING), default=list, blank=True)
+    favorite_cars = ArrayField(models.CharField(max_length=30, choices=CAR_BRANDS_ITEMS), default=list, blank=True)
+    car_sorting = ArrayField(models.CharField(max_length=30, choices=CAR_SORTING_ITEMS), default=list, blank=True)
     favorite_presenter = models.ForeignKey("FavoritePresenter", blank=True, null=True, on_delete=models.SET_NULL)
     favorite_show = models.ForeignKey("FavoriteShow", blank=True, null=True, on_delete=models.SET_NULL)
     point = models.IntegerField(default=5)
@@ -51,7 +51,7 @@ class User(TimeStampedModel, AbstractUser):
 
         point_fields = UserProfilePoint._all_fields()
         for field in point_fields:
-            if not getattr(self.userprofilepoint, field) and getattr(self, field):
+            if not getattr(self.userprofilepoint, field) and getattr(self, field) is not None:
                 set_point.delay(self.id, PointType.FILL_PROFILE_FIELD.name)
                 setattr(self.userprofilepoint, field, True)
         self.userprofilepoint.save()
@@ -96,15 +96,14 @@ class User(TimeStampedModel, AbstractUser):
                 return rank.name
 
     @property
-    def remaining_point(self):
+    def next_rank_value(self):
         ranks = list(UserRank.__members__)
         index = ranks.index(self.rank)
         next_index = index + 1
         if next_index < len(ranks):
             next_rank = ranks[next_index]
-            next_rank_value = UserRank[next_rank].value
-            return next_rank_value - self.point
-        return None
+            return UserRank[next_rank].value
+        return self.point
 
 
 class DeletedUser(TimeStampedModel):
@@ -123,8 +122,8 @@ class DeletedUser(TimeStampedModel):
     car_type = models.CharField(max_length=255, blank=True, choices=CARS)
     hobbies = ArrayField(models.CharField(max_length=30, choices=HOBBIES), default=list, blank=True)
     interests = ArrayField(models.CharField(max_length=30, choices=INTERESTS), default=list, blank=True)
-    favorite_cars = ArrayField(models.CharField(max_length=30, choices=CAR_BRANDS), default=list, blank=True)
-    car_sorting = ArrayField(models.CharField(max_length=30, choices=CAR_SORTING), default=list, blank=True)
+    favorite_cars = ArrayField(models.CharField(max_length=30, choices=CAR_BRANDS_ITEMS), default=list, blank=True)
+    car_sorting = ArrayField(models.CharField(max_length=30, choices=CAR_SORTING_ITEMS), default=list, blank=True)
     favorite_presenter = models.CharField(max_length=255, blank=True)
     favorite_show = models.CharField(max_length=255, blank=True)
     delete_reason = models.TextField(blank=True)
