@@ -8,7 +8,7 @@ class CharArrayFilter(BaseInFilter, CharFilter):
 
 class PostFilter(filters.FilterSet):
     category = CharArrayFilter(field_name='category', lookup_expr='contains')
-    tag = CharArrayFilter(field_name='tag', lookup_expr='contains')
+    tag = CharArrayFilter(field_name='tag', lookup_expr='overlap')
 
     class Meta:
         model = Post
