@@ -176,7 +176,7 @@ class ReplyWriteSerializer(serializers.ModelSerializer):
 
 class ReplyReadSerializer(serializers.ModelSerializer):
     replies = ChildReplySerializer(many=True)
-
+    user = UserSerializer()
     class Meta:
         model = Reply
         fields = [
@@ -204,6 +204,7 @@ class QuestionWriteSerializer(serializers.ModelSerializer):
 
 class QuestionReadSerializer(serializers.ModelSerializer):
     replies = ReplyReadSerializer(many=True)
+    user = UserSerializer()
     pinned_by = serializers.SerializerMethodField()
 
     class Meta:
