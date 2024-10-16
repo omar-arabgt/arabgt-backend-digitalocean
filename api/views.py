@@ -24,6 +24,7 @@ from .serializers import *
 from .filters import *
 from . import choices as choices_module
 from .pagination import *
+from .permissions import *
 
 
 class UserRetrieveUpdateDestroyView(RetrieveUpdateDestroyAPIView):
@@ -543,21 +544,16 @@ class QuestionRetrieveUpdateDestroyView(RetrieveUpdateDestroyAPIView):
     Output:
     - Returns the question details, or a success message upon update or deletion.
     """
+    queryset = Question.objects.all()
+    permission_classes = [IsOwnerOrReadOnlyPermission]
 
     def get_serializer_class(self):
         """
         Returns the appropriate serializer class based on the HTTP method.
         """
         if self.request.method == "GET":
-            return QuestionReadSerializer
+            return QuestionDetailSerializer
         return QuestionWriteSerializer
-
-    def get_queryset(self):
-        """
-        Retrieves the queryset of questions for the current authenticated user.
-        """
-        queryset = Question.objects.filter(user=self.request.user)
-        return queryset
 
 
 class PinQuestionView(APIView):

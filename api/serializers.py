@@ -112,6 +112,20 @@ class UserUpdateSerializer(serializers.ModelSerializer):
         ]
 
 
+class QuestionUserSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = User
+        fields = [
+            "id",
+            "first_name",
+            "last_name",
+            "nick_name",
+            "point",
+            "rank",
+            "is_verified",
+            "profile_photo",
+        ]
 
 
 class PostListSerializer(serializers.ModelSerializer):
@@ -156,13 +170,6 @@ class NewsletterSerializer(serializers.ModelSerializer):
         read_only_fields = ['created_at']
 
 
-class ChildReplySerializer(serializers.ModelSerializer):
-
-    class Meta:
-        model = Reply
-        fields = "__all__"
-
-
 class ReplyWriteSerializer(serializers.ModelSerializer):
 
     class Meta:
@@ -175,8 +182,10 @@ class ReplyWriteSerializer(serializers.ModelSerializer):
 
 
 class ReplyReadSerializer(serializers.ModelSerializer):
-    replies = ChildReplySerializer(many=True)
-    user = UserSerializer()
+    replies = serializers.SerializerMethodField()
+    user = QuestionUserSerializer()
+    liked_by = serializers.SerializerMethodField()
+
     class Meta:
         model = Reply
         fields = [
@@ -188,7 +197,21 @@ class ReplyReadSerializer(serializers.ModelSerializer):
             "file",
             "replies",
             "like_count",
+            "reply_count",
+            "liked_by",
+            "created_at",
+            "updated_at",
         ]
+
+    def get_replies(self, obj):
+        if obj.replies:
+            return ReplyReadSerializer(obj.replies.all(), many=True, context=self.context).data
+        return None
+
+    def get_liked_by(self, obj):
+        user = self.context["request"].user
+        content_type = ContentType.objects.get_for_model(self.Meta.model)
+        return Reaction.objects.filter(content_type=content_type, object_id=obj.id, user=user).exists()
 
 
 class QuestionWriteSerializer(serializers.ModelSerializer):
@@ -203,9 +226,9 @@ class QuestionWriteSerializer(serializers.ModelSerializer):
 
 
 class QuestionReadSerializer(serializers.ModelSerializer):
-    replies = ReplyReadSerializer(many=True)
-    user = UserSerializer()
+    user = QuestionUserSerializer()
     pinned_by = serializers.SerializerMethodField()
+    liked_by = serializers.SerializerMethodField()
 
     class Meta:
         model = Question
@@ -213,17 +236,30 @@ class QuestionReadSerializer(serializers.ModelSerializer):
             "id",
             "user",
             "pinned_by",
+            "liked_by",
             "replies",
             "content",
             "group",
             "forum",
             "file",
             "like_count",
+            "reply_count",
+            "created_at",
+            "updated_at",
         ]
 
     def get_pinned_by(self, obj):
         user = self.context["request"].user
         return user in obj.pinned_by.all()
+    
+    def get_liked_by(self, obj):
+        user = self.context["request"].user
+        content_type = ContentType.objects.get_for_model(self.Meta.model)
+        return Reaction.objects.filter(content_type=content_type, object_id=obj.id, user=user).exists()
+
+
+class QuestionDetailSerializer(QuestionReadSerializer):
+    replies = ReplyReadSerializer(many=True)
 
 
 class MobileReleaseSerializer(serializers.ModelSerializer):
