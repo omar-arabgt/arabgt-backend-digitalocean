@@ -556,7 +556,20 @@ class QuestionRetrieveUpdateDestroyView(RetrieveUpdateDestroyAPIView):
             return QuestionDetailSerializer
         return QuestionWriteSerializer
 
+class QuestionReportView(APIView):
 
+    def post(self, request, *args, **kwargs):
+        pk = self.kwargs.get("pk")
+        question = get_object_or_404(Question, pk=pk)
+        question.report_count = F("report_count") + 1
+        question = question.save(update_fields=["report_count"])
+        
+        question = Question.objects.get(id=pk)
+        if question.report_count >= 5:
+            question.delete()
+
+        return Response("OK")
+    
 class PinQuestionView(APIView):
     """
     Pins or unpins a specific question for the authenticated user.
