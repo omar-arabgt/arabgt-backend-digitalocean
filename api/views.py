@@ -509,6 +509,7 @@ class QuestionListCreateView(ListCreateAPIView):
     Output:
     - Returns a list of questions or the created question details.
     """
+    filter_backends = [DjangoFilterBackend, SearchFilter]
     filterset_fields = ["group_id", "forum_id"]
     search_fields = ["content"]
 
