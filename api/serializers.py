@@ -256,10 +256,16 @@ class ForumSerializer(serializers.ModelSerializer):
 
 
 class GroupSerializer(serializers.ModelSerializer):
+    is_member = serializers.SerializerMethodField()
 
     class Meta:
         model = Group
         exclude = ["members"]
+
+    def get_is_member(self, obj):
+        user = self.context["request"].user
+        membership = GroupMembership.objects.filter(group=obj, user=user, is_active=True)
+        return membership.exists()
 
 
 class GroupMembershipSerializer(serializers.ModelSerializer):
