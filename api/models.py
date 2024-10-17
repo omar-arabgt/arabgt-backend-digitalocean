@@ -3,6 +3,8 @@ from django.contrib.auth.models import AbstractUser
 from django.contrib.postgres.fields import ArrayField
 from django.contrib.contenttypes.models import ContentType
 from django.contrib.contenttypes.fields import GenericForeignKey
+from django.db.models import Q
+
 
 from .choices import *
 from .utils import *
@@ -267,6 +269,11 @@ class Question(TimeStampedModel):
     def like_count(self):
         content_type = ContentType.objects.get_for_model(self)
         return Reaction.objects.filter(content_type=content_type, object_id=self.id).count()
+    
+    @property
+    def reply_count(self):
+        replies = Reply.objects.filter(Q(question=self) | Q(parent_reply__in=self.replies.all()))
+        return replies.count()
 
 
 class Reply(TimeStampedModel):
@@ -288,6 +295,10 @@ class Reply(TimeStampedModel):
     def like_count(self):
         content_type = ContentType.objects.get_for_model(self)
         return Reaction.objects.filter(content_type=content_type, object_id=self.id).count()
+
+    @property
+    def reply_count(self):
+        return self.replies.all().count()
 
 
 class Reaction(TimeStampedModel):
