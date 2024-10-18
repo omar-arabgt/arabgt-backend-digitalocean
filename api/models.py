@@ -259,6 +259,7 @@ class Question(TimeStampedModel):
     content = models.TextField()
     file = models.FileField(upload_to="question", blank=True, null=True)
     pinned_by = models.ManyToManyField("User", related_name="pinned_questions", blank=True)
+    report_count = models.IntegerField(default=0)
 
     def save(self, *args, **kwargs):
         self.clean()
