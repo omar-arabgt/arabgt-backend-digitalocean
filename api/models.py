@@ -2,7 +2,7 @@ from django.db import models
 from django.contrib.auth.models import AbstractUser
 from django.contrib.postgres.fields import ArrayField
 from django.contrib.contenttypes.models import ContentType
-from django.contrib.contenttypes.fields import GenericForeignKey
+from django.contrib.contenttypes.fields import GenericForeignKey, GenericRelation
 from django.db.models import Q
 
 
@@ -260,6 +260,7 @@ class Question(TimeStampedModel):
     file = models.FileField(upload_to="question", blank=True, null=True)
     pinned_by = models.ManyToManyField("User", related_name="pinned_questions", blank=True)
     report_count = models.IntegerField(default=0)
+    reactions = GenericRelation("Reaction")
 
     def save(self, *args, **kwargs):
         self.clean()
@@ -283,6 +284,7 @@ class Reply(TimeStampedModel):
     parent_reply = models.ForeignKey("Reply", related_name="replies", blank=True, null=True, on_delete=models.CASCADE)
     content = models.TextField()
     file = models.FileField(upload_to="reply", blank=True, null=True)
+    reactions = GenericRelation("Reaction")
 
     def save(self, *args, **kwargs):
         self.clean()

@@ -784,9 +784,7 @@ class QuestionDetailView(LoginRequiredMixin, DetailView):
         context = super().get_context_data(**kwargs)
         question = self.get_object()
         
-        replies = question.replies.filter(parent_reply__isnull=True).annotate(
-            total_likes=Count('reactions', filter=Q(reactions__reaction_type='like'))
-        )
+        replies = question.replies.filter(parent_reply__isnull=True)
         
         context['replies'] = self.annotate_replies_with_likes(replies)
         context['no_sidebar'] = True
