@@ -79,6 +79,13 @@ MIDDLEWARE = [
     "django.middleware.locale.LocaleMiddleware",
 ]
 
+
+LOCALE_PATHS = (
+    os.path.join(BASE_DIR, "locale"),
+    "/usr/local/lib/python3.9/site-packages/dj_rest_auth/locale"
+)
+
+
 ROOT_URLCONF = 'core.urls'
 
 TEMPLATES = [
