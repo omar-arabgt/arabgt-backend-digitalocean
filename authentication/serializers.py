@@ -34,6 +34,7 @@ class CustomPasswordResetSerializer(PasswordResetSerializer):
         return CustomPasswordResetForm
 
     def get_email_options(self):
+        self.reset_form._request = self.context.get("request")
         extra_email_context = {
             "request": self.context.get("request")
         }

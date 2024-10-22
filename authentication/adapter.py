@@ -3,6 +3,9 @@ from django.core.mail import EmailMessage
 from django.contrib.auth import get_user_model
 from django.template.loader import render_to_string
 from django.contrib.auth.forms import PasswordResetForm
+from django.utils.translation import gettext as _
+from rest_framework.serializers import ValidationError
+from allauth.account.models import EmailAddress
 from allauth.account.adapter import DefaultAccountAdapter
 from allauth.utils import build_absolute_uri
 
@@ -36,6 +39,11 @@ class CustomPasswordResetForm(PasswordResetForm):
     def get_users(self, email):
         user_model = get_user_model()
         users = user_model.objects.filter(is_active=True, email=email, emailaddress__verified=True)
+        if not users:
+            if user_model.objects.filter(is_active=True, email=email).exists():
+                email_address = EmailAddress.objects.filter(email=email).last()
+                email_address.send_confirmation(self._request)
+                raise ValidationError({"error": _("Please check your email to verify your account before proceeding with password reset.")})
         return users
 
     def send_mail(
