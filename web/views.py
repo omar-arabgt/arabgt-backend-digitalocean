@@ -19,6 +19,7 @@ from api.tasks import send_push_notification, NOTIFICATION_ALL
 from .utils import get_merged_user_data
 from api.choices import COUNTRIES, GENDERS, STATUS, HOBBIES, INTERESTS, CAR_BRANDS_ITEMS, CAR_SORTING_ITEMS
 from .forms import *
+from django.utils.timezone import make_naive
 
 class GroupListView(LoginRequiredMixin, ListView):
     """
@@ -343,7 +344,6 @@ class ExportUserToExcelView(LoginRequiredMixin, ListView):
     Output:
     - Returns the Excel file containing the merged user data for download.
     """
-
     def get_queryset(self):
         """
         Retrieves and filters the merged user data based on the query parameters.
@@ -357,6 +357,29 @@ class ExportUserToExcelView(LoginRequiredMixin, ListView):
 
         return get_merged_user_data(query, nationality, country, birthdate, gender, status)
 
+    def get_user_details(self, user_id):
+        """
+        Retrieves the User object from the database to get additional fields.
+        """
+        try:
+            user = User.objects.get(id=user_id)
+            return {
+                'email': user.email,
+                'phone_number': user.phone_number,
+                'date_joined': make_naive(user.date_joined) if user.date_joined else '',  # Convert to naive datetime
+                'deletion_date': make_naive(user.last_login) if user.last_login else '',  # Convert to naive datetime
+                'send_notification': user.send_notification,
+                'point': user.point,
+                'has_car': user.has_car,
+                'car_type': user.car_type,
+                'favorite_presenter': user.favorite_presenter.name if user.favorite_presenter else '',
+                'favorite_show': user.favorite_show.name if user.favorite_show else '',
+                'hobbies': ', '.join(user.hobbies),
+                'has_business': user.has_business,
+            }
+        except User.DoesNotExist:
+            return {}
+
     def get(self, request, *args, **kwargs):
         """
         Generates and returns an Excel file containing the filtered user data.
@@ -368,22 +391,40 @@ class ExportUserToExcelView(LoginRequiredMixin, ListView):
         ws.title = "Users and Deleted Users"
 
         headers = [
-            'ID', # رقم المستخدم
-            'Status', # الحالة
-            'First Name', # اسم الاول
-            'Last Name', # الاسم الاخير
-            'Nick Name', # الكنية
-            'Birth Date', # تاريخ الميلاد
-            'Gender', # الجنسية
-            'Nationality', # دولة الإقامة
-            'Country', # الجنس
-            'Rank', # فئة
-            'Delete Reason',
+            'ID',  # User ID
+            'Status',  # User Status
+            'First Name',  # First Name
+            'Last Name',  # Last Name
+            'Nick Name',  # Nick Name
+            'Birth Date',  # Birth Date
+            'Gender',  # Gender
+            'Nationality',  # Nationality
+            'Country',  # Country
+            'Rank',  # Rank
+            'Delete Reason',  # Deletion Reason
+            'Email',  # Email
+            'Mobile',  # Mobile
+            'Registration Date',  # Registration Date
+            'Deletion Date',  # Deletion Date
+            'Newsletter Subscription',  # Newsletter Subscription
+            'Points',  # Points
+            'Have a Car',  # Have a Car
+            'Brand Model',  # Car Brand Model
+            'Favorite Presenter',  # Favorite Presenter
+            'Favorite Show',  # Favorite Show
+            'Hobbies',  # Hobbies
+            'Is Business Owner',  # Is Business Owner
         ]
 
         ws.append(headers)
 
         for user in queryset:
+            user_details = self.get_user_details(user['id'])
+            
+            # Ensure datetime fields are naive (timezone removed)
+            registration_date = user_details.get('date_joined', '')
+            deletion_date = user_details.get('deletion_date', '')
+
             ws.append([
                 user['id'],
                 "محذوف" if user['status'] == "deleted" else "مفعل",
@@ -396,13 +437,24 @@ class ExportUserToExcelView(LoginRequiredMixin, ListView):
                 user['get_country_display'],
                 user["rank"],
                 user["delete_reason"],
+                user_details.get('email', ''),  # Email
+                user_details.get('phone_number', ''),  # Mobile
+                registration_date,  # Registration Date
+                deletion_date,  # Deletion Date
+                'Yes' if user_details.get('send_notification') else 'No',  # Newsletter Subscription
+                user_details.get('point', 0),  # Points
+                'Yes' if user_details.get('has_car') else 'No',  # Have a Car
+                user_details.get('car_type', ''),  # Car Brand Model
+                user_details.get('favorite_presenter', ''),  # Favorite Presenter
+                user_details.get('favorite_show', ''),  # Favorite Show
+                user_details.get('hobbies', ''),  # Hobbies
+                'Yes' if user_details.get('has_business') else 'No',  # Is Business Owner
             ])
 
         response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
         response['Content-Disposition'] = 'attachment; filename=exported_users.xlsx'
         wb.save(response)
         return response
-
 
 class NewsletterListView(LoginRequiredMixin, ListView):
     """

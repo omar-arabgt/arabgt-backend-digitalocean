@@ -312,7 +312,7 @@ CELERY_BEAT_SCHEDULE = {
 CSRF_TRUSTED_ORIGINS = ["https://localhost", "https://localhost", 'https://dev-arabgt.audteye.com', 'http://dev-arabgt.audteye.com']
 # CSRF_TRUSTED_ORIGINS = ["*"]
 
-LOGIN_REDIRECT_URL="home"
+LOGIN_REDIRECT_URL="user_list"
 LOGOUT_REDIRECT_URL = "web-login"
 LOGIN_URL="web-login"
 

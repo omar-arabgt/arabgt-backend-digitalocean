@@ -76,7 +76,7 @@ class CustomAuthenticationForm(AuthenticationForm, CustomFormMixin):
 
 class GroupForm(CustomFormMixin, forms.ModelForm):
     class Meta:
-        model = Forum
+        model = Group
         fields = ['name', 'description', 'image' ]
         labels = {
             'name': 'اسم المجموعة',
