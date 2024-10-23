@@ -222,6 +222,9 @@ class QuestionWriteSerializer(serializers.ModelSerializer):
 
     def create(self, validated_data):
         validated_data["user"] = self.context["request"].user
+        file = validated_data.get("file")
+        if file:
+            validated_data["file_extension"] = file.name.split(".")[-1].lower()
         return super().create(validated_data)
 
 
@@ -229,6 +232,7 @@ class QuestionReadSerializer(serializers.ModelSerializer):
     user = QuestionUserSerializer()
     pinned_by = serializers.SerializerMethodField()
     liked_by = serializers.SerializerMethodField()
+    file_type = serializers.SerializerMethodField()
 
     class Meta:
         model = Question
@@ -242,6 +246,8 @@ class QuestionReadSerializer(serializers.ModelSerializer):
             "group",
             "forum",
             "file",
+            "file_extension",
+            "file_type",
             "like_count",
             "reply_count",
             "created_at",
@@ -256,6 +262,15 @@ class QuestionReadSerializer(serializers.ModelSerializer):
         user = self.context["request"].user
         content_type = ContentType.objects.get_for_model(self.Meta.model)
         return Reaction.objects.filter(content_type=content_type, object_id=obj.id, user=user).exists()
+
+    def get_file_type(self, obj):
+        # TODO: add all required formats
+        if obj.file_extension in ["jpg", "jpeg", "png", "webp"]:
+            return "image"
+        elif obj.file_extension in ["mp4", "mov"]:
+            return "video"
+        else:
+            return None
 
 
 class QuestionDetailSerializer(QuestionReadSerializer):
