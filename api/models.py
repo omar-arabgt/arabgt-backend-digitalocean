@@ -258,6 +258,7 @@ class Question(TimeStampedModel):
     group = models.ForeignKey("Group", related_name="questions", blank=True, null=True, on_delete=models.SET_NULL)
     content = models.TextField()
     file = models.FileField(upload_to="question", blank=True, null=True)
+    file_extension = models.CharField(max_length=20, blank=True, null=True)
     pinned_by = models.ManyToManyField("User", related_name="pinned_questions", blank=True)
     report_count = models.IntegerField(default=0)
     reactions = GenericRelation("Reaction")
