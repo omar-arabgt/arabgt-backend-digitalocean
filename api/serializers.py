@@ -178,6 +178,9 @@ class ReplyWriteSerializer(serializers.ModelSerializer):
 
     def create(self, validated_data):
         validated_data["user"] = self.context["request"].user
+        file = validated_data.get("file")
+        if file:
+            validated_data["file_extension"] = file.name.split(".")[-1].lower()
         return super().create(validated_data)
 
 
@@ -185,6 +188,7 @@ class ReplyReadSerializer(serializers.ModelSerializer):
     replies = serializers.SerializerMethodField()
     user = QuestionUserSerializer()
     liked_by = serializers.SerializerMethodField()
+    file_type = serializers.SerializerMethodField()
 
     class Meta:
         model = Reply
@@ -195,6 +199,8 @@ class ReplyReadSerializer(serializers.ModelSerializer):
             "parent_reply",
             "content",
             "file",
+            "file_extension",
+            "file_type",
             "replies",
             "like_count",
             "reply_count",
@@ -212,6 +218,15 @@ class ReplyReadSerializer(serializers.ModelSerializer):
         user = self.context["request"].user
         content_type = ContentType.objects.get_for_model(self.Meta.model)
         return Reaction.objects.filter(content_type=content_type, object_id=obj.id, user=user).exists()
+
+    def get_file_type(self, obj):
+        # TODO: add all required formats
+        if obj.file_extension in ["jpg", "jpeg", "png", "webp"]:
+            return "image"
+        elif obj.file_extension in ["mp4", "mov"]:
+            return "video"
+        else:
+            return None
 
 
 class QuestionWriteSerializer(serializers.ModelSerializer):
