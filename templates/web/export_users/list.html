@@ -38,8 +38,11 @@
                         <option value="{{ value }}" {% if value == status_filter %}selected{% endif %}>{{ name }}</option>
                         {% endfor %}
                     </select>
-                    <select name="category" class="custom-select w-full md:w-44 px-2 py-1 tom-select agt-default-input">
-                        <option value="">Rank</option>
+                    <select name="rank" class="custom-select w-full md:w-44 px-2 py-1 tom-select agt-default-input">
+                        <option value="">الحالة</option>
+                        {% for enum in RANKS %}
+                        <option value="{{ enum.value }}" {% if enum.value == rank_filter %}selected{% endif %}>{{ enum.name }}</option>
+                        {% endfor %}
                     </select>
                     <div class="w-full md:w-44 md:mb-0 mb-4 flex flex-col relative">
                         <input type="date" name="birthdate" value="{{ birthdate_filter }}" class="w-full h-full md:w-44 px-2 py-1 agt-default-input">

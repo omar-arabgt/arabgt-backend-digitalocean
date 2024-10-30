@@ -99,13 +99,8 @@ class User(TimeStampedModel, AbstractUser):
 
     @property
     def next_rank_value(self):
-        ranks = list(UserRank.__members__)
-        index = ranks.index(self.rank)
-        next_index = index + 1
-        if next_index < len(ranks):
-            next_rank = ranks[next_index]
-            return UserRank[next_rank].value
-        return self.point
+        next_rank = UserRank.next_rank_value(self.point)
+        return next_rank or self.point
 
 
 class DeletedUser(TimeStampedModel):

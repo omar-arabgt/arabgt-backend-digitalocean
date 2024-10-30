@@ -4,11 +4,19 @@ from django.db import models
 from .utils import get_detailed_item_dict
 
 class UserRank(Enum):
-   USER = 0
-   RED = 6
-   SILVER = 2500
-   GOLD = 10000
-   PLATINUM = 25000
+    USER = 0
+    RED = 6
+    SILVER = 2500
+    GOLD = 10000
+    PLATINUM = 25000
+
+    @classmethod
+    def next_rank_value(cls, point):
+        items = list(cls)
+        for item in items:
+            if item.value > point:
+                return item.value
+        return None
 
 
 class PointType(Enum):

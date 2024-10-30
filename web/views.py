@@ -17,7 +17,7 @@ import openpyxl
 from api.models import User, Newsletter, DeletedUser, Group, Forum, Question, Reply
 from api.tasks import send_push_notification, NOTIFICATION_ALL
 from .utils import get_merged_user_data
-from api.choices import COUNTRIES, GENDERS, STATUS, HOBBIES, INTERESTS, CAR_BRANDS_ITEMS, CAR_SORTING_ITEMS
+from api.choices import COUNTRIES, GENDERS, STATUS, HOBBIES, INTERESTS, CAR_BRANDS_ITEMS, CAR_SORTING_ITEMS, UserRank
 from .forms import *
 from django.utils.timezone import make_naive
 
@@ -310,8 +310,9 @@ class ExportUserListView(LoginRequiredMixin, ListView):
         birthdate = self.request.GET.get('birthdate')
         gender = self.request.GET.get('gender')
         status = self.request.GET.get('status')
+        rank = self.request.GET.get('rank')
 
-        return get_merged_user_data(query, nationality, country, birthdate, gender, status)
+        return get_merged_user_data(query, nationality, country, birthdate, gender, status, rank)
 
     def get_context_data(self, **kwargs):
         """
@@ -328,6 +329,10 @@ class ExportUserListView(LoginRequiredMixin, ListView):
         context['GENDERS'] = GENDERS
         context['STATUS'] = STATUS
         context['COUNTRIES'] = COUNTRIES
+        context['RANKS'] = list(UserRank)
+        rank = self.request.GET.get('rank', "")
+        if rank:
+            context['rank_filter'] = int(rank)
         return context
 
 
@@ -354,8 +359,9 @@ class ExportUserToExcelView(LoginRequiredMixin, ListView):
         birthdate = self.request.GET.get('birthdate')
         gender = self.request.GET.get('gender')
         status = self.request.GET.get('status')
+        rank = self.request.GET.get('rank')
 
-        return get_merged_user_data(query, nationality, country, birthdate, gender, status)
+        return get_merged_user_data(query, nationality, country, birthdate, gender, status, rank)
 
     def get_user_details(self, user_id):
         """
@@ -558,7 +564,7 @@ class DeletedUserListView(LoginRequiredMixin, ListView):
         filters = Q()
 
         if query:
-            filters &= Q(username__icontains=query)
+            filters &= Q(Q(username__icontains=query) | Q(email__icontains=query) | Q(first_name__icontains=query) | Q(last_name__icontains=query) | Q(nick_name__icontains=query))
         if nationality:
             filters &= Q(nationality=nationality)
         if country:

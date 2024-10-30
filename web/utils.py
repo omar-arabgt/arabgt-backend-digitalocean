@@ -2,8 +2,10 @@ from itertools import chain
 from django.db.models import Q, Value, CharField
 from django.utils.dateparse import parse_date
 from api.models import User, DeletedUser
+from api.choices import UserRank
 
-def get_merged_user_data(query='', nationality=None, country=None, birthdate=None, gender=None, status=None):
+
+def get_merged_user_data(query='', nationality=None, country=None, birthdate=None, gender=None, status=None, rank=None):
     """
     Merges and filters data from the User and DeletedUser models based on the provided criteria.
 
@@ -28,13 +30,18 @@ def get_merged_user_data(query='', nationality=None, country=None, birthdate=Non
     # Filtering active users
     user_filters = Q(is_staff=False, is_superuser=False)
     if query:
-        user_filters &= Q(username__icontains=query)
+        user_filters &= Q(Q(username__icontains=query) | Q(email__icontains=query) | Q(first_name__icontains=query) | Q(last_name__icontains=query) | Q(nick_name__icontains=query))
     if nationality:
         user_filters &= Q(nationality=nationality)
     if gender:
         user_filters &= Q(gender=gender)
     if country:
         user_filters &= Q(country=country)
+    if rank:
+        user_filters &= Q(point__gte=rank)
+        next_rank_value = UserRank.next_rank_value(int(rank))
+        if next_rank_value:
+            user_filters &= Q(point__lt=next_rank_value)
     if birthdate:
         try:
             date = parse_date(birthdate)
@@ -69,6 +76,11 @@ def get_merged_user_data(query='', nationality=None, country=None, birthdate=Non
         deleted_user_filters &= Q(gender=gender)
     if country:
         deleted_user_filters &= Q(country=country)
+    if rank:
+        deleted_user_filters &= Q(point__gte=rank)
+        next_rank_value = UserRank.next_rank_value(int(rank))
+        if next_rank_value:
+            user_filters &= Q(point__lt=next_rank_value)
     if birthdate:
         try:
             date = parse_date(birthdate)
