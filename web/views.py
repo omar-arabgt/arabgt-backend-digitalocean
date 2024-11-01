@@ -370,10 +370,13 @@ class ExportUserToExcelView(LoginRequiredMixin, ListView):
         try:
             if status == "deleted":
                 user = DeletedUser.objects.get(id=user_id)
+                user_id = user.user_id
             else:
                 user = User.objects.get(id=user_id)
+                user_id = user.id
 
             return {
+                'user_id': user_id,
                 'email': user.email,
                 'phone_number': user.phone_number,
                 'date_joined': make_naive(user.date_joined) if getattr(user, "date_joined", None) else '',  # Convert to naive datetime
@@ -439,7 +442,7 @@ class ExportUserToExcelView(LoginRequiredMixin, ListView):
             deletion_date = user_details.get('deletion_date', '')
 
             ws.append([
-                user['id'],
+                user_details['user_id'],
                 "محذوف" if user['status'] == "deleted" else "مفعل",
                 user['first_name'],
                 user['last_name'],

@@ -92,7 +92,7 @@ def get_merged_user_data(query='', nationality=None, country=None, birthdate=Non
 
     # Querying deleted users and annotating them with status 'deleted'
     deleted_users = DeletedUser.objects.filter(deleted_user_filters).values(
-        'id', 'first_name', 'last_name', 'nick_name', 'birth_date', 'gender', 'delete_reason', 'rank'
+        'id', 'user_id', 'first_name', 'last_name', 'nick_name', 'birth_date', 'gender', 'delete_reason', 'rank'
     ).annotate(
         status=Value('deleted', output_field=CharField())
     )
