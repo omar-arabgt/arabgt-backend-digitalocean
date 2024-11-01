@@ -47,7 +47,7 @@ def get_merged_user_data(query='', nationality=None, country=None, birthdate=Non
         try:
             date = parse_date(birthdate)
             if date:
-                user_filters &= Q(birth_date__gt=date)
+                user_filters &= Q(birth_date=date)
         except ValueError:
             pass
 
@@ -86,7 +86,7 @@ def get_merged_user_data(query='', nationality=None, country=None, birthdate=Non
         try:
             date = parse_date(birthdate)
             if date:
-                deleted_user_filters &= Q(birth_date__gt=date)
+                deleted_user_filters &= Q(birth_date=date)
         except ValueError:
             pass
 
