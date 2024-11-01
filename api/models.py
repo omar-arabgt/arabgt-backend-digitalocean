@@ -171,10 +171,16 @@ class FavoritePresenter(TimeStampedModel):
     image = models.ImageField(upload_to="favorite_presenter")
     video = models.CharField(max_length=255, blank=True)
 
+    def __str__(self):
+        return self.name
+
 
 class FavoriteShow(TimeStampedModel):
     name = models.CharField(max_length=255, blank=True)
     image = models.ImageField(upload_to="favorite_show")
+
+    def __str__(self):
+        return self.name
 
 
 class Post(TimeStampedModel):

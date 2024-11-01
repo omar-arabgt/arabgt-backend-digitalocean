@@ -1,8 +1,9 @@
 from itertools import chain
 from django.db.models import Q, Value, CharField
 from django.utils.dateparse import parse_date
+from allauth.socialaccount.models import SocialAccount
 from api.models import User, DeletedUser
-from api.choices import UserRank
+from api.choices import UserRank, CAR_SORTING_ITEMS
 
 
 def get_merged_user_data(query='', nationality=None, country=None, birthdate=None, gender=None, status=None, rank=None):
@@ -114,3 +115,23 @@ def get_merged_user_data(query='', nationality=None, country=None, birthdate=Non
         combined_queryset = [user for user in combined_queryset if user['status'] == status]
 
     return combined_queryset
+
+
+def get_signup_method(user_id):
+    social_account = SocialAccount.objects.filter(user_id=user_id).first()
+    if social_account:
+        return social_account.provider
+    return "email"
+
+
+CAR_SORTING_LIST = [i for i,_ in CAR_SORTING_ITEMS]
+
+def get_car_sorting_index(user_sorting):
+    car_index_list = []
+    for car in CAR_SORTING_LIST:
+        try:
+            idx = user_sorting.index(car) + 1
+        except:
+            idx = "-"
+        car_index_list.append(idx)
+    return car_index_list
