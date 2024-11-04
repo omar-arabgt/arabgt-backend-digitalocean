@@ -75,7 +75,7 @@
             <tbody>
                 {% for user in merged_list %}
                 <tr class="hover:bg-gray-100 {% if user.status == 'deleted' %} bg-gray-200/50 {% endif %}">
-                    <td class="border border-gray-300 font-bold px-4 py-2">{{ user.id }}</td>
+                    <td class="border border-gray-300 font-bold px-4 py-2">{% if user.status == "deleted" %} {{user.user_id}} {% else %} {{user.id}} {% endif %}</td>
                     <td class="border border-gray-300 font-bold px-4 py-2">{% if user.status == "deleted" %} محذوف {% else %} مفعل {% endif %}</td>
                     <td class="border border-gray-300 font-bold px-4 py-2">{{ user.first_name }}</td>
                     <td class="border border-gray-300 font-bold px-4 py-2">{{ user.last_name }}</td>

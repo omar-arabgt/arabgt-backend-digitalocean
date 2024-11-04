@@ -1,8 +1,9 @@
 from itertools import chain
 from django.db.models import Q, Value, CharField
 from django.utils.dateparse import parse_date
+from allauth.socialaccount.models import SocialAccount
 from api.models import User, DeletedUser
-from api.choices import UserRank
+from api.choices import UserRank, CAR_SORTING_ITEMS
 
 
 def get_merged_user_data(query='', nationality=None, country=None, birthdate=None, gender=None, status=None, rank=None):
@@ -46,7 +47,7 @@ def get_merged_user_data(query='', nationality=None, country=None, birthdate=Non
         try:
             date = parse_date(birthdate)
             if date:
-                user_filters &= Q(birth_date__gt=date)
+                user_filters &= Q(birth_date=date)
         except ValueError:
             pass
 
@@ -85,13 +86,13 @@ def get_merged_user_data(query='', nationality=None, country=None, birthdate=Non
         try:
             date = parse_date(birthdate)
             if date:
-                deleted_user_filters &= Q(birth_date__gt=date)
+                deleted_user_filters &= Q(birth_date=date)
         except ValueError:
             pass
 
     # Querying deleted users and annotating them with status 'deleted'
     deleted_users = DeletedUser.objects.filter(deleted_user_filters).values(
-        'id', 'first_name', 'last_name', 'nick_name', 'birth_date', 'gender', 'delete_reason', 'rank'
+        'id', 'user_id', 'first_name', 'last_name', 'nick_name', 'birth_date', 'gender', 'delete_reason', 'rank'
     ).annotate(
         status=Value('deleted', output_field=CharField())
     )
@@ -114,3 +115,23 @@ def get_merged_user_data(query='', nationality=None, country=None, birthdate=Non
         combined_queryset = [user for user in combined_queryset if user['status'] == status]
 
     return combined_queryset
+
+
+def get_signup_method(user_id):
+    social_account = SocialAccount.objects.filter(user_id=user_id).first()
+    if social_account:
+        return social_account.provider
+    return "email"
+
+
+CAR_SORTING_LIST = [i for i,_ in CAR_SORTING_ITEMS]
+
+def get_car_sorting_index(user_sorting):
+    car_index_list = []
+    for car in CAR_SORTING_LIST:
+        try:
+            idx = user_sorting.index(car) + 1
+        except:
+            idx = "-"
+        car_index_list.append(idx)
+    return car_index_list

@@ -60,6 +60,7 @@ class User(TimeStampedModel, AbstractUser):
 
     def delete(self, delete_reason=None, *args, **kwargs):
         DeletedUser.objects.create(
+            user_id=self.id,
             username=self.username,
             email=self.email,
             first_name=self.first_name,
@@ -104,6 +105,7 @@ class User(TimeStampedModel, AbstractUser):
 
 
 class DeletedUser(TimeStampedModel):
+    user_id = models.IntegerField(unique=True)
     email = models.CharField(max_length=255, blank=True)
     first_name = models.CharField(max_length=255, blank=True)
     last_name = models.CharField(max_length=255, blank=True)
@@ -171,10 +173,16 @@ class FavoritePresenter(TimeStampedModel):
     image = models.ImageField(upload_to="favorite_presenter")
     video = models.CharField(max_length=255, blank=True)
 
+    def __str__(self):
+        return self.name
+
 
 class FavoriteShow(TimeStampedModel):
     name = models.CharField(max_length=255, blank=True)
     image = models.ImageField(upload_to="favorite_show")
+
+    def __str__(self):
+        return self.name
 
 
 class Post(TimeStampedModel):
