@@ -188,6 +188,7 @@ class FavoriteShow(TimeStampedModel):
 class Post(TimeStampedModel):
     post_id = models.IntegerField(unique=True, db_index=True)
     title = models.CharField(max_length=255)
+    normalized_title = models.CharField(max_length=255, blank=True)
     author = models.CharField(max_length=255)
     publish_date = models.DateTimeField()
     edit_date = models.DateTimeField()
