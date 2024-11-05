@@ -630,6 +630,8 @@ class ReplyRetrieveUpdateDestroyView(RetrieveUpdateDestroyAPIView):
     Output:
     - Returns the reply details, or a success message upon update or deletion.
     """
+    queryset = Reply.objects.all()
+    permission_classes = [IsOwnerOrReadOnlyPermission]
 
     def get_serializer_class(self):
         """
@@ -638,13 +640,6 @@ class ReplyRetrieveUpdateDestroyView(RetrieveUpdateDestroyAPIView):
         if self.request.method == "GET":
             return ReplyReadSerializer
         return ReplyWriteSerializer
-
-    def get_queryset(self):
-        """
-        Retrieves the queryset of replies for the current authenticated user.
-        """
-        queryset = Reply.objects.filter(user=self.request.user)
-        return queryset
 
 
 class MobileReleaseView(RetrieveAPIView):
