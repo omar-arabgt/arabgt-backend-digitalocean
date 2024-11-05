@@ -3,7 +3,7 @@ from celery import shared_task
 
 from api.models import Post
 from .models import WpPosts, WpTermRelationships, WpTermTaxonomy, WpTerms, WpUsers
-from .preprocessing import preprocess_article, get_related_article_ids, preprocess_video_article
+from .preprocessing import preprocess_article, get_related_article_ids, preprocess_video_article, normalize_title
 
 logger = logging.getLogger(__name__)
 
@@ -53,6 +53,7 @@ def fetch_and_process_post(post, override_existing=False):
                 post_id=wp_post_id,
                 defaults={
                     "title": post["post_title"],
+                    "normalized_title": normalize_title(post["title"]),
                     "content": processed_article["content"],
                     "publish_date": post["post_date"],
                     "thumbnail": processed_article["thumbnail"],
@@ -68,6 +69,7 @@ def fetch_and_process_post(post, override_existing=False):
             new_post = Post.objects.create(
                 post_id=wp_post_id,
                 title=post["post_title"],
+                normalized_title=normalize_title(post["title"]),
                 content=processed_article["content"],
                 publish_date=post["post_date"],
                 thumbnail=processed_article["thumbnail"],

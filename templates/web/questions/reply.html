@@ -1,0 +1,61 @@
+{% load custom_filters %}
+{% for reply in replies %}
+<li class="flex flex-col">
+    <div class="mb-2">
+        <div class="mt-2 px-4 flex items-center justify-between">
+            <div class="text-gray-500 items-center flex gap-2">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <rect x="0.5" y="0.5" width="23" height="23" rx="11.5" fill="#EBEBEC"/>
+                <rect x="0.5" y="0.5" width="23" height="23" rx="11.5" stroke="#E2072C"/>
+                <path d="M14.3337 9.08333C14.3337 10.372 13.289 11.4167 12.0003 11.4167C10.7117 11.4167 9.66699 10.372 9.66699 9.08333C9.66699 7.79467 10.7117 6.75 12.0003 6.75C13.289 6.75 14.3337 7.79467 14.3337 9.08333Z" fill="#E2072C"/>
+                <path d="M12.0003 13.1667C9.74516 13.1667 7.91699 14.9948 7.91699 17.25H16.0837C16.0837 14.9948 14.2555 13.1667 12.0003 13.1667Z" fill="#E2072C"/>
+                <path d="M14.3337 9.08333C14.3337 10.372 13.289 11.4167 12.0003 11.4167C10.7117 11.4167 9.66699 10.372 9.66699 9.08333C9.66699 7.79467 10.7117 6.75 12.0003 6.75C13.289 6.75 14.3337 7.79467 14.3337 9.08333Z" stroke="#E2072C" stroke-linecap="round" stroke-linejoin="round"/>
+                <path d="M12.0003 13.1667C9.74516 13.1667 7.91699 14.9948 7.91699 17.25H16.0837C16.0837 14.9948 14.2555 13.1667 12.0003 13.1667Z" stroke="#E2072C" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+              {{ reply.user.username }}
+              <div class="text-gray-400 text-sm">{{ reply.created_at|arabic_timesince }}</div>
+            </div>
+            <form method="POST" action="{% url 'delete_reply' reply.id %}" class="inline">
+                {% csrf_token %}
+                <button type="submit" class="text-black font-bold flex gap-2 text-sm">
+                    حذف
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M21 4H8L1 12L8 20H21C21.5304 20 22.0391 19.7893 22.4142 19.4142C22.7893 19.0391 23 18.5304 23 18V6C23 5.46957 22.7893 4.96086 22.4142 4.58579C22.0391 4.21071 21.5304 4 21 4V4Z" stroke="#E2072C" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        <path d="M18 9L12 15" stroke="#E2072C" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        <path d="M12 9L18 15" stroke="#E2072C" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                </button>
+            </form>
+        </div>
+        <p class="my-4 px-4 text-gray-800">{{ reply.content }}</p>
+        {% if reply.file %}
+          <div class="px-4 mb-4">
+              <img src="{{ reply.file.url }}" alt="reply Image" class="w-32 h-auto">
+          </div>
+        {% endif %}
+        <div class="mb-5 bg-gray-50 p-4 border-b border-t border-gray-200 flex justify-between items-center">
+            <div class="text-gray-700 flex items-center space-x-4 space-x-reverse">
+                <span class="flex items-center space-x-1 space-x-reverse">
+                    <svg width="20" height="21" viewBox="0 0 20 21" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <path d="M5.83366 18.8346H3.33366C2.89163 18.8346 2.46771 18.659 2.15515 18.3465C1.84259 18.0339 1.66699 17.61 1.66699 17.168V11.3346C1.66699 10.8926 1.84259 10.4687 2.15515 10.1561C2.46771 9.84356 2.89163 9.66797 3.33366 9.66797H5.83366M11.667 8.0013V4.66797C11.667 4.00493 11.4036 3.36904 10.9348 2.9002C10.4659 2.43136 9.83003 2.16797 9.16699 2.16797L5.83366 9.66797V18.8346H15.2337C15.6356 18.8392 16.0256 18.6983 16.3319 18.438C16.6382 18.1776 16.8401 17.8154 16.9003 17.418L18.0503 9.91797C18.0866 9.6791 18.0705 9.4352 18.0031 9.20318C17.9357 8.97115 17.8187 8.75655 17.6602 8.57423C17.5017 8.39191 17.3054 8.24624 17.085 8.14732C16.8645 8.04839 16.6252 7.99857 16.3837 8.0013H11.667Z" stroke="#272727" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                    <span>{{ reply.total_likes }}</span>
+                </span>
+            </div>
+    
+            {% if reply.nested_replies.exists %}
+              <button class="text-blue-500 hover:text-blue-700 text-sm toggle-replies" data-target="nested-replies-{{ reply.id }}">
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <path d="M6 12H18" stroke="#0F172A" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                  </svg>            
+              </button>
+            {% endif %}
+        </div>
+    </div>
+    {% if reply.nested_replies %}
+    <ul id="nested-replies-{{ reply.id }}" class="block mr-8 mt-2 border-r-2 border-gray-200 pr-4">
+        {% include 'web/questions/reply.html' with replies=reply.nested_replies %}
+    </ul>
+    {% endif %}
+</li>
+{% endfor %}

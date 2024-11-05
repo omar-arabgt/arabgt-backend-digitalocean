@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2024-07-31 10:45+0000\n"
+"POT-Creation-Date: 2024-10-22 08:46+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -19,10 +19,16 @@ msgstr ""
 "Plural-Forms: nplurals=6; plural=n==0 ? 0 : n==1 ? 1 : n==2 ? 2 : n%100>=3 "
 "&& n%100<=10 ? 3 : n%100>=11 && n%100<=99 ? 4 : 5;\n"
 
-#: api/utils.py:5
-msgid "Fill only one field among these"
-msgstr "السؤال يمكن ان يكون فقط عائد لقروب او موضوع سؤال وليس كلاهما"
+#: authentication/adapter.py:46
+msgid "Please check your email to verify your account before proceeding with password reset."
+msgstr "الرجاء التحقق من بريدك الإلكتروني لتفعيل حسابك قبل المتابعة لإعادة تعيين كلمة المرور."
 
 #: authentication/serializers.py:26
 msgid "This account is already exists"
 msgstr "تم تسجيل حساب بهذا البريد الالكتروني سابقا"
+
+msgid "User is already registered with this e-mail address."
+msgstr "هناك مستخدم اخر مسجل لدينا بهذا البريد الالكتروني"
+
+msgid "A user is already registered with this e-mail address."
+msgstr "هناك مستخدم اخر مسجل لدينا بهذا البريد الالكتروني"

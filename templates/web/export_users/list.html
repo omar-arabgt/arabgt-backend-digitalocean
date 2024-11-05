@@ -38,8 +38,11 @@
                         <option value="{{ value }}" {% if value == status_filter %}selected{% endif %}>{{ name }}</option>
                         {% endfor %}
                     </select>
-                    <select name="category" class="custom-select w-full md:w-44 px-2 py-1 tom-select agt-default-input">
-                        <option value="">Rank</option>
+                    <select name="rank" class="custom-select w-full md:w-44 px-2 py-1 tom-select agt-default-input">
+                        <option value="">الحالة</option>
+                        {% for enum in RANKS %}
+                        <option value="{{ enum.value }}" {% if enum.value == rank_filter %}selected{% endif %}>{{ enum.name }}</option>
+                        {% endfor %}
                     </select>
                     <div class="w-full md:w-44 md:mb-0 mb-4 flex flex-col relative">
                         <input type="date" name="birthdate" value="{{ birthdate_filter }}" class="w-full h-full md:w-44 px-2 py-1 agt-default-input">
@@ -72,7 +75,7 @@
             <tbody>
                 {% for user in merged_list %}
                 <tr class="hover:bg-gray-100 {% if user.status == 'deleted' %} bg-gray-200/50 {% endif %}">
-                    <td class="border border-gray-300 font-bold px-4 py-2">{{ user.id }}</td>
+                    <td class="border border-gray-300 font-bold px-4 py-2">{% if user.status == "deleted" %} {{user.user_id}} {% else %} {{user.id}} {% endif %}</td>
                     <td class="border border-gray-300 font-bold px-4 py-2">{% if user.status == "deleted" %} محذوف {% else %} مفعل {% endif %}</td>
                     <td class="border border-gray-300 font-bold px-4 py-2">{{ user.first_name }}</td>
                     <td class="border border-gray-300 font-bold px-4 py-2">{{ user.last_name }}</td>
@@ -81,7 +84,7 @@
                     <td class="border border-gray-300 font-bold px-4 py-2">{{ user.get_nationality_display }}</td>
                     <td class="border border-gray-300 font-bold px-4 py-2">{{ user.get_country_display }}</td>
                     <td class="border border-gray-300 font-bold px-4 py-2">{{ user.gender|gender_translation }}</td>
-                    <td class="border border-gray-300 font-bold px-4 py-2"></td>
+                    <td class="border border-gray-300 font-bold px-4 py-2">{{ user.rank }}</td>
                 </tr>
                 {% endfor %}
             </tbody>

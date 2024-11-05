@@ -1,13 +1,22 @@
 from enum import Enum
 from django.db import models
 
+from .utils import get_detailed_item_dict
 
 class UserRank(Enum):
-   USER = 0
-   RED = 6
-   SILVER = 2500
-   GOLD = 10000
-   PLATINUM = 25000
+    USER = 0
+    RED = 6
+    SILVER = 2500
+    GOLD = 10000
+    PLATINUM = 25000
+
+    @classmethod
+    def next_rank_value(cls, point):
+        items = list(cls)
+        for item in items:
+            if item.value > point:
+                return item.value
+        return None
 
 
 class PointType(Enum):
@@ -32,9 +41,6 @@ class PointType(Enum):
 
 class ReactionType(models.TextChoices):
     LIKE = "like"
-    DISLIKE = "dislike"
-    HEART = "heart"
-    APPLAUSE = "applause",
 
 
 class MobilePlatform(models.TextChoices):
@@ -177,7 +183,7 @@ CARS = [
     ('كونيجسيج', 'كونيجسيج'),
 ]
 
-CAR_BRANDS = [
+CAR_BRANDS_ITEMS = [
     ('dodge', 'دودج'),
     ('genesis', 'جينيسيس'),
     ('ram', 'رام'),
@@ -330,7 +336,6 @@ COUNTRIES= [
     ('HU', 'المجر'),
     ('ID', 'اندونيسيا'),
     ('IE', 'أيرلندا'),
-    ('IL', 'اسرائيل'),
     ('IM', 'جزيرة مان'),
     ('IN', 'الهند'),
     ('IO', 'المحيط الهندي البريطاني'),
@@ -511,7 +516,7 @@ INTERESTS = [
 ]
 
 
-CAR_SORTING = [
+CAR_SORTING_ITEMS = [
     ('coupe_cars', 'سيارات كوبيه'),
     ('sports_cars', 'سيارات رياضية'),
     ('hyper_cars', 'سيارات هايبر كارز'),
@@ -527,3 +532,11 @@ CAR_SORTING = [
     ('electric_cars', 'سيارات كهربائية'),
     ('hybrid_cars', 'سيارات هايبرد'),
 ]
+
+
+CAR_SORTING_DICT = get_detailed_item_dict(CAR_SORTING_ITEMS, "sort_cars")
+CAR_SORTING = list(CAR_SORTING_DICT.values())
+
+
+CAR_BRAND_DICT = get_detailed_item_dict(CAR_BRANDS_ITEMS, "car_brand")
+CAR_BRANDS = list(CAR_BRAND_DICT.values())

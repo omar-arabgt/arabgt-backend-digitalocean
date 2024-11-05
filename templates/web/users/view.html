@@ -38,18 +38,18 @@
                 <label class="block mb-2 font-bold">نوع السيارة</label>
                 <p class="mb-1 agt-default-input w-full px-3 py-2 bg-gray-100 text-gray-800">{{ user.get_car_type_display|default:"لا توجد بيانات" }}</p>
             </div>
-            <div>
+            {% comment %} <div>
                 <label class="block mb-2 font-bold">الاهتمامات</label>
                 <p class="mb-1 agt-default-input w-full px-3 py-2 bg-gray-100 text-gray-800">
                     {{ user.interests|get_display:INTERESTS }}
                 </p>
-            </div>
-            <div>
+            </div> {% endcomment %}
+            {% comment %} <div>
                 <label class="block mb-2 font-bold">ترتيب السيارات</label>
                 <p class="mb-1 agt-default-input w-full px-3 py-2 bg-gray-100 text-gray-800">
-                    {{ user.car_sorting|get_display:CAR_SORTING }}
+                    {{ user.car_sorting|get_display:CAR_SORTING_ITEMS }}
                 </p>
-            </div>
+            </div> {% endcomment %}
             <div>
                 <label class="block mb-2 font-bold">البرنامج المفضل</label>
                 <p class="mb-1 agt-default-input w-full px-3 py-2 bg-gray-100 text-gray-800">{{ user.favorite_show|default:"لا توجد بيانات" }}</p>
@@ -80,18 +80,18 @@
                 <label class="block mb-2 font-bold">لديه سيارة</label>
                 <p class="mb-1 agt-default-input w-full px-3 py-2 bg-gray-100 text-gray-800">{{ user.has_car|yesno:"نعم,لا"|default:"لا توجد بيانات" }}</p>
             </div>
-            <div>
+            {% comment %} <div>
               <label class="block mb-2 font-bold">الهوايات</label>
                 <p class="mb-1 agt-default-input w-full px-3 py-2 bg-gray-100 text-gray-800">
                     {{ user.hobbies|get_display:HOBBIES }}
                 </p>
-            </div>
-            <div>
+            </div> {% endcomment %}
+            {% comment %} <div>
               <label class="block mb-2 font-bold">السيارات المفضلة</label>
               <p class="mb-1 agt-default-input w-full px-3 py-2 bg-gray-100 text-gray-800">
                 {{ user.favorite_cars|get_display:CAR_BRANDS }}
               </p>
-            </div>
+            </div> {% endcomment %}
             <div>
                 <label class="block mb-2 font-bold">المقدم المفضل</label>
                 <p class="mb-1 agt-default-input w-full px-3 py-2 bg-gray-100 text-gray-800">{{ user.favorite_presenter|default:"لا توجد بيانات" }}</p>

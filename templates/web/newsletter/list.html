@@ -8,7 +8,7 @@
     <div class="my-8">
       <a class="border-2 border-red-600 hover:bg-red-600 hover:text-white text-red-600 font-bold px-6 py-2 rounded" href="{% url 'download_newsletter_excel' %}">تحميل القائمة</a>
     </div>
-    
+
     <div class="overflow-y-auto">
         <table class="w-full border-collapse border border-gray-300">
             <thead>
@@ -39,12 +39,17 @@
 <script>
     function unsubscribeNewsletter(email) {
         const csrfToken = '{{ csrf_token }}';
-        
-        fetch("{% url 'unsubscribe-newsletter' %}?email=" + email, {
+
+        fetch("{% url 'subscribe-newsletter' %}", {
             method: 'POST',
             headers: {
                 'X-CSRFToken': csrfToken,
-            }
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                email: email,
+                unsubscribe: true
+            })
         })
         .then(response => {
             if (!response.ok) {

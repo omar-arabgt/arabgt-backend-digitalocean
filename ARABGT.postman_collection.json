@@ -523,11 +523,6 @@
 									"type": "text"
 								},
 								{
-									"key": "title",
-									"value": "title",
-									"type": "text"
-								},
-								{
 									"key": "content",
 									"value": "content",
 									"type": "text"
@@ -571,7 +566,7 @@
 						"header": [],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n    \"title\": \"new title\",\n    \"content\": \"new content\"\n}",
+							"raw": "{\n   \"content\": \"new content\"\n}",
 							"options": {
 								"raw": {
 									"language": "json"

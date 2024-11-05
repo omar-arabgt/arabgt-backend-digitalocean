@@ -26,20 +26,22 @@
                     <th class="border border-gray-300 px-4 py-2">الهاتف</th>
                     <th class="border border-gray-300 px-4 py-2">نقاط<br>المستخدم</th>
                     <th class="border border-gray-300 px-4 py-2">رتبة<br>المستخدم</th>
+                    <th class="border border-gray-300 px-4 py-2">سبب الحذف</th>
                 </tr>
             </thead>
             <tbody>
                 {% for user in deleted_user_list %}
                 <tr class="hover:bg-gray-100">
-                    <td class="border border-gray-300 font-bold px-4 py-2">{{ user.id }}</td>
+                    <td class="border border-gray-300 font-bold px-4 py-2">{{ user.user_id }}</td>
                     <td class="border border-gray-300 font-bold px-4 py-2">{{ user.date_joined|date:"Y-m-d" }}</td>
                     <td class="border border-gray-300 font-bold px-4 py-2">{{ user.username }}</td>
                     <td class="border border-gray-300 font-bold px-4 py-2">{{ user.last_name }}</td>
                     <td class="border border-gray-300 font-bold px-4 py-2">{{ user.nick_name }}</td>
                     <td class="border border-gray-300 font-bold px-4 py-2">{{ user.email }}</td>
                     <td class="border border-gray-300 font-bold px-4 py-2">{{ user.phone_number }}</td>
-                    <td class="border border-gray-300 font-bold px-4 py-2"></td>
-                    <td class="border border-gray-300 font-bold px-4 py-2"></td>
+                    <td class="border border-gray-300 font-bold px-4 py-2">{{ user.point }}</td>
+                    <td class="border border-gray-300 font-bold px-4 py-2">{{ user.rank }}</td>
+                    <td class="border border-gray-300 font-bold px-4 py-2">{{ user.delete_reason }}</td>
                 </tr>
                 {% endfor %}
             </tbody>

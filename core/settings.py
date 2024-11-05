@@ -76,7 +76,15 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'allauth.account.middleware.AccountMiddleware',
+    "django.middleware.locale.LocaleMiddleware",
 ]
+
+
+LOCALE_PATHS = (
+    os.path.join(BASE_DIR, "locale"),
+    "/usr/local/lib/python3.9/site-packages/dj_rest_auth/locale"
+)
+
 
 ROOT_URLCONF = 'core.urls'
 
@@ -136,9 +144,6 @@ CACHES = {
 # https://docs.djangoproject.com/en/4.2/ref/settings/#auth-password-validators
 
 AUTH_PASSWORD_VALIDATORS = [
-    {
-        'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator',
-    },
     {
         'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator',
     },
@@ -307,7 +312,7 @@ CELERY_BEAT_SCHEDULE = {
 CSRF_TRUSTED_ORIGINS = ["https://localhost", "https://localhost", 'https://dev-arabgt.audteye.com', 'http://dev-arabgt.audteye.com']
 # CSRF_TRUSTED_ORIGINS = ["*"]
 
-LOGIN_REDIRECT_URL="home"
+LOGIN_REDIRECT_URL="user_list"
 LOGOUT_REDIRECT_URL = "web-login"
 LOGIN_URL="web-login"
 

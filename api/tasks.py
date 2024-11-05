@@ -16,6 +16,18 @@ NOTIFICATION_ALL = "notification_all"
 
 @shared_task
 def send_push_notification(user_id, title, content, link=None):
+    """
+    Sends a push notification to a specific user or all users who have notifications enabled.
+
+    Args:
+    - user_id: The ID of the user to send the notification to, or NOTIFICATION_ALL for all users.
+    - title: The title of the notification.
+    - content: The content of the notification.
+    - link: An optional link to include with the notification.
+
+    Functionality:
+    - Sends the notification through OneSignal and creates a Notification object in the database.
+    """
     from .models import User, Notification
 
     if user_id == NOTIFICATION_ALL:
@@ -56,6 +68,17 @@ def send_push_notification(user_id, title, content, link=None):
 
 @shared_task
 def set_point(user_id, point_type):
+    """
+    Awards points to a user based on a specific point type.
+
+    Args:
+    - user_id: The ID of the user to award points to.
+    - point_type: The type of points to award, which must be defined in PointType.
+
+    Functionality:
+    - Checks if the user has reached the limit for this point type, and if not, awards the points.
+    - Uses a cache to limit the number of points that can be awarded within a certain timeframe.
+    """
     point, cache_key, limit, expire = getattr(PointType, point_type).value
     if cache_key and limit and expire:
         KEY = f"{cache_key}:{user_id}"
@@ -73,6 +96,16 @@ def set_point(user_id, point_type):
 
 @shared_task
 def send_sms_notification(phone_number, body):
+    """
+    Sends an SMS notification to the specified phone number.
+
+    Args:
+    - phone_number: The phone number to send the SMS to.
+    - body: The content of the SMS.
+
+    Functionality:
+    - Uses the Twilio API to send the SMS.
+    """
     client = Client(settings.TWILIO_ACCOUNT_SID, settings.TWILIO_AUTH_TOKEN)
     client.messages.create(
         from_=settings.TWILIO_FROM_NUMBER,

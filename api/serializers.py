@@ -3,8 +3,20 @@ from rest_framework import serializers
 from django.conf import settings
 
 from .models import *
-from .choices import MobilePlatform, CAR_SORTING, CAR_BRANDS
-from .utils import get_detailed_list
+
+
+class FavoritePresenterSerializer(serializers.ModelSerializer):
+    
+    class Meta:
+        model = FavoritePresenter
+        fields = "__all__"
+
+
+class FavoriteShowSerializer(serializers.ModelSerializer):
+    
+    class Meta:
+        model = FavoriteShow
+        fields = "__all__"
 
 
 class UserSerializer(serializers.ModelSerializer):
@@ -16,7 +28,8 @@ class UserSerializer(serializers.ModelSerializer):
     hobbies = serializers.SerializerMethodField()
     interests = serializers.SerializerMethodField()
     favorite_cars = serializers.SerializerMethodField()
-    rank = serializers.SerializerMethodField()
+    favorite_presenter = FavoritePresenterSerializer()
+    favorite_show = FavoriteShowSerializer()
 
     class Meta:
         model = User
@@ -42,21 +55,23 @@ class UserSerializer(serializers.ModelSerializer):
             "favorite_show",
             "point",
             "rank",
+            "is_verified",
+            "next_rank_value",
             "send_notification",
             "profile_photo",
         ]
 
     def get_gender(self, obj):
-        return obj.get_gender_display() if obj.gender else None
+        return obj.get_gender_display()
 
     def get_nationality(self, obj):
-        return obj.get_nationality_display() if obj.nationality else None
+        return obj.get_nationality_display()
 
     def get_country(self, obj):
-        return obj.get_country_display() if obj.country else None
+        return obj.get_country_display()
 
     def get_car_type(self, obj):
-        return dict(CARS).get(obj.car_type) if obj.car_type else None
+        return obj.get_car_type_display()
 
     def get_hobbies(self, obj):
         return [dict(HOBBIES).get(hobby) for hobby in obj.hobbies] if obj.hobbies else []
@@ -65,17 +80,10 @@ class UserSerializer(serializers.ModelSerializer):
         return [dict(INTERESTS).get(interest) for interest in obj.interests] if obj.interests else []
 
     def get_car_sorting(self, obj):
-        return get_detailed_list(obj.favorite_cars, s3_directory="sort_cars", list=CAR_SORTING)
+        return [CAR_SORTING_DICT[key] for key in obj.car_sorting] if obj.car_sorting else []
 
     def get_favorite_cars(self, obj):
-        return get_detailed_list(obj.favorite_cars, s3_directory="car_brand", list=CAR_BRANDS)
-    
-    def get_rank(self, obj):
-        ranks = list(UserRank)
-        ranks.reverse()
-        for rank in ranks:
-            if obj.point >= rank.value:
-                return rank.name
+        return [CAR_BRAND_DICT[key] for key in obj.favorite_cars] if obj.favorite_cars else []
 
 
 class UserUpdateSerializer(serializers.ModelSerializer):
@@ -104,18 +112,20 @@ class UserUpdateSerializer(serializers.ModelSerializer):
         ]
 
 
-class FavoritePresenterSerializer(serializers.ModelSerializer):
-    
-    class Meta:
-        model = FavoritePresenter
-        fields = "__all__"
+class QuestionUserSerializer(serializers.ModelSerializer):
 
-
-class FavoriteShowSerializer(serializers.ModelSerializer):
-    
     class Meta:
-        model = FavoriteShow
-        fields = "__all__"
+        model = User
+        fields = [
+            "id",
+            "first_name",
+            "last_name",
+            "nick_name",
+            "point",
+            "rank",
+            "is_verified",
+            "profile_photo",
+        ]
 
 
 class PostListSerializer(serializers.ModelSerializer):
@@ -160,13 +170,6 @@ class NewsletterSerializer(serializers.ModelSerializer):
         read_only_fields = ['created_at']
 
 
-class ChildReplySerializer(serializers.ModelSerializer):
-
-    class Meta:
-        model = Reply
-        fields = "__all__"
-
-
 class ReplyWriteSerializer(serializers.ModelSerializer):
 
     class Meta:
@@ -175,39 +178,118 @@ class ReplyWriteSerializer(serializers.ModelSerializer):
 
     def create(self, validated_data):
         validated_data["user"] = self.context["request"].user
+        file = validated_data.get("file")
+        if file:
+            validated_data["file_extension"] = file.name.split(".")[-1].lower()
         return super().create(validated_data)
 
 
 class ReplyReadSerializer(serializers.ModelSerializer):
-    replies = ChildReplySerializer(many=True)
+    replies = serializers.SerializerMethodField()
+    user = QuestionUserSerializer()
+    liked_by = serializers.SerializerMethodField()
+    file_type = serializers.SerializerMethodField()
 
     class Meta:
         model = Reply
-        fields = "__all__"
+        fields = [
+            "id",
+            "user",
+            "question",
+            "parent_reply",
+            "content",
+            "file",
+            "file_extension",
+            "file_type",
+            "replies",
+            "like_count",
+            "reply_count",
+            "liked_by",
+            "created_at",
+            "updated_at",
+        ]
+
+    def get_replies(self, obj):
+        if obj.replies:
+            return ReplyReadSerializer(obj.replies.all(), many=True, context=self.context).data
+        return None
+
+    def get_liked_by(self, obj):
+        user = self.context["request"].user
+        content_type = ContentType.objects.get_for_model(self.Meta.model)
+        return Reaction.objects.filter(content_type=content_type, object_id=obj.id, user=user).exists()
+
+    def get_file_type(self, obj):
+        # TODO: add all required formats
+        if obj.file_extension in ["jpg", "jpeg", "png", "webp"]:
+            return "image"
+        elif obj.file_extension in ["mp4", "mov"]:
+            return "video"
+        else:
+            return None
 
 
 class QuestionWriteSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Question
-        fields = ["title", "content", "group", "forum", "file"]
+        fields = ["content", "group", "forum", "file"]
 
     def create(self, validated_data):
         validated_data["user"] = self.context["request"].user
+        file = validated_data.get("file")
+        if file:
+            validated_data["file_extension"] = file.name.split(".")[-1].lower()
         return super().create(validated_data)
 
 
 class QuestionReadSerializer(serializers.ModelSerializer):
-    replies = ReplyReadSerializer(many=True)
+    user = QuestionUserSerializer()
     pinned_by = serializers.SerializerMethodField()
+    liked_by = serializers.SerializerMethodField()
+    file_type = serializers.SerializerMethodField()
 
     class Meta:
         model = Question
-        fields = "__all__"
+        fields = [
+            "id",
+            "user",
+            "pinned_by",
+            "liked_by",
+            "replies",
+            "content",
+            "group",
+            "forum",
+            "file",
+            "file_extension",
+            "file_type",
+            "like_count",
+            "reply_count",
+            "created_at",
+            "updated_at",
+        ]
 
     def get_pinned_by(self, obj):
         user = self.context["request"].user
         return user in obj.pinned_by.all()
+    
+    def get_liked_by(self, obj):
+        user = self.context["request"].user
+        content_type = ContentType.objects.get_for_model(self.Meta.model)
+        return Reaction.objects.filter(content_type=content_type, object_id=obj.id, user=user).exists()
+
+    def get_file_type(self, obj):
+        # TODO: add all required formats
+        if obj.file_extension in ["jpg", "jpeg", "png", "webp"]:
+            return "image"
+        elif obj.file_extension in ["mp4", "mov"]:
+            return "video"
+        else:
+            return None
+
+
+class QuestionDetailSerializer(QuestionReadSerializer):
+    replies = ReplyReadSerializer(many=True)
 
 
 class MobileReleaseSerializer(serializers.ModelSerializer):
@@ -240,10 +322,16 @@ class ForumSerializer(serializers.ModelSerializer):
 
 
 class GroupSerializer(serializers.ModelSerializer):
+    is_member = serializers.SerializerMethodField()
 
     class Meta:
         model = Group
         exclude = ["members"]
+
+    def get_is_member(self, obj):
+        user = self.context["request"].user
+        membership = GroupMembership.objects.filter(group=obj, user=user, is_active=True)
+        return membership.exists()
 
 
 class GroupMembershipSerializer(serializers.ModelSerializer):
@@ -251,3 +339,30 @@ class GroupMembershipSerializer(serializers.ModelSerializer):
     class Meta:
         model = GroupMembership
         fields = ["is_active"]
+
+
+class ReactionSerializer(serializers.ModelSerializer):
+    content_type = serializers.CharField()
+
+    class Meta:
+        model = Reaction
+        fields = ["content_type", "object_id"]
+
+    def validate(self, data):
+        data = super().validate(data)
+        try:
+            content_type_model = ContentType.objects.get(model=data["content_type"])
+        except ContentType.DoesNotExist:
+            raise serializers.ValidationError("Invalid content type")
+
+        model_class = content_type_model.model_class()
+        if not model_class.objects.filter(id=data["object_id"]).exists():
+            raise serializers.ValidationError("The object with this ID does not exist")
+
+        user = self.context["request"].user
+        if self.Meta.model.objects.filter(user=user, content_type=content_type_model, object_id=data['object_id']).exists():
+            raise serializers.ValidationError("You have already liked this item.")
+
+        data["content_type"] = content_type_model
+        data["user"] = user
+        return data
