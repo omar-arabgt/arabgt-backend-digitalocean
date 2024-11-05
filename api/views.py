@@ -529,7 +529,7 @@ class QuestionListCreateView(ListCreateAPIView):
             queryset = Question.objects.filter(pinned_by=self.request.user)
         else:
             queryset = Question.objects.all()
-        return queryset.prefetch_related("pinned_by")
+        return queryset.prefetch_related("pinned_by").order_by("-created_at")
 
 
 class QuestionRetrieveUpdateDestroyView(RetrieveUpdateDestroyAPIView):
