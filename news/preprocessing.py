@@ -8,6 +8,68 @@ from django.db.models import Q
 from api.models import Post
 from .models import WpPosts, WpPostmeta
 
+from urllib.parse import urlparse, unquote
+
+# def replace_url(url):
+#     # Decode the URL
+#     clean_url = re.search(r'https?://[^\s"]+', url).group()
+
+#     decoded_url = unquote(clean_url)
+#     parsed_url = urlparse(decoded_url)
+#     title =  parsed_url.path.strip('/').split('/')[-1].replace('-', ' ').lower()
+#     post_instance = Post.objects.filter(normalized_title__icontains=title).first()
+#     return f'https://localhost/api/posts/{post_instance.id}'
+
+import re
+from urllib.parse import unquote, urlparse
+
+def replace_url(url):
+    # Check if URL is from arabgt.com
+    if not url.startswith("https://arabgt.com/"):
+        return url
+
+    # Decode the URL
+    clean_url = re.search(r'https?://[^\s"]+', url).group()
+    decoded_url = unquote(clean_url)
+    parsed_url = urlparse(decoded_url)
+
+    # Split the path into parts
+    path_parts = parsed_url.path.strip('/').split('/')
+
+    # Special case for 'news-tags'
+    if "news-tags" in path_parts:
+        # Find the index of 'news-tags' and get the part after it
+        news_tag_index = path_parts.index("news-tags")
+        if news_tag_index + 1 < len(path_parts):
+            tag_part = path_parts[news_tag_index + 1]
+            # Replace hyphens with spaces
+            formatted_tag = tag_part.replace('-', ' ')
+            return f"https://localhost/api/posts/?tag={formatted_tag}"
+
+    # # Define allowed tags
+    # tags = {
+    #     "اخبار-سيارات",
+    #     "سيارات-معدلة",
+    #     # Add your other 26 tags here
+    # }
+
+    # # Check if the URL contains any of the allowed tags
+    # if not any(tag in path_parts for tag in tags):
+    #     return None
+
+    # Extract the title part of the URL
+    title = normalize_title(path_parts[-1]) 
+    # Find the first matching Post instance
+    post_instance = Post.objects.filter(normalized_title__icontains=title).first()
+    print(post_instance)
+    # Return the local API URL if a post is found, else return None
+    if post_instance:
+        return f'https://localhost/api/posts/{post_instance.id}'
+    else:
+        print(f'arabgt {url}')
+        return clean_url
+
+# 365716
 
 def process_list_item_with_regex(html):
     """
@@ -44,7 +106,7 @@ def process_list_item_with_regex(html):
 
             rich_data.append({
                 "text": f"{link_text}",
-                "url": link_url,
+                "url": replace_url(link_url),
                 "heading": "",
                 "media": {}
             })
@@ -124,7 +186,7 @@ def extract_elements(element):
             url = child.get('href', '')
             link_text = child.get_text(strip=True)
             external_links.add(url)
-            accumilated_rich.append({"text": link_text, "url": url, "heading": "", "media": {}})
+            accumilated_rich.append({"text": link_text, "url": replace_url(url), "heading": "", "media": {}})
         else:
             if accumilated_rich:
                 has_link = any('url' in item for item in accumilated_rich)
@@ -151,7 +213,7 @@ def extract_elements(element):
                         if paragraph_text.strip():
                             rich_data.append({"text": paragraph_text.strip(), "heading": "", "media": {}})
                             paragraph_text = ""
-                        rich_data.append({"text": p_child.get_text(strip=True), "url": url, "heading": "", "media": {}})
+                        rich_data.append({"text": p_child.get_text(strip=True), "url": replace_url(url), "heading": "", "media": {}})
                         external_links.add(url)
                     elif p_child.name == 'img':
                         if paragraph_text.strip():
@@ -189,7 +251,7 @@ def extract_elements(element):
                         if heading_text.strip():
                             heading_rich_data.append({"text": heading_text.strip(), "heading": "", "media": {}})
                             heading_text = ""
-                        heading_rich_data.append({"text": h_child.get_text(strip=True), "url": url, "heading": "", "media": {}})
+                        heading_rich_data.append({"text": h_child.get_text(strip=True), "url": replace_url(url), "heading": "", "media": {}})
                         external_links.add(url)
 
                 if heading_text.strip():
@@ -448,7 +510,7 @@ def preprocess_article(article):
 
     soup = BeautifulSoup(post_content, "html.parser")
     structured_data, external_links = extract_elements(soup.body if soup.body else soup)
-    print("Structured Data:", structured_data)
+    # print("Structured Data:", structured_data)
 
     final_elements = []
     for element in structured_data:
