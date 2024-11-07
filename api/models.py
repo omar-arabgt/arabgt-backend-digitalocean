@@ -287,7 +287,7 @@ class Reply(TimeStampedModel):
     user = models.ForeignKey("User", related_name="replies", on_delete=models.CASCADE)
     question = models.ForeignKey("Question", related_name="replies", blank=True, null=True, on_delete=models.CASCADE)
     parent_reply = models.ForeignKey("Reply", related_name="replies", blank=True, null=True, on_delete=models.CASCADE)
-    content = models.TextField()
+    content = models.TextField(blank=True)
     file = models.FileField(upload_to="reply", blank=True, null=True)
     file_extension = models.CharField(max_length=20, blank=True, null=True)
     reactions = GenericRelation("Reaction")
