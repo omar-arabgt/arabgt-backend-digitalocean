@@ -73,26 +73,43 @@ def replace_url(url):
 
 def process_list_item_with_regex(html):
     """
-    Processes <ul> or <ol> elements to extract bullet points with and without links using regex.
+    Processes <ul> or <ol> elements to extract bullet points with and without links using BeautifulSoup.
     Returns structured content, treating lists with links as 'rich' and lists without links as plain text.
     """
+    soup = BeautifulSoup(html, 'html.parser')
+    list_items = soup.find_all('li')
 
-    li_pattern = r'<li>(.*?)</li>'
-    link_pattern = r'<a href="(.*?)">(.*?)</a>'
-    
-    list_items = re.findall(li_pattern, html, re.DOTALL)
-    rich_data = []  
-    has_link = False  
+    rich_data = []
+    has_link = False
 
     for item in list_items:
-        link_match = re.search(link_pattern, item)
+        link = item.find('a')
+        if link:
+            has_link = True
+            text_parts = []
+            for content in item.contents:
+                if content == link:
+                    break
+                if isinstance(content, str):
+                    text_parts.append(content.strip())
+                else:
+                    text_parts.append(content.get_text(strip=True))
+            text_before_link = ' '.join(text_parts).strip()
 
-        if link_match:
-            has_link = True  
-            text_before_link = item.split(link_match.group(0))[0].strip()
-            link_url = link_match.group(1)
-            link_text = link_match.group(2)
-            text_after_link = item.split(link_match.group(0))[1].strip()
+            text_after_link = ''
+            after_link = False
+            for content in item.contents:
+                if after_link:
+                    if isinstance(content, str):
+                        text_after_link += content.strip() + ' '
+                    else:
+                        text_after_link += content.get_text(strip=True) + ' '
+                if content == link:
+                    after_link = True
+            text_after_link = text_after_link.strip()
+
+            link_text = link.get_text(strip=True)
+            link_url = link.get('href', '')
 
             if text_before_link:
                 rich_data.append({
@@ -118,7 +135,7 @@ def process_list_item_with_regex(html):
                     "media": {}
                 })
         else:
-            bullet_point = f"• {item.strip()}"
+            bullet_point = f"• {item.get_text(strip=True)}"
             if rich_data and 'url' not in rich_data[-1]:
                 rich_data[-1]['text'] += f"\n{bullet_point}"
             else:
@@ -127,7 +144,7 @@ def process_list_item_with_regex(html):
                     "heading": "",
                     "media": {}
                 })
-    
+  
     if not has_link:
         merged_bullet_points = "\n".join([item['text'] for item in rich_data])
         return [{
@@ -135,7 +152,7 @@ def process_list_item_with_regex(html):
             "heading": "",
             "media": {}
         }]
-    
+
     result = [{
         "text": "",
         "heading": "",
