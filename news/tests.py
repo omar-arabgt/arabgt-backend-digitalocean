@@ -26,6 +26,10 @@ class TestPostContentProcessing(unittest.TestCase):
                 <h1>click <a href="https://www.google.com">here</a> to continue</h1>
                 <ul><li>one</li><li>two</li><li>three</li></ul>
                 <ul><li>one <a href="www.audteye.com">link</a></li><li>two</li><li>three</li></ul>
+                text
+                <a href="#" target="_blank" rel="noopener"><strong>اختبار حقيقي حماسي مع أسرع وأقوى سيارة رنج روفر جديدة</strong></a>
+                [gallery link="file" ids="354716,354713"]
+                another_text
             ''',
             'post_date': '2024-01-01',
             'post_modified': '2024-01-01',
@@ -111,33 +115,21 @@ class TestPostContentProcessing(unittest.TestCase):
                     {"text": "• two\n• three", "heading": "", "media": {}}
                 ]
             },
+            {   
+                'text': '',
+                'media': {}, 'heading': '',
+                'type': 'rich', 'data': [
+                  {'text': 'text', 'heading': '', 'media': {}},
+                  {'text': 'اختبار حقيقي حماسي مع أسرع وأقوى سيارة رنج روفر جديدة', 'url': '#', 'heading': '', 'media': {}},
+                  {'text': '', 'heading': '', 'media': {'gallery': [
+                      'https://arabgt.com/wp-content/uploads/2023/12/بورش-باناميرا-2024-1-1.jpg',
+                      'https://arabgt.com/wp-content/uploads/2023/12/باناميرا-الجديدة-.jpg'
+                    ]}
+                  }
+                ]
+            },
+            {'text': 'another_text', 'heading': '', 'media': {}},
             {'external_links': ['https://www.google.com', 'www.link.com']},
-        #      {
-        #     "data": [
-        #         {
-        #             "text": "وفقاً لـ UA، خصصت كارداشيان سيارة رنج روفر معدلة بمجموعة من جنوط Forgiato Cactus Jack أحادية الكتلة ذات تصميم مسطح بحجم 24 إنش . على الرغم من أن هذا ليس بالضبط ما كانت لاند روفر تأمله لمركباتها من حيث الحجم ، إلا أن هذه المجموعة من الجنوط هي من بين الأمثلة القليلة التي تم إنتاجها على الإطلاق ، وتحيط بها اطارات Ultra Pro من Vredestein ، وهي الأولى من نوعها لأي سيارة رنج روفر في العالم . سترى أيضًا شارات KK على الجزء الخارجي ، مما يجعل هذه السيارة فريدة حقاً .\r\n\r\nتنضم رنج روفر المخصصة إلى مجموعة المشاهير من السيارات الفاخرة ، بما في ذلك سيارة مرسيدس مايباخ S580 المعاد تصميمها بمهارة . يقول سيمون ديرن ، مؤسس UA : ” نحن فخورون بمحفظتنا المتنامية من مشاريع العملاء المشاهير ، وفرصة العمل على سيارة مخصصة لـ كيم كارداشيان يعتبر على مستوى عالمي ” .",
-        #             "media": {},
-        #             "heading": ""
-        #         },
-        #         {
-        #             "url": "https://localhost/api/posts/249265",
-        #             "text": "اختبار حقيقي حماسي مع أسرع وأقوى سيارة رنج روفر جديدة",
-        #             "media": {},
-        #             "heading": ""
-        #         },
-        #         {
-        #             "text": "[gallery link=\"file\" ids=\"371610,371611,371605,371604,371606,371607,371609,371612\"]\r\n\r\n \r\n\r\nلم يتم إجراء أي تغييرات في الداخل ولا على المواصفات الميكانيكية الخاصة بـ رينج روفر ، ولكن من المهم ملاحظة أن مقر UA و Platinum Motorsport يفصل بينهما المحيط الأطلسي . لإنجاز هذا العمل ، قامت الأولى بتصنيع أجزاء مخصصة من ألياف الكربون في المملكة المتحدة قبل شحنها إلى لوس أنجلوس لكي تعمل الأخيرة عليها . حتى أن سيمون ديرن سافر إلى لوس أنجلوس للتوقيع على السيارة قبل التسليم ، وهو ما نعتقد أنه يضاف إلى التكلفة الإجمالية لهذه الرحلة الخاصة .\r\n\r\nبعد معرفة التعديلات التي تم توفيرها برأيكم هل تستحق سيارة رنج روفر معدلة سعر 306 ألف دولار أمريكي .",
-        #             "media": {},
-        #             "heading": ""
-        #         }
-        #     ],
-        #     "text": "",
-        #     "type": "rich",
-        #     "media": {},
-        #     "heading": ""
-        # },
-#     "post_id": 371603,
-
         ]
         
         # Compare the actual content with expected content

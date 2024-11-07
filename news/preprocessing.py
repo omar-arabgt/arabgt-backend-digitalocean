@@ -346,27 +346,46 @@ def replace_gallery_ids_with_links(elements):
     Functionality:
     - Fetches image URLs for the given gallery IDs from the database.
     - Replaces gallery IDs with the corresponding image URLs.
+    - Recursively processes nested elements, including within 'rich' and 'rich_heading' elements.
 
     Output:
     - Returns an updated list of elements with image URLs.
     """
     gallery_ids = []
-    for element in elements:
-        if 'gallery' in element['media']:
-            gallery_ids.extend(element['media']['gallery'])
 
+    # Function to collect all gallery IDs from elements and nested data
+    def collect_gallery_ids(element):
+        if 'media' in element and 'gallery' in element['media']:
+            gallery_ids.extend(element['media']['gallery'])
+        if element.get('type') in ['rich', 'rich_heading']:
+            for item in element['data']:
+                collect_gallery_ids(item)
+
+    # Collect gallery IDs from all elements
+    for element in elements:
+        collect_gallery_ids(element)
+
+    # Fetch image URLs from the database
     wp_posts = WpPosts.objects.filter(post_type="attachment", id__in=gallery_ids)
     wp_posts_dict = {str(post.id): post.guid for post in wp_posts}
 
-    updated_elements = []
-    for element in elements:
-        if 'gallery' in element['media']:
+    # Function to replace gallery IDs with URLs in elements and nested data
+    def replace_ids_in_element(element):
+        if 'media' in element and 'gallery' in element['media']:
             ids = element['media']['gallery']
-            links = [wp_posts_dict.get(id, '') for id in ids]
-            element['media'] = {"gallery": links}
-        updated_elements.append(element)
+            # Replace IDs with URLs, defaulting to an empty string if not found
+            links = [wp_posts_dict.get(id.strip(), '') for id in ids]
+            element['media']['gallery'] = links
+        if element.get('type') in ['rich', 'rich_heading']:
+            for item in element['data']:
+                replace_ids_in_element(item)
+
+    # Replace gallery IDs with URLs in all elements
+    for element in elements:
+        replace_ids_in_element(element)
     
-    return updated_elements
+    return elements
+
 
 
 def get_thumbnail(post_id):
@@ -480,6 +499,21 @@ def get_related_article_ids(related_articles):
     return result
 
 
+def process_galleries_in_element(element):
+    if element.get('type') in ['rich', 'rich_heading']:
+        new_data = []
+        for item in element['data']:
+            processed_items = process_galleries_in_element(item)
+            new_data.extend(processed_items)
+        element['data'] = new_data
+        return [element]
+    else:
+        if '[gallery' in element.get('text', ''):
+          return handle_galleries(element['text'])
+        else:
+            return [element]
+
+
 def preprocess_article(article):
     """
     Preprocesses an article to extract and structure its content.
@@ -513,11 +547,11 @@ def preprocess_article(article):
     # print("Structured Data:", structured_data)
 
     final_elements = []
+    
     for element in structured_data:
-        if '[gallery' in element.get('text', ''):
-            final_elements.extend(handle_galleries(element['text']))
-        else:
-            final_elements.append(element)
+        processed_elements = process_galleries_in_element(element)
+        final_elements.extend(processed_elements)
+
 
     final_elements = replace_gallery_ids_with_links(final_elements)
     
@@ -529,8 +563,10 @@ def preprocess_article(article):
         })
 
     thumbnail_url = get_thumbnail(post_id)
-    thumbnail_url_with_base = f'https://arabgt.com/wp-content/uploads/{thumbnail_url}'
-
+    thumbnail_url_with_base = f'https://arabgt.com/wp-content/uploads/{thumbnail_url}' if thumbnail_url else None
+    print("||")
+    print(final_elements)
+    print("||")
     output_data = {
         "thumbnail": thumbnail_url_with_base,
         "content": final_elements,
@@ -605,7 +641,7 @@ def preprocess_video_article(article):
         content["media"]["iframe"] = media_content
 
     thumbnail_url = get_thumbnail(post_id)
-    thumbnail_url_with_base = f'https://arabgt.com/wp-content/uploads/{thumbnail_url}'
+    thumbnail_url_with_base = f'https://arabgt.com/wp-content/uploads/{thumbnail_url}' if thumbnail_url else None
 
     output_data = {
         "thumbnail": thumbnail_url_with_base,
