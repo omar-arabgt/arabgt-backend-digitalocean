@@ -186,7 +186,14 @@ def extract_elements(element):
             url = child.get('href', '')
             link_text = child.get_text(strip=True)
             external_links.add(url)
-            accumilated_rich.append({"text": link_text, "url": replace_url(url), "heading": "", "media": {}})
+            if(not url.startswith("https://arabgt.com/wp-content")):
+              accumilated_rich.append({"text": link_text, "url": replace_url(url), "heading": "", "media": {}})
+              external_links.add(url)
+            else:
+              if link_text.strip():
+                  add_element(text=link_text.strip())
+                  link_text = ""
+              add_element(media={"image": replace_url(url)})
         else:
             if accumilated_rich:
                 has_link = any('url' in item for item in accumilated_rich)
@@ -213,8 +220,15 @@ def extract_elements(element):
                         if paragraph_text.strip():
                             rich_data.append({"text": paragraph_text.strip(), "heading": "", "media": {}})
                             paragraph_text = ""
-                        rich_data.append({"text": p_child.get_text(strip=True), "url": replace_url(url), "heading": "", "media": {}})
-                        external_links.add(url)
+                        if(not url.startswith("https://arabgt.com/wp-content")):
+                          rich_data.append({"text": p_child.get_text(strip=True), "url": replace_url(url), "heading": "", "media": {}})
+                          external_links.add(url)
+                        else:
+                          if p_child.get_text(strip=True):
+                              add_element(text=p_child.get_text(strip=True))
+                              link_text = ""
+                          add_element(media={"image": replace_url(url)})
+                        
                     elif p_child.name == 'img':
                         if paragraph_text.strip():
                             add_element(text=paragraph_text.strip())
@@ -251,8 +265,14 @@ def extract_elements(element):
                         if heading_text.strip():
                             heading_rich_data.append({"text": heading_text.strip(), "heading": "", "media": {}})
                             heading_text = ""
-                        heading_rich_data.append({"text": h_child.get_text(strip=True), "url": replace_url(url), "heading": "", "media": {}})
-                        external_links.add(url)
+                        if(not url.startswith("https://arabgt.com/wp-content")):
+                          heading_rich_data.append({"text": h_child.get_text(strip=True), "url": replace_url(url), "heading": "", "media": {}})
+                          external_links.add(url)
+                        else:
+                          if h_child.get_text(strip=True):
+                              add_element(text=h_child.get_text(strip=True))
+                              link_text = ""
+                          add_element(media={"image": replace_url(url)})
 
                 if heading_text.strip():
                     heading_rich_data.append({"text": heading_text.strip(), "heading": "", "media": {}})
