@@ -1,4 +1,5 @@
 import re
+import json
 import urllib.parse
 from bs4 import BeautifulSoup
 
@@ -7,130 +8,318 @@ from django.db.models import Q
 from api.models import Post
 from .models import WpPosts, WpPostmeta
 
+from urllib.parse import urlparse, unquote
+
+# def replace_url(url):
+#     # Decode the URL
+#     clean_url = re.search(r'https?://[^\s"]+', url).group()
+
+#     decoded_url = unquote(clean_url)
+#     parsed_url = urlparse(decoded_url)
+#     title =  parsed_url.path.strip('/').split('/')[-1].replace('-', ' ').lower()
+#     post_instance = Post.objects.filter(normalized_title__icontains=title).first()
+#     return f'https://localhost/api/posts/{post_instance.id}'
+
+import re
+from urllib.parse import unquote, urlparse
+
+def replace_url(url):
+    # Check if URL is from arabgt.com
+
+    # Decode the URL
+    clean_url = re.search(r'https?://[^\s"]+', url).group()
+    if not clean_url.startswith("https://arabgt.com/"):
+        return clean_url
+
+    decoded_url = unquote(clean_url)
+    parsed_url = urlparse(decoded_url)
+    # Split the path into parts
+    path_parts = parsed_url.path.strip('/').split('/')
+
+    # Special case for 'news-tags'
+    if "news-tags" in path_parts:
+        # Find the index of 'news-tags' and get the part after it
+        news_tag_index = path_parts.index("news-tags")
+        if news_tag_index + 1 < len(path_parts):
+            tag_part = path_parts[news_tag_index + 1]
+            # Replace hyphens with spaces
+            formatted_tag = tag_part.replace('-', ' ')
+            return f"/api/posts/?tag={formatted_tag}"
+
+    # # Define allowed tags
+    # tags = {
+    #     "اخبار-سيارات",
+    #     "سيارات-معدلة",
+    #     # Add your other 26 tags here
+    # }
+
+    # # Check if the URL contains any of the allowed tags
+    # if not any(tag in path_parts for tag in tags):
+    #     return None
+
+    # Extract the title part of the URL
+    title = normalize_title(path_parts[-1]) 
+    # Find the first matching Post instance
+    post_instance = Post.objects.filter(normalized_title__icontains=title).first()
+    # Return the local API URL if a post is found, else return None
+    if post_instance:
+        return f'/api/posts/{post_instance.id}'
+    else:
+        print(f'arabgt {url}')
+        return clean_url
+
+# 365716
+
+def process_list_item_with_regex(html):
+    """
+    Processes <ul> or <ol> elements to extract bullet points with and without links.
+    Returns structured content, treating lists with links as 'rich' and lists without links as plain text.
+    """
+    soup = BeautifulSoup(html, 'html.parser')
+    list_items = soup.find_all('li')
+
+    rich_data = []
+    has_link = False
+
+    for idx, item in enumerate(list_items):
+        item_rich_data = []
+        bullet_added = False
+
+        for content in item.contents:
+            if isinstance(content, str):
+                text = content.strip()
+                if text:
+                    if not bullet_added:
+                        text = '• ' + text
+                        bullet_added = True
+                    else:
+                        text = ' ' + text 
+                    item_rich_data.append({
+                        "text": text,
+                        "heading": "",
+                        "media": {}
+                    })
+            elif content.name == 'a':
+                has_link = True
+                link_text = content.get_text(strip=True)
+                link_url = content.get('href', '')
+                if not bullet_added:
+                    link_text = '• ' + link_text
+                    bullet_added = True
+                else:
+                    link_text = ' ' + link_text 
+                item_rich_data.append({
+                    "text": link_text,
+                    "url": replace_url(link_url),
+                    "heading": "",
+                    "media": {}
+                })
+            else:
+                pass
+
+        if idx < len(list_items) - 1:
+            if item_rich_data:
+                last_text = item_rich_data[-1]['text']
+                item_rich_data[-1]['text'] = last_text + '\n'
+
+        rich_data.extend(item_rich_data)
+
+    if not has_link:
+        merged_bullet_points = "".join([item['text'] for item in rich_data])
+        return [{
+            "text": merged_bullet_points,
+            "heading": "",
+            "media": {}
+        }]
+
+    result = [{
+        "text": "",
+        "heading": "",
+        "media": {},
+        "type": "rich",
+        "data": rich_data
+    }]
+
+    return result
 
 def extract_elements(element):
     """
-    Extracts structured elements from HTML content.
-
-    Input:
-    - element: A BeautifulSoup element representing the HTML content to be parsed.
-
-    Functionality:
-    - Parses the HTML content to extract text, headings, media elements (such as images, iframes, YouTube videos), and external links.
-    - Processes various HTML tags (<strong>, <a>, <h1> to <h6>, <ul>, <ol>, <iframe>, and <img>) to structure the content into elements.
-
-    Output:
-    - Returns a tuple:
-      - elements: A list of dictionaries representing structured content elements.
-      - external_links: A list of external links found in the content.
+    Extract structured elements from HTML content recursively.
+    Returns a list of content elements with text, media, and headings.
     """
     elements = []
-    text_buffer = []
-    external_links = []
+    external_links = set()
+    accumilated_rich = []
 
-    def add_text_buffer_to_elements():
-        if text_buffer:
-            text = ''.join(text_buffer).strip()
-            if text:
-                elements.append({
-                    "text": text,
-                    "media": {},
-                    "heading": ""
-                })
-            text_buffer.clear()
+    youtube_pattern = re.compile(r'https?://(www\.)?(youtube\.com|youtu\.be)/[^\s]+')
 
-    def handle_strong_tag(child):
-        text = child.get_text(strip=True)
-        if (child.previous_sibling and '\n' in child.previous_sibling) or (child.next_sibling and '\n' in child.next_sibling):
-            add_text_buffer_to_elements()
-            elements.append({
-                "media": {},
-                "heading": text,
-                "text": "",
-            })
-        else:
-            text_buffer.append(text)
+    def add_element(text='', media=None, heading='', url=None, type=None, rich_data=None):
+        if text.strip() or media or heading.strip() or rich_data:
+            text = text.strip() if text else ''
+            if text and youtube_pattern.match(text):
+                media = media or {}
+                media['youtube'] = text
+                text = ''
+            element = {
+                'text': text,
+                'media': media or {},
+                'heading': heading.strip() if heading else ''
+            }
+            if url:
+                element['url'] = url
+            if type == 'rich' or type == 'rich_heading':
+                element['type'] = type
+                element['data'] = rich_data
+            elements.append(element)
 
     for child in element.children:
         if isinstance(child, str):
-            text_buffer.append(child)
-        else:
-            tag_name = child.name
-            attributes = child.attrs
-            text = child.get_text(strip=True)
-
-            if tag_name == 'strong':
-                handle_strong_tag(child)
-            elif tag_name == 'a':
-                href = attributes.get('href', '')
-                if href:
-                    external_links.append(href)
-                if child.find('strong') and (
-                    (child.previous_sibling is None or (isinstance(child.previous_sibling, str) and child.previous_sibling.strip() == "")) or
-                    (child.next_sibling is None or (isinstance(child.next_sibling, str) and child.next_sibling.strip() == ""))
-                ):
-                    add_text_buffer_to_elements()
-                    elements.append({
-                        "text": "",
-                        "media": {},
-                        "heading": text
-                    })
-                else:
-                    text_buffer.append(child.get_text())
-            elif tag_name in ['h1', 'h2', 'h3', 'h4', 'h5', 'h6']:
-                add_text_buffer_to_elements()
-                elements.append({
-                    "text": "",
-                    "media": {},
-                    "heading": text
-                })
-            elif tag_name in ['ul', 'ol']:
-                add_text_buffer_to_elements()
-                bullets = "\n".join([f"• {li.get_text(strip=True)}" for li in child.find_all('li')])
-                elements.append({
-                    "text": bullets,
-                    "media": {},
-                    "heading": ""
-                })
-                for li in child.find_all('li'):
-                    a_tag = li.find('a')
-                    if a_tag and 'href' in a_tag.attrs:
-                        external_links.append(a_tag['href'])
-            elif tag_name == 'iframe':
-                add_text_buffer_to_elements()
-                src = attributes.get('src', '')
-                if 'youtube' in src:
-                    youtube_id = re.search(r"embed/([^?]+)", src).group(1)
-                    elements.append({
-                        "text": "",
-                        "media": {"youtube": f"https://www.youtube.com/watch?v={youtube_id}"},
-                        "heading": ""
-                    })
-                else:
-                    elements.append({
-                        "text": "",
-                        "media": {"iframe": src},
-                        "heading": ""
-                    })
-            elif tag_name == 'img':
-                add_text_buffer_to_elements()
-                src = attributes.get('src', '')
-                elements.append({
-                    "text": "",
-                    "media": {"image": src},
-                    "heading": ""
-                })
+            text = child.strip()
+            if text:
+                accumilated_rich.append({"text": text, "heading": "", "media": {}})
+        elif child.name == 'a' and child.parent.name not in ['h1', 'h2', 'h3', 'h4', 'h5', 'h6']:
+            url = child.get('href', '')
+            link_text = child.get_text(strip=True)
+            external_links.add(url)
+            if(not url.startswith("https://arabgt.com/wp-content")):
+              accumilated_rich.append({"text": link_text, "url": replace_url(url), "heading": "", "media": {}})
+              external_links.add(url)
             else:
-                add_text_buffer_to_elements()
-                elements.append({
-                    "text": text,
-                    "media": {},
-                    "heading": ""
-                })
+              if link_text.strip():
+                  add_element(text=link_text.strip())
+                  link_text = ""
+              add_element(media={"image": replace_url(url)})
+        else:
+            if accumilated_rich:
+                has_link = any('url' in item for item in accumilated_rich)
+                if has_link:
+                    add_element(type='rich', rich_data=accumilated_rich.copy())
+                else:
+                    for item in accumilated_rich:
+                        add_element(text=item['text'])
+                accumilated_rich.clear()
 
-    add_text_buffer_to_elements()
-    elements = [element for element in elements if element['text'] or element['media'] or element['heading']]
-    return elements, external_links
+            if child.name in ['ul', 'ol']:
+                list_elements = process_list_item_with_regex(str(child))
+                if list_elements:
+                    elements.extend(list_elements)
+
+            elif child.name == 'p':
+                rich_data = []
+                paragraph_text = ""
+                for p_child in child.children:
+                    if isinstance(p_child, str):
+                        paragraph_text += p_child.strip() + " "
+                    elif p_child.name == 'a':
+                        url = p_child.get('href', '')
+                        if paragraph_text.strip():
+                            rich_data.append({"text": paragraph_text.strip(), "heading": "", "media": {}})
+                            paragraph_text = ""
+                        if(not url.startswith("https://arabgt.com/wp-content")):
+                          rich_data.append({"text": p_child.get_text(strip=True), "url": replace_url(url), "heading": "", "media": {}})
+                          external_links.add(url)
+                        else:
+                          if p_child.get_text(strip=True):
+                              add_element(text=p_child.get_text(strip=True))
+                              link_text = ""
+                          add_element(media={"image": replace_url(url)})
+                        
+                    elif p_child.name == 'img':
+                        if paragraph_text.strip():
+                            add_element(text=paragraph_text.strip())
+                            paragraph_text = ""
+                        add_element(media={"image": p_child.get('src', '')})
+
+                if paragraph_text.strip():
+                    rich_data.append({"text": paragraph_text.strip(), "heading": "", "media": {}})
+
+                if len(rich_data) > 1:
+                    add_element(type='rich', rich_data=rich_data)
+                elif len(rich_data) == 1:
+                    if 'url' in rich_data[0]:
+                        add_element(text=rich_data[0]['text'], url=rich_data[0]['url'])
+                    else:
+                        add_element(text=rich_data[0]['text'])
+
+            elif child.name == 'a':
+                href = child.get('href', '')
+                external_links.add(href)
+                if child.parent.name in ['h1', 'h2', 'h3', 'h4', 'h5', 'h6']:
+                    add_element(heading=child.get_text(strip=True), url=href)
+                else:
+                    add_element(text=child.get_text(strip=True), url=href)
+
+            elif child.name in ['h1', 'h2', 'h3', 'h4', 'h5', 'h6']:
+                heading_rich_data = []
+                heading_text = ""
+                for h_child in child.children:
+                    if isinstance(h_child, str):
+                        heading_text += h_child.strip() + " "
+                    elif h_child.name == 'a':
+                        url = h_child.get('href', '')
+                        if heading_text.strip():
+                            heading_rich_data.append({"text": heading_text.strip(), "heading": "", "media": {}})
+                            heading_text = ""
+                        if(not url.startswith("https://arabgt.com/wp-content")):
+                          heading_rich_data.append({"text": h_child.get_text(strip=True), "url": replace_url(url), "heading": "", "media": {}})
+                          external_links.add(url)
+                        else:
+                          if h_child.get_text(strip=True):
+                              add_element(text=h_child.get_text(strip=True))
+                              link_text = ""
+                          add_element(media={"image": replace_url(url)})
+
+                if heading_text.strip():
+                    heading_rich_data.append({"text": heading_text.strip(), "heading": "", "media": {}})
+
+                if len(heading_rich_data) > 1:
+                    add_element(type='rich_heading', rich_data=heading_rich_data)
+                elif len(heading_rich_data) == 1:
+                    add_element(heading=heading_rich_data[0]['text'], url=heading_rich_data[0].get('url', None))
+                else:
+                    add_element(heading=child.get_text(strip=True))
+
+            elif child.name == 'strong':
+                if not accumilated_rich:
+                    add_element(heading=child.get_text(strip=True))
+                else:
+                    accumilated_rich.append({"text": child.get_text(strip=True), "heading": "", "media": {}})
+
+            elif child.name == 'iframe':
+                src = child.get('src', '')
+                if 'youtube' in src:
+                    youtube_id_match = re.search(r"embed/([^?]+)", src)
+                    if youtube_id_match:
+                        youtube_id = youtube_id_match.group(1)
+                        youtube_url = f"https://www.youtube.com/watch?v={youtube_id}"
+                        add_element(media={"youtube": youtube_url})
+                else:
+                    add_element(media={"iframe": src})
+
+            elif child.name == 'img':
+                src = child.get('src', '')
+                add_element(media={"image": src})
+
+            elif '[gallery' in str(child):
+                gallery_elements = handle_galleries(str(child))
+                elements.extend(gallery_elements)
+
+            else:
+                nested_elements, nested_links = extract_elements(child)
+                elements.extend(nested_elements)
+                external_links.update(nested_links)
+
+    if accumilated_rich:
+        has_link = any('url' in item for item in accumilated_rich)
+        if has_link:
+            add_element(type='rich', rich_data=accumilated_rich.copy())
+        else:
+            for item in accumilated_rich:
+                add_element(text=item['text'])
+        accumilated_rich.clear()
+
+    return elements, list(external_links)
+
 
 
 def handle_galleries(text):
@@ -172,27 +361,46 @@ def replace_gallery_ids_with_links(elements):
     Functionality:
     - Fetches image URLs for the given gallery IDs from the database.
     - Replaces gallery IDs with the corresponding image URLs.
+    - Recursively processes nested elements, including within 'rich' and 'rich_heading' elements.
 
     Output:
     - Returns an updated list of elements with image URLs.
     """
     gallery_ids = []
-    for element in elements:
-        if 'gallery' in element['media']:
-            gallery_ids.extend(element['media']['gallery'])
 
+    # Function to collect all gallery IDs from elements and nested data
+    def collect_gallery_ids(element):
+        if 'media' in element and 'gallery' in element['media']:
+            gallery_ids.extend(element['media']['gallery'])
+        if element.get('type') in ['rich', 'rich_heading']:
+            for item in element['data']:
+                collect_gallery_ids(item)
+
+    # Collect gallery IDs from all elements
+    for element in elements:
+        collect_gallery_ids(element)
+
+    # Fetch image URLs from the database
     wp_posts = WpPosts.objects.filter(post_type="attachment", id__in=gallery_ids)
     wp_posts_dict = {str(post.id): post.guid for post in wp_posts}
 
-    updated_elements = []
-    for element in elements:
-        if 'gallery' in element['media']:
+    # Function to replace gallery IDs with URLs in elements and nested data
+    def replace_ids_in_element(element):
+        if 'media' in element and 'gallery' in element['media']:
             ids = element['media']['gallery']
-            links = [wp_posts_dict.get(id, '') for id in ids]
-            element['media'] = {"gallery": links}
-        updated_elements.append(element)
+            # Replace IDs with URLs, defaulting to an empty string if not found
+            links = [wp_posts_dict.get(id.strip(), '') for id in ids]
+            element['media']['gallery'] = links
+        if element.get('type') in ['rich', 'rich_heading']:
+            for item in element['data']:
+                replace_ids_in_element(item)
+
+    # Replace gallery IDs with URLs in all elements
+    for element in elements:
+        replace_ids_in_element(element)
     
-    return updated_elements
+    return elements
+
 
 
 def get_thumbnail(post_id):
@@ -306,6 +514,21 @@ def get_related_article_ids(related_articles):
     return result
 
 
+def process_galleries_in_element(element):
+    if element.get('type') in ['rich', 'rich_heading']:
+        new_data = []
+        for item in element['data']:
+            processed_items = process_galleries_in_element(item)
+            new_data.extend(processed_items)
+        element['data'] = new_data
+        return [element]
+    else:
+        if '[gallery' in element.get('text', ''):
+          return handle_galleries(element['text'])
+        else:
+            return [element]
+
+
 def preprocess_article(article):
     """
     Preprocesses an article to extract and structure its content.
@@ -331,17 +554,19 @@ def preprocess_article(article):
       - related_articles: A list of related article links.
     """
     post_content = article['post_content']
+    post_content = post_content.replace('\t', '')
     post_id = article['id']
 
     soup = BeautifulSoup(post_content, "html.parser")
     structured_data, external_links = extract_elements(soup.body if soup.body else soup)
+    # print("Structured Data:", structured_data)
 
     final_elements = []
+    
     for element in structured_data:
-        if '[gallery' in element.get('text', ''):
-            final_elements.extend(handle_galleries(element['text']))
-        else:
-            final_elements.append(element)
+        processed_elements = process_galleries_in_element(element)
+        final_elements.extend(processed_elements)
+
 
     final_elements = replace_gallery_ids_with_links(final_elements)
     
@@ -351,9 +576,9 @@ def preprocess_article(article):
         final_elements.append({
             "external_links": cleaned_external_links
         })
-        
+
     thumbnail_url = get_thumbnail(post_id)
-    thumbnail_url_with_base = f'https://arabgt.com/wp-content/uploads/{thumbnail_url}'
+    thumbnail_url_with_base = f'https://arabgt.com/wp-content/uploads/{thumbnail_url}' if thumbnail_url else None
 
     output_data = {
         "thumbnail": thumbnail_url_with_base,
@@ -376,19 +601,19 @@ def preprocess_video_article(article):
 
     media_content = None
     
-    # Extract YouTube URL
+    
     youtube_match = youtube_pattern.search(post_content)
     if youtube_match:
         media_content = youtube_match.group(0)
         post_content = youtube_pattern.sub('', post_content)
 
-    # Extract Facebook iframe
+    
     facebook_match = facebook_pattern.search(post_content)
     if facebook_match:
         media_content = facebook_match.group(0)
         post_content = facebook_pattern.sub('', post_content)
 
-    # Extract Twitter media URL
+    
     twitter_match = twitter_pattern.search(post_content)
     if twitter_match:
         tweet_content = twitter_match.group(0)
@@ -397,7 +622,7 @@ def preprocess_video_article(article):
             media_content = media_match.group(1)
         post_content = twitter_pattern.sub('', post_content)
 
-    # Extract Instagram post URL
+    
     instagram_match = instagram_pattern.search(post_content)
     if instagram_match:
         instagram_content = instagram_match.group(0)
@@ -406,16 +631,16 @@ def preprocess_video_article(article):
             media_content = permalink_match.group(1)
         post_content = instagram_pattern.sub('', post_content)
 
-    # Clean the text
+    
     soup = BeautifulSoup(post_content, "html.parser")
     
-    # Remove all script tags
+    
     for script in soup(["script", "style"]):
         script.decompose()
 
     text_content = soup.get_text(separator=" ").strip()
 
-    # Replace non-breaking spaces with regular spaces
+    
     text_content = text_content.replace('\xa0', ' ')
 
     content = {
@@ -429,7 +654,7 @@ def preprocess_video_article(article):
         content["media"]["iframe"] = media_content
 
     thumbnail_url = get_thumbnail(post_id)
-    thumbnail_url_with_base = f'https://arabgt.com/wp-content/uploads/{thumbnail_url}'
+    thumbnail_url_with_base = f'https://arabgt.com/wp-content/uploads/{thumbnail_url}' if thumbnail_url else None
 
     output_data = {
         "thumbnail": thumbnail_url_with_base,
