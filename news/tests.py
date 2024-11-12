@@ -21,15 +21,21 @@ class TestPostContentProcessing(unittest.TestCase):
                 <iframe title="YouTube video player" src="//www.youtube.com/embed/sK6dEN73n0E?si=jNOsU0mt3ogEjA6p" width="850" height="478" frameborder="0" allowfullscreen="allowfullscreen"></iframe>
                 [gallery link="file" ids="354716,354713"]
                 <p>click <a href="https://www.google.com">here</a> to continue</p>
-                <p><a href="www.link.com">paragraph with a link</a></p>
-                <h1><a href="www.link.com">paragraph with a link</a></h1>
+                <p><a href="https://www.google.com">paragraph with a link</a></p>
+                <h1><a href="https://www.google.com">paragraph with a link</a></h1>
                 <h1>click <a href="https://www.google.com">here</a> to continue</h1>
                 <ul><li>one</li><li>two</li><li>three</li></ul>
                 <ul><li>one <a href="www.audteye.com">link</a></li><li>two</li><li>three</li></ul>
                 text
-                <a href="#" target="_blank" rel="noopener"><strong>اختبار حقيقي حماسي مع أسرع وأقوى سيارة رنج روفر جديدة</strong></a>
+                <a href="https://www.google.com" target="_blank" rel="noopener"><strong>اختبار حقيقي حماسي مع أسرع وأقوى سيارة رنج روفر جديدة</strong></a>
                 [gallery link="file" ids="354716,354713"]
                 another_text
+                <ul>
+                	<li><a href="https://www.google.com">link one</a> rest one</li>
+                	<li>two.</li>
+                	<li><a href="https://www.google.com">link three</a> rest three <a href="https://www.google.com">link 2 three</a> rest 2 three</li>
+                	<li>four.</li>
+                </ul>
             ''',
             'post_date': '2024-01-01',
             'post_modified': '2024-01-01',
@@ -62,7 +68,7 @@ class TestPostContentProcessing(unittest.TestCase):
                 "type": "rich",
                 "data": [
                     {"text": "first", "heading": "", "media": {}},
-                    {"text": "link", "url": "https://arabgt.com/", "heading": "", "media": {}},
+                    {"text": "link", "url": "https://localhost/api/posts/33346", "heading": "", "media": {}},
                     {"text": "second", "heading": "", "media": {}}
                 ]
             },
@@ -90,8 +96,8 @@ class TestPostContentProcessing(unittest.TestCase):
                     {"text": "to continue", "heading": "", "media": {}}
                 ]
             },
-            {"text": "paragraph with a link", "url": "www.link.com", "heading": "", "media": {}},
-            {"text": "", "url": "www.link.com", "heading": "paragraph with a link", "media": {}},
+            {"text": "paragraph with a link", "url": "https://www.google.com", "heading": "", "media": {}},
+            {"text": "", "url": "https://www.google.com", "heading": "paragraph with a link", "media": {}},
             {
                 "text": "",
                 "heading": "",
@@ -111,8 +117,9 @@ class TestPostContentProcessing(unittest.TestCase):
                 "type": "rich",
                 "data": [
                     {"text": "• one", "heading": "", "media": {}},
-                    {"text": "link\n", "url": "www.audteye.com", "heading": "", "media": {}},
-                    {"text": "• two\n• three", "heading": "", "media": {}}
+                    {"text": " link\n", "url": "www.audteye.com", "heading": "", "media": {}},
+                    {"text": "• two\n", "heading": "", "media": {}},
+                    {"text": "• three", "heading": "", "media": {}}
                 ]
             },
             {   
@@ -120,16 +127,65 @@ class TestPostContentProcessing(unittest.TestCase):
                 'media': {}, 'heading': '',
                 'type': 'rich', 'data': [
                   {'text': 'text', 'heading': '', 'media': {}},
-                  {'text': 'اختبار حقيقي حماسي مع أسرع وأقوى سيارة رنج روفر جديدة', 'url': '#', 'heading': '', 'media': {}},
+                  {'text': 'اختبار حقيقي حماسي مع أسرع وأقوى سيارة رنج روفر جديدة', 'url': 'https://www.google.com', 'heading': '', 'media': {}},
                   {'text': '', 'heading': '', 'media': {'gallery': [
                       'https://arabgt.com/wp-content/uploads/2023/12/بورش-باناميرا-2024-1-1.jpg',
                       'https://arabgt.com/wp-content/uploads/2023/12/باناميرا-الجديدة-.jpg'
                     ]}
-                  }
+                  },
+                  {'heading': '', 'media': {}, 'text': 'another_text'},
                 ]
             },
-            {'text': 'another_text', 'heading': '', 'media': {}},
-            {'external_links': ['https://www.google.com', 'www.link.com']},
+            {
+                'data': [{
+                  'heading': '',
+                  'media': {},
+                  'text': '• link one',
+                  'url': 'https://www.google.com'
+                },
+                {
+                    'heading': '', 
+                    'media': {}, 
+                    'text': ' rest one\n'
+                },
+                {
+                    'heading': '', 
+                    'media': {}, 
+                    'text': '• two.\n'
+                },
+                {
+                    'heading': '',
+                    'media': {},
+                    'text': '• link three',
+                    'url': 'https://www.google.com'
+                },
+                {
+                    'heading': '',
+                    'media': {},
+                    'text': ' rest three'
+                },
+                {
+                    'heading': '',
+                    'media': {},
+                    'text': ' link 2 three',
+                    'url': 'https://www.google.com'
+                },
+                {
+                    'heading': '',
+                    'media': {},
+                    'text': ' rest 2 three\n'
+                },
+                {
+                    'heading': '',
+                    'media': {},
+                    'text': '• four.'
+                }],
+                'heading': '',
+                'media': {},
+                'text': '',
+                'type': 'rich'
+            },
+            {'external_links': ['https://www.google.com']},
         ]
         
         # Compare the actual content with expected content

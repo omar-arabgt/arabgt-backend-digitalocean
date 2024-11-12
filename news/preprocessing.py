@@ -72,69 +72,66 @@ def replace_url(url):
 
 def process_list_item_with_regex(html):
     """
-    Processes <ul> or <ol> elements to extract bullet points with and without links using regex.
+    Processes <ul> or <ol> elements to extract bullet points with and without links.
     Returns structured content, treating lists with links as 'rich' and lists without links as plain text.
     """
+    soup = BeautifulSoup(html, 'html.parser')
+    list_items = soup.find_all('li')
 
-    li_pattern = r'<li>(.*?)</li>'
-    link_pattern = r'<a href="(.*?)">(.*?)</a>'
-    
-    list_items = re.findall(li_pattern, html, re.DOTALL)
-    rich_data = []  
-    has_link = False  
+    rich_data = []
+    has_link = False
 
-    for item in list_items:
-        link_match = re.search(link_pattern, item)
+    for idx, item in enumerate(list_items):
+        item_rich_data = []
+        bullet_added = False
 
-        if link_match:
-            has_link = True  
-            text_before_link = item.split(link_match.group(0))[0].strip()
-            link_url = link_match.group(1)
-            link_text = link_match.group(2)
-            text_after_link = item.split(link_match.group(0))[1].strip()
-
-            if text_before_link:
-                rich_data.append({
-                    "text": f"• {text_before_link}",
+        for content in item.contents:
+            if isinstance(content, str):
+                text = content.strip()
+                if text:
+                    if not bullet_added:
+                        text = '• ' + text
+                        bullet_added = True
+                    else:
+                        text = ' ' + text 
+                    item_rich_data.append({
+                        "text": text,
+                        "heading": "",
+                        "media": {}
+                    })
+            elif content.name == 'a':
+                has_link = True
+                link_text = content.get_text(strip=True)
+                link_url = content.get('href', '')
+                if not bullet_added:
+                    link_text = '• ' + link_text
+                    bullet_added = True
+                else:
+                    link_text = ' ' + link_text 
+                item_rich_data.append({
+                    "text": link_text,
+                    "url": replace_url(link_url),
                     "heading": "",
                     "media": {}
                 })
-
-            if not text_after_link:
-                link_text += '\n'
-
-            rich_data.append({
-                "text": f"{link_text}",
-                "url": replace_url(link_url),
-                "heading": "",
-                "media": {}
-            })
-            
-            if text_after_link:
-                rich_data.append({
-                    "text": f"{text_after_link}\n",
-                    "heading": "",
-                    "media": {}
-                })
-        else:
-            bullet_point = f"• {item.strip()}"
-            if rich_data and 'url' not in rich_data[-1]:
-                rich_data[-1]['text'] += f"\n{bullet_point}"
             else:
-                rich_data.append({
-                    "text": bullet_point,
-                    "heading": "",
-                    "media": {}
-                })
-    
+                pass
+
+        if idx < len(list_items) - 1:
+            if item_rich_data:
+                last_text = item_rich_data[-1]['text']
+                item_rich_data[-1]['text'] = last_text + '\n'
+
+        rich_data.extend(item_rich_data)
+
     if not has_link:
-        merged_bullet_points = "\n".join([item['text'] for item in rich_data])
+        merged_bullet_points = "".join([item['text'] for item in rich_data])
         return [{
             "text": merged_bullet_points,
             "heading": "",
             "media": {}
         }]
-    
+
     result = [{
         "text": "",
         "heading": "",
@@ -144,7 +141,6 @@ def process_list_item_with_regex(html):
     }]
 
     return result
-
 
 def extract_elements(element):
     """
@@ -185,7 +181,14 @@ def extract_elements(element):
             url = child.get('href', '')
             link_text = child.get_text(strip=True)
             external_links.add(url)
-            accumilated_rich.append({"text": link_text, "url": replace_url(url), "heading": "", "media": {}})
+            if(not url.startswith("https://arabgt.com/wp-content")):
+              accumilated_rich.append({"text": link_text, "url": replace_url(url), "heading": "", "media": {}})
+              external_links.add(url)
+            else:
+              if link_text.strip():
+                  add_element(text=link_text.strip())
+                  link_text = ""
+              add_element(media={"image": replace_url(url)})
         else:
             if accumilated_rich:
                 has_link = any('url' in item for item in accumilated_rich)
@@ -212,8 +215,15 @@ def extract_elements(element):
                         if paragraph_text.strip():
                             rich_data.append({"text": paragraph_text.strip(), "heading": "", "media": {}})
                             paragraph_text = ""
-                        rich_data.append({"text": p_child.get_text(strip=True), "url": replace_url(url), "heading": "", "media": {}})
-                        external_links.add(url)
+                        if(not url.startswith("https://arabgt.com/wp-content")):
+                          rich_data.append({"text": p_child.get_text(strip=True), "url": replace_url(url), "heading": "", "media": {}})
+                          external_links.add(url)
+                        else:
+                          if p_child.get_text(strip=True):
+                              add_element(text=p_child.get_text(strip=True))
+                              link_text = ""
+                          add_element(media={"image": replace_url(url)})
+                        
                     elif p_child.name == 'img':
                         if paragraph_text.strip():
                             add_element(text=paragraph_text.strip())
@@ -250,8 +260,14 @@ def extract_elements(element):
                         if heading_text.strip():
                             heading_rich_data.append({"text": heading_text.strip(), "heading": "", "media": {}})
                             heading_text = ""
-                        heading_rich_data.append({"text": h_child.get_text(strip=True), "url": replace_url(url), "heading": "", "media": {}})
-                        external_links.add(url)
+                        if(not url.startswith("https://arabgt.com/wp-content")):
+                          heading_rich_data.append({"text": h_child.get_text(strip=True), "url": replace_url(url), "heading": "", "media": {}})
+                          external_links.add(url)
+                        else:
+                          if h_child.get_text(strip=True):
+                              add_element(text=h_child.get_text(strip=True))
+                              link_text = ""
+                          add_element(media={"image": replace_url(url)})
 
                 if heading_text.strip():
                     heading_rich_data.append({"text": heading_text.strip(), "heading": "", "media": {}})
