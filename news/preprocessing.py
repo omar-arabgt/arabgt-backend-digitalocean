@@ -25,14 +25,14 @@ from urllib.parse import unquote, urlparse
 
 def replace_url(url):
     # Check if URL is from arabgt.com
-    if not url.startswith("https://arabgt.com/"):
-        return url
 
     # Decode the URL
     clean_url = re.search(r'https?://[^\s"]+', url).group()
+    if not clean_url.startswith("https://arabgt.com/"):
+        return clean_url
+
     decoded_url = unquote(clean_url)
     parsed_url = urlparse(decoded_url)
-
     # Split the path into parts
     path_parts = parsed_url.path.strip('/').split('/')
 
@@ -44,7 +44,7 @@ def replace_url(url):
             tag_part = path_parts[news_tag_index + 1]
             # Replace hyphens with spaces
             formatted_tag = tag_part.replace('-', ' ')
-            return f"https://localhost/api/posts/?tag={formatted_tag}"
+            return f"/api/posts/?tag={formatted_tag}"
 
     # # Define allowed tags
     # tags = {
@@ -61,10 +61,9 @@ def replace_url(url):
     title = normalize_title(path_parts[-1]) 
     # Find the first matching Post instance
     post_instance = Post.objects.filter(normalized_title__icontains=title).first()
-    print(post_instance)
     # Return the local API URL if a post is found, else return None
     if post_instance:
-        return f'https://localhost/api/posts/{post_instance.id}'
+        return f'/api/posts/{post_instance.id}'
     else:
         print(f'arabgt {url}')
         return clean_url
@@ -564,9 +563,7 @@ def preprocess_article(article):
 
     thumbnail_url = get_thumbnail(post_id)
     thumbnail_url_with_base = f'https://arabgt.com/wp-content/uploads/{thumbnail_url}' if thumbnail_url else None
-    print("||")
-    print(final_elements)
-    print("||")
+
     output_data = {
         "thumbnail": thumbnail_url_with_base,
         "content": final_elements,
