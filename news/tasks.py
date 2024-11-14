@@ -1,5 +1,6 @@
 import logging
 from celery import shared_task
+from django.core.cache import cache
 
 from api.models import Post
 from .models import WpPosts, WpTermRelationships, WpTermTaxonomy, WpTerms, WpUsers
@@ -85,6 +86,14 @@ def fetch_and_process_post(post, override_existing=False):
         if related_articles:
             related_ids = get_related_article_ids(related_articles)
             new_post.related_articles.add(*related_ids)
+
+        try:
+            cache_client = cache._cache.get_client()
+            keys = cache_client.keys("*home_page_view_cache*")
+            if keys:
+                cache_client.delete(*keys)
+        except Exception as e:
+            logger.error(f"Error while deleting cache: {str(e)}")
 
         logger.info(f"Post {new_post.id} - {new_post.post_id} processed succesfully!")
     except Exception as e:
