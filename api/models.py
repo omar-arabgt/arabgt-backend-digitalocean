@@ -1,3 +1,5 @@
+from datetime import datetime
+
 from django.db import models
 from django.contrib.auth.models import AbstractUser
 from django.contrib.postgres.fields import ArrayField
@@ -207,6 +209,9 @@ class PostAction(TimeStampedModel):
     is_saved = models.BooleanField(default=False)
     is_read = models.BooleanField(default=False)
     is_shared = models.BooleanField(default=False)
+    saved_at = models.DateTimeField(blank=True, null=True)
+    read_at = models.DateTimeField(blank=True, null=True)
+    shared_at = models.DateTimeField(blank=True, null=True)
 
     class Meta:
         unique_together = ("user", "post")
@@ -215,16 +220,25 @@ class PostAction(TimeStampedModel):
         super().__init__(*args, **kwargs)
         self._is_read = self.is_read
         self._is_shared = self.is_shared
+        self._is_saved = self.is_saved
 
     def save(self, *args, **kwargs):
-        super().save(*args, **kwargs)
         point_type = None
+        now = datetime.now()
+
         if not self._is_read and self.is_read:
+            self.read_at = now
             point_type = PointType.READ_ARTICLE.name
         if not self._is_shared and self.is_shared:
+            self.shared_at = now
             point_type = PointType.SHARE_ARTICLE.name
+        if not self._is_saved and self.is_saved:
+            self.saved_at = now
+
         if point_type:
             set_point.delay(self.user_id, point_type)
+
+        super().save(*args, **kwargs)
 
 
 class Forum(TimeStampedModel):
