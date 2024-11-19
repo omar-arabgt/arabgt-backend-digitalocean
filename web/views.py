@@ -900,7 +900,7 @@ def delete_question(request, question_id):
     
     if request.method == 'POST':
         question.delete()
-        return redirect(reverse('question'))
+        return redirect(reverse('questions'))
     
     return redirect(reverse('question_detail', args=[question_id]))
 
