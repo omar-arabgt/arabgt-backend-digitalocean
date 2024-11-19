@@ -23,6 +23,7 @@ urlpatterns = [
     ),
     path("register/", include("dj_rest_auth.registration.urls")),
     path("email_confirmed/", EmailConfirmed.as_view(), name="email_confirmed"),
+    path("email_change/", EmailChange.as_view(), name="email_change"),
     path("apple/", AppleLogin.as_view(), name="apple_login"),
     path("facebook/", FacebookLogin.as_view(), name="facebook_login"),
     path("google/", GoogleLogin.as_view(), name="google_login"),

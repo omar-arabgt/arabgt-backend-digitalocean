@@ -1,5 +1,5 @@
 from django.utils.translation import gettext as _
-from rest_framework.serializers import ValidationError
+from rest_framework.serializers import ValidationError, Serializer, EmailField
 from dj_rest_auth.serializers import PasswordResetSerializer, LoginSerializer, UserDetailsSerializer
 from dj_rest_auth.registration.serializers import SocialLoginSerializer
 
@@ -52,3 +52,7 @@ class CustomUserDetailsSerializer(UserDetailsSerializer):
     class Meta(UserDetailsSerializer.Meta):
         custom_fields = ("is_onboarded", )
         fields = UserDetailsSerializer.Meta.fields + custom_fields
+
+
+class EmailChangeSerializer(Serializer):
+    email = EmailField()
