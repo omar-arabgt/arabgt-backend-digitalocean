@@ -1,17 +1,19 @@
+{% load custom_filters %}
+
 <div class="mt-4 flex justify-center">
-    {% if page_obj.has_previous %}
-        <a href="?q={{ request.GET.q|default:'' }}&page={{ page_obj.previous_page_number }}" class="bg-gray-300 hover:bg-gray-400 text-black font-bold py-2 px-4 rounded mx-1">السابق</a>
-    {% endif %}
+  {% if page_obj.has_previous %}
+      <a href="?{% query_transform request page=page_obj.previous_page_number %}" class="bg-gray-300 hover:bg-gray-400 text-black font-bold py-2 px-4 rounded mx-1">السابق</a>
+  {% endif %}
 
-    {% for num in page_obj.paginator.page_range %}
-        {% if page_obj.number == num %}
-            <span class="agt-bg-red-900 text-white font-bold py-2 px-4 rounded mx-1">{{ num }}</span>
-        {% else %}
-            <a href="?q={{ request.GET.q|default:'' }}&page={{ num }}" class="bg-gray-300 hover:bg-gray-400 text-black font-bold py-2 px-4 rounded mx-1">{{ num }}</a>
-        {% endif %}
-    {% endfor %}
+  {% for num in page_obj.paginator.page_range %}
+      {% if page_obj.number == num %}
+      <span class="agt-bg-red-900 text-white font-bold py-2 px-4 rounded mx-1">{{ num }}</span>
+      {% else %}
+          <a href="?{% query_transform request page=num %}" class="bg-gray-300 hover:bg-gray-400 text-black font-bold py-2 px-4 rounded mx-1">{{ num }}</a>
+      {% endif %}
+  {% endfor %}
 
-    {% if page_obj.has_next %}
-        <a href="?q={{ request.GET.q|default:'' }}&page={{ page_obj.next_page_number }}" class="bg-gray-300 hover:bg-gray-400 text-black font-bold py-2 px-4 rounded mx-1">التالي</a>
-    {% endif %}
+  {% if page_obj.has_next %}
+      <a href="?{% query_transform request page=page_obj.next_page_number %}" class="bg-gray-300 hover:bg-gray-400 text-black font-bold py-2 px-4 rounded mx-1">التالي</a>
+  {% endif %}
 </div>
