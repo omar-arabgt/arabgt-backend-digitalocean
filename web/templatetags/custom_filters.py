@@ -30,3 +30,9 @@ def arabic_timesince(value):
     time = time.replace('seconds', 'ثواني').replace('second', 'ثانية')
     return f"منذ {time}"
 
+@register.simple_tag
+def query_transform(request, **kwargs):
+    updated = request.GET.copy()
+    for k, v in kwargs.items():
+        updated[k] = v
+    return updated.urlencode()
