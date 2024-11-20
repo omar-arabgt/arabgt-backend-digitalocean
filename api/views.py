@@ -401,8 +401,7 @@ class HomePageView(APIView):
     Output:
     - Returns the homepage content divided into sections.
     """
- 
-    @method_decorator(cache_page(60 * 60 * 24))
+    @method_decorator(cache_page(60 * 60 * 24, key_prefix="home_page_view_cache"))
     def get(self, request):
         """
         Retrieves posts for each section on the homepage, organized by section name.
