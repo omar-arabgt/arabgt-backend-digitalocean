@@ -40,17 +40,27 @@
                 {% endif %}
             </div>
             <div>
-                <form method="POST" action="{% url 'delete_question' question.id %}" class="inline">
-                    {% csrf_token %}
-                    <button type="submit" class="text-black font-bold flex gap-2 text-sm">
-                        حذف المنشور
-                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                            <path d="M21 4H8L1 12L8 20H21C21.5304 20 22.0391 19.7893 22.4142 19.4142C22.7893 19.0391 23 18.5304 23 18V6C23 5.46957 22.7893 4.96086 22.4142 4.58579C22.0391 4.21071 21.5304 4 21 4V4Z" stroke="#E2072C" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                            <path d="M18 9L12 15" stroke="#E2072C" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                            <path d="M12 9L18 15" stroke="#E2072C" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                        </svg>
-                    </button>
-                </form>
+              <button type="button" class="text-black font-bold flex gap-2 text-sm" onclick="question_openModal()">
+                  حذف المنشور
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <path d="M21 4H8L1 12L8 20H21C21.5304 20 22.0391 19.7893 22.4142 19.4142C22.7893 19.0391 23 18.5304 23 18V6C23 5.46957 22.7893 4.96086 22.4142 4.58579C22.0391 4.21071 21.5304 4 21 4V4Z" stroke="#E2072C" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                      <path d="M18 9L12 15" stroke="#E2072C" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                      <path d="M12 9L18 15" stroke="#E2072C" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                  </svg>
+              </button>
+            </div>
+            <div id="question_confirmationModal" class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 hidden" style="z-index: 99999999;">
+                <div class="bg-white rounded-lg px-16 py-6 shadow-lg">
+                    <h2 class="text-xl text-center text-red-600 font-bold mb-6">تأكيد الحذف</h2>
+                    <p>هل أنت متأكد أنك تريد حذف هذا المنشور؟</p>
+                    <div class="flex gap-4 justify-between mt-6">
+                        <form method="POST" action="{% url 'delete_question' question.id %}" class="w-full">
+                            {% csrf_token %}
+                            <button type="submit" class="border-2 border-red-600 hover:bg-red-600 hover:text-white text-red-600 font-bold py-2 px-12 rounded">حذف</button>
+                        </form>
+                        <button class="agt-bg-red-900 hover:bg-red-700 text-white font-bold py-2 px-12 rounded" onclick="question_closeModal()">إلغاء</button>
+                    </div>
+                </div>
             </div>
         </div>
         <div class="bg-gray-50 p-4 border-b border-t border-gray-200 flex justify-between items-center">
@@ -77,6 +87,16 @@
         </ul>
     </div>
 </div>
+
+<script>
+  function question_openModal() {
+      document.getElementById('question_confirmationModal').classList.remove('hidden');
+  }
+  
+  function question_closeModal() {
+      document.getElementById('question_confirmationModal').classList.add('hidden');
+  }
+</script>
 
 <script>
   document.addEventListener("DOMContentLoaded", function() {
