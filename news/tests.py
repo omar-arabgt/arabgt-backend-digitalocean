@@ -36,6 +36,7 @@ class TestPostContentProcessing(unittest.TestCase):
                 	<li><a href="https://www.google.com">link three</a> rest three <a href="https://www.google.com">link 2 three</a> rest 2 three</li>
                 	<li>four.</li>
                 </ul>
+                hello world[caption id="attachment_258409" align="alignright" width="750"]
             ''',
             'post_date': '2024-01-01',
             'post_modified': '2024-01-01',
@@ -185,6 +186,7 @@ class TestPostContentProcessing(unittest.TestCase):
                 'text': '',
                 'type': 'rich'
             },
+            {"text": "hello world", "heading": "", "media": {}},
             {'external_links': ['https://www.google.com']},
         ]
         

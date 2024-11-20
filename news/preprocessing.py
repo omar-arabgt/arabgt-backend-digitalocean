@@ -530,6 +530,19 @@ def process_galleries_in_element(element):
             return [element]
 
 
+def preprocess_captions_and_galleries(text):
+    """
+    Replaces [caption] and [gallery] shortcodes with HTML tags for easier parsing.
+    """
+    caption_pattern_start = r'\[caption[^\]]*\]'
+    caption_pattern_end = r'\[/caption\]'
+
+    text = re.sub(caption_pattern_start, '', text)
+    text = re.sub(caption_pattern_end, '', text)
+
+    return text
+
+
 def preprocess_article(article):
     """
     Preprocesses an article to extract and structure its content.
@@ -557,6 +570,8 @@ def preprocess_article(article):
     post_content = article['post_content']
     post_content = post_content.replace('\t', '')
     post_id = article['id']
+
+    post_content = preprocess_captions_and_galleries(post_content)
 
     soup = BeautifulSoup(post_content, "html.parser")
     structured_data, external_links = extract_elements(soup.body if soup.body else soup)
