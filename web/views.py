@@ -14,7 +14,7 @@ from django.core.paginator import Paginator
 from django.utils.timezone import localtime
 import openpyxl
 
-from api.models import User, Newsletter, DeletedUser, Group, Forum, Question, Reply
+from api.models import User, Newsletter, DeletedUser, Group, Forum, Question, Reply, AdminNotification
 from api.tasks import send_push_notification, NOTIFICATION_ALL
 from .utils import get_merged_user_data, get_signup_method, get_car_sorting_index, CAR_SORTING_LIST
 from api.choices import COUNTRIES, GENDERS, STATUS, HOBBIES, INTERESTS, CAR_BRANDS_ITEMS, CAR_SORTING_ITEMS, UserRank
@@ -737,7 +737,7 @@ class NotificationView(LoginRequiredMixin, FormView):
         """
         context = super().get_context_data(**kwargs)
         context['page_name'] = 'إرسال التنبيهات'
-        notifications = Notification.objects.all().order_by('-created_at')
+        notifications = AdminNotification.objects.all().order_by('-created_at')
         paginator = Paginator(notifications, self.paginate_by)
         page_number = self.request.GET.get('page')
         page_obj = paginator.get_page(page_number)
@@ -748,7 +748,7 @@ class NotificationView(LoginRequiredMixin, FormView):
         title = form.cleaned_data.get("title")
         content = form.cleaned_data.get("content")
         link = form.cleaned_data.get("link")
-        send_push_notification.delay(NOTIFICATION_ALL, title, content, link)
+        send_push_notification.delay(NOTIFICATION_ALL, title, content, link, True)
         return super().form_valid(form)
   
     def post(self, request, *args, **kwargs):

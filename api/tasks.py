@@ -15,7 +15,7 @@ NOTIFICATION_ALL = "notification_all"
 
 
 @shared_task
-def send_push_notification(user_id, title, content, link=None):
+def send_push_notification(user_id, title, content, link=None, by_admin=False):
     """
     Sends a push notification to a specific user or all users who have notifications enabled.
 
@@ -28,7 +28,7 @@ def send_push_notification(user_id, title, content, link=None):
     Functionality:
     - Sends the notification through OneSignal and creates a Notification object in the database.
     """
-    from .models import User, Notification
+    from .models import User, Notification, AdminNotification
 
     if user_id == NOTIFICATION_ALL:
         users = User.objects.filter(send_notification=True)
@@ -59,11 +59,18 @@ def send_push_notification(user_id, title, content, link=None):
                 title=title,
                 content=content,
                 link=link,
-                is_admin_notification=True,
+                is_admin_notification=by_admin,
             )
         notifications.append(n)
 
         Notification.objects.bulk_create(notifications)
+
+        if by_admin:
+            AdminNotification.objects.create(
+                title=title,
+                content=content,
+                link=link,
+            )
 
 
 @shared_task
