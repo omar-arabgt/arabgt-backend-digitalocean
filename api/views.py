@@ -165,10 +165,9 @@ class PostListView(ListAPIView):
     pagination_class = CustomPagination
 
     def get_queryset(self):
-        queryset = Post.objects.all()
         if self.request.GET.get("is_saved"):
-            queryset = queryset.filter(postaction__is_saved=True, postaction__user=self.request.user.id)
-        return queryset.order_by("-publish_date")
+            return Post.objects.filter(postaction__is_saved=True, postaction__user=self.request.user.id).order_by("-postaction__saved_at")
+        return Post.objects.all().order_by("-publish_date")
 
 
 class PostRetrieveView(RetrieveAPIView):
