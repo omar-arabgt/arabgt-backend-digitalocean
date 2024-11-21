@@ -59,6 +59,7 @@ class UserSerializer(serializers.ModelSerializer):
             "next_rank_value",
             "send_notification",
             "profile_photo",
+            "is_onboarded",
         ]
 
     def get_gender(self, obj):
@@ -109,6 +110,7 @@ class UserUpdateSerializer(serializers.ModelSerializer):
             "favorite_show",
             "send_notification",
             "profile_photo",
+            "is_onboarded",
         ]
 
 
