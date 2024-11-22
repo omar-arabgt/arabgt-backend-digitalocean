@@ -55,6 +55,7 @@ class GroupListView(LoginRequiredMixin, ListView):
         """
         context = super().get_context_data(**kwargs)
         context['page_name'] = 'قائمة المجموعات'
+        context['search_query'] = self.request.GET.get('q', '')
         return context
 
 
@@ -153,6 +154,7 @@ class UserListView(LoginRequiredMixin, ListView):
         """
         context = super().get_context_data(**kwargs)
         context['page_name'] = 'قائمة المستخدمين'
+        context['search_query'] = self.request.GET.get('q', '')
         return context
 
 
@@ -220,6 +222,7 @@ class ForumListView(LoginRequiredMixin, ListView):
         """
         context = super().get_context_data(**kwargs)
         context['page_name'] = 'قائمة المنتديات'
+        context['search_query'] = self.request.GET.get('q', '')
         return context
 
 
@@ -781,7 +784,8 @@ class ForumGroupQuestionsView(LoginRequiredMixin, TemplateView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         tab = self.request.GET.get('tab', 'forums')
-        
+        extra_query_params = any(key != 'tab' for key in self.request.GET.keys())
+
         if tab == 'forums':
             questions = self.get_filtered_questions(tab)
             paginator = Paginator(questions, 10)
@@ -796,23 +800,24 @@ class ForumGroupQuestionsView(LoginRequiredMixin, TemplateView):
             context['groups_questions'] = context['page_obj']
 
         context['active_tab'] = tab
-        context[f'{tab}_search_query'] = self.request.GET.get('q', '')
-        context[f'{tab}_question_id'] = self.request.GET.get('question_id', '')
-        context[f'{tab}_group_filter'] = self.request.GET.get('forum_group', '')
-        context[f'{tab}_date_filter'] = self.request.GET.get('date', '')
+        context[f'{tab}_search_query'] = self.request.GET.get(f'{tab}_q', '')
+        context[f'{tab}_question_id'] = self.request.GET.get(f'{tab}_question_id', '')
+        context['forums_group'] = int(self.request.GET.get('forums_group')) if self.request.GET.get('forums_group', False) else ""
+        context[f'{tab}_date'] = self.request.GET.get(f'{tab}_date', '')
         context['forums'] = Forum.objects.all()
         context['groups'] = Group.objects.all()
         context['page_name'] = 'الأسئلة و النقاشات'
+        context['show_clear_button'] = extra_query_params
 
         return context
 
     def get_filtered_questions(self, tab):
         if tab == 'forums':
             questions = Question.objects.filter(forum__isnull=False)
-            search_query = self.request.GET.get('q', '')
-            question_id = self.request.GET.get('question_id', '')
-            group_filter = self.request.GET.get('forum_group', '')
-            date_filter = self.request.GET.get('date', '')
+            search_query = self.request.GET.get(f'{tab}_q', '')
+            question_id = self.request.GET.get(f'{tab}_question_id', '')
+            group_filter = self.request.GET.get(f'{tab}_forum_group', '')
+            date_filter = self.request.GET.get(f'{tab}_date', '')
 
             if search_query:
                 questions = questions.filter(
@@ -827,10 +832,10 @@ class ForumGroupQuestionsView(LoginRequiredMixin, TemplateView):
 
         elif tab == 'groups':
             questions = Question.objects.filter(group__isnull=False)
-            search_query = self.request.GET.get('q', '')
-            question_id = self.request.GET.get('question_id', '')
-            group_filter = self.request.GET.get('forum_group', '')
-            date_filter = self.request.GET.get('date', '')
+            search_query = self.request.GET.get(f'{tab}_q', '')
+            question_id = self.request.GET.get(f'{tab}_question_id', '')
+            group_filter = self.request.GET.get(f'{tab}_groups_forum_group', '')
+            date_filter = self.request.GET.get(f'{tab}_date', '')
 
             if search_query:
                 questions = questions.filter(
