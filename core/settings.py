@@ -183,6 +183,7 @@ REST_AUTH = {
     'OLD_PASSWORD_FIELD_ENABLED': True,
     'PASSWORD_RESET_SERIALIZER': 'authentication.serializers.CustomPasswordResetSerializer',
     'LOGIN_SERIALIZER': 'authentication.serializers.CustomLoginSerializer',
+    'USER_DETAILS_SERIALIZER': 'authentication.serializers.CustomUserDetailsSerializer',
 }
 
 AUTHENTICATION_BACKENDS = (

@@ -1,6 +1,6 @@
 from django.utils.translation import gettext as _
 from rest_framework.serializers import ValidationError
-from dj_rest_auth.serializers import PasswordResetSerializer, LoginSerializer
+from dj_rest_auth.serializers import PasswordResetSerializer, LoginSerializer, UserDetailsSerializer
 from dj_rest_auth.registration.serializers import SocialLoginSerializer
 
 from .adapter import CustomPasswordResetForm
@@ -45,3 +45,10 @@ class CustomLoginSerializer(LoginSerializer):
 
     def get_auth_user(self, username, email, password):
         return self.get_auth_user_using_allauth(username, email, password)
+
+
+class CustomUserDetailsSerializer(UserDetailsSerializer):
+
+    class Meta(UserDetailsSerializer.Meta):
+        custom_fields = ("is_onboarded", )
+        fields = UserDetailsSerializer.Meta.fields + custom_fields
