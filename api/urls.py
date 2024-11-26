@@ -31,4 +31,6 @@ urlpatterns = [
     path('group_membership/<group_id>/', GroupMembershipView.as_view(), name='group_membership'),
     path('reactions/', ReactionCreateView.as_view(), name='reaction-create'),
     path('reactions/<str:content_type>/<int:object_id>/', ReactionDestroyView.as_view(), name='reaction-destroy'),
+    path('file/<pk>/', FileDestroyView.as_view(), name='file-destroy'),
+    path("file_upload_limit/", FileUploadLimitView.as_view(), name="file-upload-limit"),
 ]

@@ -3,6 +3,34 @@ from rest_framework import serializers
 from django.conf import settings
 
 from .models import *
+from .mixins import *
+
+
+class FileSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = File
+        fields = "__all__"
+
+    def validate(self, attrs):
+        file = attrs.get("file")
+        file_extension = file.name.split(".")[-1].lower()
+        file_size = file.size / (1024 * 1024)
+
+        if file_extension in UPLOAD_IMAGE_EXTENSIONS:
+            if file_size > UPLOAD_MAX_IMAGE_SIZE:
+                raise ValidationError({"error": "Maximum file size exceeded!"})
+            attrs["file_type"] = FileType.IMAGE
+
+        elif file_extension in UPLOAD_VIDEO_EXTENSIONS:
+            if file_size > UPLOAD_MAX_VIDEO_SIZE:
+                raise ValidationError({"error": "Maximum file size exceeded!"})
+            attrs["file_type"] = FileType.VIDEO
+
+        else:
+            raise serializers.ValidationError({"error": "Invalid file extension!"})
+        
+        return super().validate(attrs)
 
 
 class FavoritePresenterSerializer(serializers.ModelSerializer):
@@ -172,25 +200,24 @@ class NewsletterSerializer(serializers.ModelSerializer):
         read_only_fields = ['created_at']
 
 
-class ReplyWriteSerializer(serializers.ModelSerializer):
+class ReplyWriteSerializer(FileMixin, serializers.ModelSerializer):
+    file = serializers.ListField(
+        child=serializers.FileField(),
+        allow_empty=True,
+        write_only=True,
+        default=list,
+    )
 
     class Meta:
         model = Reply
         fields = ["question", "parent_reply", "content", "file"]
-
-    def create(self, validated_data):
-        validated_data["user"] = self.context["request"].user
-        file = validated_data.get("file")
-        if file:
-            validated_data["file_extension"] = file.name.split(".")[-1].lower()
-        return super().create(validated_data)
 
 
 class ReplyReadSerializer(serializers.ModelSerializer):
     replies = serializers.SerializerMethodField()
     user = QuestionUserSerializer()
     liked_by = serializers.SerializerMethodField()
-    file_type = serializers.SerializerMethodField()
+    files = FileSerializer(many=True)
 
     class Meta:
         model = Reply
@@ -200,9 +227,7 @@ class ReplyReadSerializer(serializers.ModelSerializer):
             "question",
             "parent_reply",
             "content",
-            "file",
-            "file_extension",
-            "file_type",
+            "files",
             "replies",
             "like_count",
             "reply_count",
@@ -221,35 +246,25 @@ class ReplyReadSerializer(serializers.ModelSerializer):
         content_type = ContentType.objects.get_for_model(self.Meta.model)
         return Reaction.objects.filter(content_type=content_type, object_id=obj.id, user=user).exists()
 
-    def get_file_type(self, obj):
-        # TODO: add all required formats
-        if obj.file_extension in ["jpg", "jpeg", "png", "webp"]:
-            return "image"
-        elif obj.file_extension in ["mp4", "mov"]:
-            return "video"
-        else:
-            return None
 
-
-class QuestionWriteSerializer(serializers.ModelSerializer):
+class QuestionWriteSerializer(FileMixin, serializers.ModelSerializer):
+    file = serializers.ListField(
+        child=serializers.FileField(),
+        allow_empty=True,
+        write_only=True,
+        default=list,
+    )
 
     class Meta:
         model = Question
         fields = ["content", "group", "forum", "file"]
-
-    def create(self, validated_data):
-        validated_data["user"] = self.context["request"].user
-        file = validated_data.get("file")
-        if file:
-            validated_data["file_extension"] = file.name.split(".")[-1].lower()
-        return super().create(validated_data)
 
 
 class QuestionReadSerializer(serializers.ModelSerializer):
     user = QuestionUserSerializer()
     pinned_by = serializers.SerializerMethodField()
     liked_by = serializers.SerializerMethodField()
-    file_type = serializers.SerializerMethodField()
+    files = FileSerializer(many=True)
 
     class Meta:
         model = Question
@@ -262,9 +277,7 @@ class QuestionReadSerializer(serializers.ModelSerializer):
             "content",
             "group",
             "forum",
-            "file",
-            "file_extension",
-            "file_type",
+            "files",
             "like_count",
             "reply_count",
             "created_at",
@@ -279,15 +292,6 @@ class QuestionReadSerializer(serializers.ModelSerializer):
         user = self.context["request"].user
         content_type = ContentType.objects.get_for_model(self.Meta.model)
         return Reaction.objects.filter(content_type=content_type, object_id=obj.id, user=user).exists()
-
-    def get_file_type(self, obj):
-        # TODO: add all required formats
-        if obj.file_extension in ["jpg", "jpeg", "png", "webp"]:
-            return "image"
-        elif obj.file_extension in ["mp4", "mov"]:
-            return "video"
-        else:
-            return None
 
 
 class QuestionDetailSerializer(QuestionReadSerializer):

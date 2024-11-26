@@ -53,6 +53,19 @@ class MobileReleaseType(models.TextChoices):
     HARD = "hard"
 
 
+class FileType(models.TextChoices):
+    IMAGE = "image"
+    VIDEO = "video"
+
+
+UPLOAD_MAX_IMAGE_SIZE = 1
+UPLOAD_MAX_VIDEO_SIZE = 50
+UPLOAD_MAX_IMAGE_NUMBER = 7
+UPLOAD_MAX_VIDEO_NUMBER = 1
+UPLOAD_IMAGE_EXTENSIONS = ["jpg", "jpeg", "png", "gif"]
+UPLOAD_VIDEO_EXTENSIONS = ["mp4", "m4v", "mov"]
+
+
 GENDERS = [
     ("M", 'ذكر'),
     ("F", 'أنثى'),

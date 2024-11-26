@@ -847,3 +847,22 @@ class ReactionDestroyView(DestroyAPIView):
         except (Reaction.DoesNotExist, ContentType.DoesNotExist):
             raise Http404
         return reaction
+
+
+class FileDestroyView(DestroyAPIView):
+    queryset = File.objects.all()
+    permission_classes = [IsOwnerOfFile]
+
+
+class FileUploadLimitView(APIView):
+
+    def get(self, *args, **kwargs):
+        response = {
+            "max_image_size": UPLOAD_MAX_IMAGE_SIZE,
+            "max_video_size": UPLOAD_MAX_VIDEO_SIZE,
+            "max_image_number": UPLOAD_MAX_IMAGE_NUMBER,
+            "max_video_number": UPLOAD_MAX_VIDEO_NUMBER,
+            "image_extensions": UPLOAD_IMAGE_EXTENSIONS,
+            "video_extensions": UPLOAD_VIDEO_EXTENSIONS,
+        }
+        return Response(response)
