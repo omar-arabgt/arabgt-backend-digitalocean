@@ -31,12 +31,13 @@ class PointType(Enum):
     ADMIN_NOTIFICATION = 10, "admin_notification", 2, 1
     POST_VIDEO = 10, "post_video", 5, 1
     PRESENTER_VIDEO = 5, "presenter_video", 1, 1
+    SHARE_QUESTION = 5, "share_question", 5, 1
     GROUP_MEMBERSHIP = 5, None, None, None
     FILL_PROFILE_FIELD = 5, None, None, None
 
     @classmethod
     def get_api_points(self):
-        return ["OPEN_APP", "USE_APP", "POST_VIDEO", "PRESENTER_VIDEO"]
+        return ["OPEN_APP", "USE_APP", "POST_VIDEO", "PRESENTER_VIDEO", "SHARE_QUESTION"]
 
 
 class ReactionType(models.TextChoices):

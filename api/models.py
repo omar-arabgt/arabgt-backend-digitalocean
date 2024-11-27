@@ -54,9 +54,10 @@ class User(TimeStampedModel, AbstractUser):
         if created:
             UserProfilePoint.objects.create(user_id=self.id)
 
-        point_fields = UserProfilePoint._all_fields()
-        for field in point_fields:
-            if not getattr(self.userprofilepoint, field) and getattr(self, field) is not None:
+        point_fields = UserProfilePoint._meta.get_fields()
+        for point_field in point_fields:
+            field = point_field.name
+            if not getattr(self.userprofilepoint, field) and getattr(self, field):
                 set_point.delay(self.id, PointType.FILL_PROFILE_FIELD.name)
                 setattr(self.userprofilepoint, field, True)
         self.userprofilepoint.save()
@@ -91,7 +92,20 @@ class User(TimeStampedModel, AbstractUser):
 
     @property
     def is_verified(self):
-        return self.userprofilepoint.is_all_done
+        verify_fields = [
+            "first_name",
+            "last_name",
+            "nick_name",
+            "birth_date",
+            "country",
+            "nationality",
+            "gender",
+            "phone_number",
+        ]
+        for field in verify_fields:
+            if not getattr(self.userprofilepoint, field):
+                return False
+        return True
 
     @property
     def rank(self):
@@ -151,24 +165,6 @@ class UserProfilePoint(models.Model):
     car_sorting = models.BooleanField(default=False)
     has_car = models.BooleanField(default=False)
     car_type = models.BooleanField(default=False)
-
-    @property
-    def is_all_done(self):
-        fields = self._all_fields()
-        for field in fields:
-            if not getattr(self, field):
-                return False
-        return True
-
-    @classmethod
-    def _all_fields(cls):
-        _fields = cls._meta.get_fields()
-        fields = []
-        for field in _fields:
-            if field.auto_created or field.is_relation:
-                continue
-            fields.append(field.name)
-        return fields
 
 
 class FavoritePresenter(TimeStampedModel):

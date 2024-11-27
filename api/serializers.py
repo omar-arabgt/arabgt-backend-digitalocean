@@ -310,10 +310,14 @@ class MobileReleaseSerializer(serializers.ModelSerializer):
 
 
 class NotificationSerializer(serializers.ModelSerializer):
+    user_first_name = serializers.SerializerMethodField()
 
     class Meta:
         model = Notification
-        fields = "__all__"
+        fields = ["id", "title", "content", "link", "is_admin_notification", "user_first_name"]
+
+    def get_user_first_name(self, obj):
+        return obj.user.first_name
 
 
 class ForumSerializer(serializers.ModelSerializer):
