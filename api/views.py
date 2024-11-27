@@ -477,7 +477,7 @@ class SectionPostsView(ListAPIView):
         if section_name == 'خصيصاً لك':
             if not user.is_authenticated:
                 raise PermissionDenied("You must be logged in to view this section")
-            queryset = Post.objects.filter(tag__overlap=user.favorite_cars)
+            queryset = Post.objects.filter(Q(tag__overlap=user.favorite_cars) | Q(tag__contains=['اخترنا-لك']))
         elif categories[0] in ["videos", "car_reviews"]:
             queryset = Post.objects.filter(post_type=categories[0])
         else:
