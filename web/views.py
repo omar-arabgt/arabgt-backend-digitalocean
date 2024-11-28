@@ -144,7 +144,7 @@ class UserListView(LoginRequiredMixin, ListView):
         query = self.request.GET.get('q', '')
         filters = Q(is_staff=False, is_superuser=False)
         if query:
-            filters &= Q(username__icontains=query)
+            filters &= Q(Q(username__icontains=query) | Q(email__icontains=query) | Q(first_name__icontains=query))
 
         return User.objects.filter(filters)
 
