@@ -47,20 +47,24 @@ class User(TimeStampedModel, AbstractUser):
     is_onboarded = models.BooleanField(default=False)
 
     def save(self, *args, **kwargs):
-        created = False
-        if not self.id:
-            created = True
-        super().save(*args, **kwargs)
-        if created:
-            UserProfilePoint.objects.create(user_id=self.id)
+        if getattr(self, "userprofilepoint", None):
+            userprofilepoint = self.userprofilepoint
+        else:
+            userprofilepoint = UserProfilePoint(user=self)
 
         point_fields = UserProfilePoint._meta.get_fields()
+        profile_point, _, _, _ = PointType.FILL_PROFILE_FIELD.value
+        point = 0
+
         for point_field in point_fields:
             field = point_field.name
-            if not getattr(self.userprofilepoint, field) and getattr(self, field):
-                set_point(self.id, PointType.FILL_PROFILE_FIELD.name)
-                setattr(self.userprofilepoint, field, True)
-        self.userprofilepoint.save()
+            if not getattr(userprofilepoint, field) and getattr(self, field):
+                point += profile_point
+                setattr(userprofilepoint, field, True)
+        self.point = self.point + point
+
+        super().save(*args, **kwargs)
+        userprofilepoint.save()
 
     def delete(self, delete_reason=None, *args, **kwargs):
         DeletedUser.objects.create(
