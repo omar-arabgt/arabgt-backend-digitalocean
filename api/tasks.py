@@ -73,7 +73,6 @@ def send_push_notification(user_id, title, content, link=None, by_admin=False):
             )
 
 
-@shared_task
 def set_point(user_id, point_type):
     """
     Awards points to a user based on a specific point type.

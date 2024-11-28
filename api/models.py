@@ -58,7 +58,7 @@ class User(TimeStampedModel, AbstractUser):
         for point_field in point_fields:
             field = point_field.name
             if not getattr(self.userprofilepoint, field) and getattr(self, field):
-                set_point.delay(self.id, PointType.FILL_PROFILE_FIELD.name)
+                set_point(self.id, PointType.FILL_PROFILE_FIELD.name)
                 setattr(self.userprofilepoint, field, True)
         self.userprofilepoint.save()
 
@@ -233,7 +233,7 @@ class PostAction(TimeStampedModel):
             self.saved_at = now
 
         if point_type:
-            set_point.delay(self.user_id, point_type)
+            set_point(self.user_id, point_type)
 
         super().save(*args, **kwargs)
 
@@ -263,7 +263,7 @@ class GroupMembership(TimeStampedModel):
 
     def save(self, *args, **kwargs):
         if not self.id:
-            set_point.delay(self.user_id, PointType.GROUP_MEMBERSHIP.name)
+            set_point(self.user_id, PointType.GROUP_MEMBERSHIP.name)
         super().save(*args, **kwargs)
 
 
@@ -281,7 +281,7 @@ class Question(TimeStampedModel):
     def save(self, *args, **kwargs):
         self.clean()
         super().save(*args, **kwargs)
-        set_point.delay(self.user_id, PointType.QUESTION.name)
+        set_point(self.user_id, PointType.QUESTION.name)
 
     @property
     def like_count(self):
@@ -306,7 +306,7 @@ class Reply(TimeStampedModel):
     def save(self, *args, **kwargs):
         self.clean()
         super().save(*args, **kwargs)
-        set_point.delay(self.user_id, PointType.REPLY.name)
+        set_point(self.user_id, PointType.REPLY.name)
         if not self.id:
             model = self.question or self.parent_reply
             send_push_notification.delay(model.user_id, "title", "content")
@@ -334,7 +334,7 @@ class Reaction(TimeStampedModel):
     def save(self, *args, **kwargs):
         self.clean()
         if not self.id:
-            set_point.delay(self.user_id, PointType.REACTION.name)
+            set_point(self.user_id, PointType.REACTION.name)
             send_push_notification.delay(self.content_object.user_id, "title", "content")
         return super().save(*args, **kwargs)
 

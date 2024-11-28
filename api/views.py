@@ -69,7 +69,7 @@ class UserRetrieveUpdateDestroyView(RetrieveUpdateDestroyAPIView):
                 subscribe_newsletter(request.user.email)
             except Exception as e:
                 return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
-            set_point.delay(request.user.id, PointType.FILL_PROFILE_FIELD.name)
+            set_point(request.user.id, PointType.FILL_PROFILE_FIELD.name)
 
         # we copy same code as super().update and just use different serializer class on response 
         partial = kwargs.pop('partial', False)
@@ -727,10 +727,11 @@ class SetPointView(APIView):
         point_type = str(request.data.get("point_type")).upper()
         
         if point_type not in point_types:
-            return Response(_(f"point_type is not correct. Choices: {point_types}"), status=status.HTTP_400_BAD_REQUEST)
+            return Response({"error": _(f"point_type is not correct. Choices: {point_types}")}, status=status.HTTP_400_BAD_REQUEST)
         
-        set_point.delay(request.user.id, point_type)
-        return Response("OK")
+        set_point(request.user.id, point_type)
+        point = User.objects.get(id=request.user.id).point
+        return Response({"point": point})
 
 
 class VerifyOTP(APIView):
