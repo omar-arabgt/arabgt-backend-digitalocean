@@ -14,12 +14,15 @@ from django.core.paginator import Paginator
 from django.utils.timezone import localtime
 import openpyxl
 
-from api.models import User, Newsletter, DeletedUser, Group, Forum, Question, Reply, AdminNotification
+from api.models import User, Newsletter, DeletedUser, Group, Forum, Question, Reply, AdminNotification, Post
 from api.tasks import send_push_notification, NOTIFICATION_ALL
 from .utils import get_merged_user_data, get_signup_method, get_car_sorting_index, CAR_SORTING_LIST
 from api.choices import COUNTRIES, GENDERS, STATUS, HOBBIES, INTERESTS, CAR_BRANDS_ITEMS, CAR_SORTING_ITEMS, UserRank
 from .forms import *
 from django.utils.timezone import make_naive
+from django.conf import settings
+from django.utils.translation import gettext_lazy as _
+
 
 class GroupListView(LoginRequiredMixin, ListView):
     """
@@ -748,6 +751,16 @@ class NotificationView(LoginRequiredMixin, FormView):
         title = form.cleaned_data.get("title")
         content = form.cleaned_data.get("content")
         link = form.cleaned_data.get("link")
+        post_id = form.cleaned_data.get("post_id")
+        
+        if post_id:
+            exists = Post.objects.filter(post_id=post_id).exists()
+            if exists:
+                link = f"{settings.APP_URL}/post-details?id={post_id}"
+            else:
+                form.add_error("post_id", _("Post does not exist!"))
+                return self.form_invalid(form)
+
         send_push_notification.delay(NOTIFICATION_ALL, title, content, link, True)
         return super().form_valid(form)
   
