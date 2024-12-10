@@ -187,7 +187,15 @@ class NotificationForm(forms.ModelForm):
             'placeholder': 'إضافة رابط'
         })
     )
+    post_id = forms.IntegerField(
+        label= "Post ID",
+        required=False,
+        widget=forms.NumberInput(attrs={
+            'class': 'w-full px-3 py-2 border-b-2 border-red-500 bg-gray-100 text-gray-800',
+            'placeholder': "Post ID"
+        })
+    )
 
     class Meta:
         model = Notification
-        fields = ["title", "content", "link"]
+        fields = ["title", "content", "link", "post_id"]

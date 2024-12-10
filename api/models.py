@@ -6,6 +6,7 @@ from django.contrib.postgres.fields import ArrayField
 from django.contrib.contenttypes.models import ContentType
 from django.contrib.contenttypes.fields import GenericForeignKey, GenericRelation
 from django.db.models import Q
+from django.utils.translation import gettext_lazy as _
 
 
 from .choices import *
@@ -312,8 +313,18 @@ class Reply(TimeStampedModel):
         super().save(*args, **kwargs)
         set_point(self.user_id, PointType.REPLY.name)
         if not self.id:
-            model = self.question or self.parent_reply
-            send_push_notification.delay(model.user_id, "title", "content")
+            if self.question:
+                model = self.question
+                question_id = model.id
+                message = _("commented on your post")
+            else:
+                model = self.parent_reply
+                question_id = model.question.id
+                message = _("replied your comment")
+
+            content = f"{self.user.first_name} {message}: {self.content}"
+            link = f"{settings.APP_URL}/question-details?id={question_id}"
+            send_push_notification.delay(model.user_id, None, content, link)
 
     @property
     def like_count(self):
@@ -339,7 +350,25 @@ class Reaction(TimeStampedModel):
         self.clean()
         if not self.id:
             set_point(self.user_id, PointType.REACTION.name)
-            send_push_notification.delay(self.content_object.user_id, "title", "content")
+
+            model = self.content_type.model
+            obj = self.content_object
+            message = None
+            if model == "question":
+                message = _("liked your post")
+                question_id = obj.id
+            elif model == "reply":
+                message = _("liked your comment")
+                if obj.question:
+                    question_id = obj.question.id
+                else:
+                    question_id = obj.parent_reply.question.id
+
+            if message:
+                link = f"{settings.APP_URL}/question-details?id={question_id}"
+                content = f"{self.user.first_name} {message}: {obj.content}"
+                send_push_notification.delay(obj.user_id, None, content, link)
+
         return super().save(*args, **kwargs)
 
 

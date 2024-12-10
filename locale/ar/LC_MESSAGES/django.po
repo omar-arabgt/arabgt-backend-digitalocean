@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2024-10-22 08:46+0000\n"
+"POT-Creation-Date: 2024-12-09 08:30+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -19,6 +19,27 @@ msgstr ""
 "Plural-Forms: nplurals=6; plural=n==0 ? 0 : n==1 ? 1 : n==2 ? 2 : n%100>=3 "
 "&& n%100<=10 ? 3 : n%100>=11 && n%100<=99 ? 4 : 5;\n"
 
+#: api/models.py:319
+msgid "commented on your post"
+msgstr "علق على منشورك"
+
+#: api/models.py:323
+msgid "replied your comment"
+msgstr "رد على تعليقك"
+
+#: api/models.py:358
+msgid "liked your post"
+msgstr "أعجب بمنشورك"
+
+#: api/models.py:361
+msgid "liked your comment"
+msgstr "أعجب بردك"
+
+#: api/views.py:730
+#, python-brace-format
+msgid "point_type is not correct. Choices: {point_types}"
+msgstr ""
+
 #: authentication/adapter.py:46
 msgid "Please check your email to verify your account before proceeding with password reset."
 msgstr "الرجاء التحقق من بريدك الإلكتروني لتفعيل حسابك قبل المتابعة لإعادة تعيين كلمة المرور."
@@ -26,6 +47,10 @@ msgstr "الرجاء التحقق من بريدك الإلكتروني لتفع�
 #: authentication/serializers.py:26
 msgid "This account is already exists"
 msgstr "تم تسجيل حساب بهذا البريد الالكتروني سابقا"
+
+#: web/views.py:761
+msgid "Post does not exist!"
+msgstr "هذه المقالة غير موجودة, تاكد من ID المقالة, او اعد المحاولة لاحقاً"
 
 msgid "User is already registered with this e-mail address."
 msgstr "هناك مستخدم اخر مسجل لدينا بهذا البريد الالكتروني"
