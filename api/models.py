@@ -237,10 +237,9 @@ class PostAction(TimeStampedModel):
         if not self._is_saved and self.is_saved:
             self.saved_at = now
 
+        super().save(*args, **kwargs)
         if point_type:
             set_point(self.user_id, point_type)
-
-        super().save(*args, **kwargs)
 
 
 class Forum(TimeStampedModel):
@@ -266,11 +265,6 @@ class GroupMembership(TimeStampedModel):
     class Meta:
         unique_together = ("user", "group")
 
-    def save(self, *args, **kwargs):
-        if not self.id:
-            set_point(self.user_id, PointType.GROUP_MEMBERSHIP.name)
-        super().save(*args, **kwargs)
-
 
 class Question(TimeStampedModel):
     user = models.ForeignKey("User", related_name="questions", on_delete=models.CASCADE)
@@ -282,11 +276,6 @@ class Question(TimeStampedModel):
     pinned_by = models.ManyToManyField("User", related_name="pinned_questions", blank=True)
     report_count = models.IntegerField(default=0)
     reactions = GenericRelation("Reaction")
-
-    def save(self, *args, **kwargs):
-        self.clean()
-        super().save(*args, **kwargs)
-        set_point(self.user_id, PointType.QUESTION.name)
 
     @property
     def like_count(self):
@@ -308,24 +297,6 @@ class Reply(TimeStampedModel):
     file_extension = models.CharField(max_length=20, blank=True, null=True)
     reactions = GenericRelation("Reaction")
 
-    def save(self, *args, **kwargs):
-        self.clean()
-        super().save(*args, **kwargs)
-        set_point(self.user_id, PointType.REPLY.name)
-        if not self.id:
-            if self.question:
-                model = self.question
-                question_id = model.id
-                message = _("commented on your post")
-            else:
-                model = self.parent_reply
-                question_id = model.question.id
-                message = _("replied your comment")
-
-            content = f"{self.user.first_name} {message}: {self.content}"
-            link = f"{settings.APP_URL}/question-details?id={question_id}"
-            send_push_notification.delay(model.user_id, None, content, link)
-
     @property
     def like_count(self):
         content_type = ContentType.objects.get_for_model(self)
@@ -345,31 +316,6 @@ class Reaction(TimeStampedModel):
 
     class Meta:
         unique_together = ("user", "content_type", "object_id")
-
-    def save(self, *args, **kwargs):
-        self.clean()
-        if not self.id:
-            set_point(self.user_id, PointType.REACTION.name)
-
-            model = self.content_type.model
-            obj = self.content_object
-            message = None
-            if model == "question":
-                message = _("liked your post")
-                question_id = obj.id
-            elif model == "reply":
-                message = _("liked your comment")
-                if obj.question:
-                    question_id = obj.question.id
-                else:
-                    question_id = obj.parent_reply.question.id
-
-            if message:
-                link = f"{settings.APP_URL}/question-details?id={question_id}"
-                content = f"{self.user.first_name} {message}: {obj.content}"
-                send_push_notification.delay(obj.user_id, None, content, link)
-
-        return super().save(*args, **kwargs)
 
 
 class MobileRelease(TimeStampedModel):
