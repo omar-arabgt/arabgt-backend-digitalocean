@@ -35,7 +35,7 @@ def post_save_reply(sender, instance, created, **kwargs):
 
         content = f"{instance.user.first_name} {message}: {instance.content}"
         link = f"{settings.APP_URL}/question-details?id={question_id}"
-        send_push_notification.delay(model.user_id, None, content, link)
+        send_push_notification.delay(model.user_id, message, content, link)
         set_point(instance.user_id, PointType.REPLY.name)
 
 
@@ -60,4 +60,4 @@ def post_save_reaction(sender, instance, created, **kwargs):
         if message:
             link = f"{settings.APP_URL}/question-details?id={question_id}"
             content = f"{instance.user.first_name} {message}: {obj.content}"
-            send_push_notification.delay(obj.user_id, None, content, link)
+            send_push_notification.delay(obj.user_id, message, content, link)
