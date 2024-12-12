@@ -35,7 +35,28 @@ def send_push_notification(user_id, title, content, link=None, by_admin=False):
     else:
         users = User.objects.filter(id=user_id, send_notification=True)
 
+    if by_admin:
+        AdminNotification.objects.create(
+            title=title,
+            content=content,
+            link=link,
+        )
+
     if users:
+        notifications = []
+        for user in users:
+            n = Notification(
+                user=user,
+                title=title,
+                content=content,
+                link=link,
+                is_admin_notification=by_admin,
+            )
+        notifications.append(n)
+
+        Notification.objects.bulk_create(notifications)
+        users.update(has_notification=True)
+
         user_ids = users.values_list("id", flat=True)
         user_ids = [str(i) for i in user_ids]
 
@@ -51,26 +72,6 @@ def send_push_notification(user_id, title, content, link=None, by_admin=False):
                 channel_for_external_user_ids="push",
             )
             api_instance.create_notification(notification)
-
-        notifications = []
-        for user in users:
-            n = Notification(
-                user=user,
-                title=title,
-                content=content,
-                link=link,
-                is_admin_notification=by_admin,
-            )
-        notifications.append(n)
-
-        Notification.objects.bulk_create(notifications)
-
-        if by_admin:
-            AdminNotification.objects.create(
-                title=title,
-                content=content,
-                link=link,
-            )
 
 
 def set_point(user_id, point_type):

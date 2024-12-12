@@ -46,6 +46,7 @@ class User(TimeStampedModel, AbstractUser):
     send_notification = models.BooleanField(default=True)
     profile_photo = models.ImageField(blank=True, null=True)
     is_onboarded = models.BooleanField(default=False)
+    has_notification = models.BooleanField(default=False)
 
     def save(self, *args, **kwargs):
         if getattr(self, "userprofilepoint", None):
