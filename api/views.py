@@ -772,7 +772,7 @@ class VerifyOTP(APIView):
                 return Response({"error": "Invalid OTP"}, status=status.HTTP_400_BAD_REQUEST)
         else:
             otp = random.randint(1000, 9999)
-            body = f"Verification code: {otp}"
+            body = f"ArabGT App verification code: {otp}\n\nY5gKMEFNvsj"
             send_sms_notification(phone_number, body)
             cache.set(CACHE_KEY, otp, 180)
 
