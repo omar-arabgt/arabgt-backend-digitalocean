@@ -1,4 +1,7 @@
 <form method="get" class="flex mb-4 gap-4">
-    <input type="text" name="q" placeholder="{{ placeholder }}" value="{{ search_query }}" class="flex-1 agt-default-input px-3 py-2">
-    <button type="submit" class="rounded agt-bg-red-900 text-white px-6 py-2 font-bold">بحث</button>
+  <input type="text" name="q" placeholder="{{ placeholder }}" value="{{ search_query }}" class="flex-1 agt-default-input px-3 py-2" />
+  <button type="submit" class="rounded agt-bg-red-900 text-white px-6 py-2 font-bold">بحث</button>
+  {% if request.GET %}
+  <button type="button" class="font-bold rounded agt-bg-red-900 text-white px-4 py-2" onclick="window.location.href = '{{ request.path }}'">مسح البحث</button>
+  {% endif %}
 </form>
