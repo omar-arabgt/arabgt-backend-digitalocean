@@ -37,6 +37,7 @@ class TestPostContentProcessing(unittest.TestCase):
                 	<li>four.</li>
                 </ul>
                 hello world[caption id="attachment_258409" align="alignright" width="750"]
+                <strong>pre link text <a href="https://www.google.com" target="_blank" rel="noopener">link text</a> post link text.<strong/>
             ''',
             'post_date': '2024-01-01',
             'post_modified': '2024-01-01',
@@ -69,7 +70,7 @@ class TestPostContentProcessing(unittest.TestCase):
                 "type": "rich",
                 "data": [
                     {"text": "first", "heading": "", "media": {}},
-                    {"text": "link", "url": "https://localhost/api/posts/33346", "heading": "", "media": {}},
+                    {"text": "link", "url": "/api/posts/33346", "heading": "", "media": {}},
                     {"text": "second", "heading": "", "media": {}}
                 ]
             },
@@ -187,6 +188,17 @@ class TestPostContentProcessing(unittest.TestCase):
                 'type': 'rich'
             },
             {"text": "hello world", "heading": "", "media": {}},
+            {
+              'data': [
+                {'heading': '', 'media': {}, 'text': 'pre link text'},
+                {'heading': '', 'media': {}, 'text': 'link text', 'url': 'https://www.google.com'},
+                {'heading': '', 'media': {}, 'text': 'post link text.'}
+              ],
+              'heading': '',
+              'media': {},
+              'text': '',
+              'type': 'rich_heading'
+            },
             {'external_links': ['https://www.google.com']},
         ]
         

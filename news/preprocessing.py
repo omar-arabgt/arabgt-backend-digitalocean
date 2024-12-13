@@ -9,59 +9,31 @@ from api.models import Post
 from .models import WpPosts, WpPostmeta
 
 from urllib.parse import urlparse, unquote
-
-# def replace_url(url):
-#     # Decode the URL
-#     clean_url = re.search(r'https?://[^\s"]+', url).group()
-
-#     decoded_url = unquote(clean_url)
-#     parsed_url = urlparse(decoded_url)
-#     title =  parsed_url.path.strip('/').split('/')[-1].replace('-', ' ').lower()
-#     post_instance = Post.objects.filter(normalized_title__icontains=title).first()
-#     return f'https://localhost/api/posts/{post_instance.id}'
-
-import re
 from urllib.parse import unquote, urlparse
+import re
 
 def replace_url(url):
-    # Check if URL is from arabgt.com
+    match = re.search(r'https?://[^\s"]+', url)
+    if not match:
+        return url
 
-    # Decode the URL
-    clean_url = re.search(r'https?://[^\s"]+', url).group()
+    clean_url = match.group()
     if not clean_url.startswith("https://arabgt.com/"):
         return clean_url
 
     decoded_url = unquote(clean_url)
     parsed_url = urlparse(decoded_url)
-    # Split the path into parts
     path_parts = parsed_url.path.strip('/').split('/')
 
-    # Special case for 'news-tags'
     if "news-tags" in path_parts:
-        # Find the index of 'news-tags' and get the part after it
         news_tag_index = path_parts.index("news-tags")
         if news_tag_index + 1 < len(path_parts):
             tag_part = path_parts[news_tag_index + 1]
-            # Replace hyphens with spaces
             formatted_tag = tag_part.replace('-', ' ')
             return f"/api/posts/?tag={formatted_tag}"
 
-    # # Define allowed tags
-    # tags = {
-    #     "اخبار-سيارات",
-    #     "سيارات-معدلة",
-    #     # Add your other 26 tags here
-    # }
-
-    # # Check if the URL contains any of the allowed tags
-    # if not any(tag in path_parts for tag in tags):
-    #     return None
-
-    # Extract the title part of the URL
     title = normalize_title(path_parts[-1]) 
-    # Find the first matching Post instance
     post_instance = Post.objects.filter(normalized_title__icontains=title).first()
-    # Return the local API URL if a post is found, else return None
     if post_instance:
         return f'/api/posts/{post_instance.id}'
     else:
@@ -142,106 +114,229 @@ def process_list_item_with_regex(html):
 
     return result
 
+# ============================================================
+# Main Extraction Logic (Refactored for Clarity)
+# ============================================================
+
 def extract_elements(element):
     """
-    Extract structured elements from HTML content recursively.
-    Returns a list of content elements with text, media, and headings.
+    Recursively extracts structured elements from an HTML element using BeautifulSoup.
+    Returns:
+        - elements: A list of extracted content blocks, each containing text, media, headings, etc.
+        - external_links: A list of external URLs found within the element.
     """
+
+    # ------------------------------------------------------------
+    # State & Helper Patterns
+    # ------------------------------------------------------------
     elements = []
     external_links = set()
     accumilated_rich = []
-
     youtube_pattern = re.compile(r'https?://(www\.)?(youtube\.com|youtu\.be)/[^\s]+')
 
+    # ------------------------------------------------------------
+    # Internal Helpers
+    # ------------------------------------------------------------
     def add_element(text='', media=None, heading='', url=None, type=None, rich_data=None):
+        """
+        Add a structured element to the `elements` list.
+        This encapsulates common logic for:
+        - Stripping and adding text
+        - Handling YouTube links in text
+        - Adding headings, URLs, rich data, and media
+        """
         if text.strip() or media or heading.strip() or rich_data:
+            # Normalize text and handle YouTube text-as-media scenario
             text = text.strip() if text else ''
             if text and youtube_pattern.match(text):
                 media = media or {}
                 media['youtube'] = text
                 text = ''
+
+            # Build the element structure
             element = {
                 'text': text,
                 'media': media or {},
                 'heading': heading.strip() if heading else ''
             }
+
+            # Add optional fields
             if url:
                 element['url'] = url
-            if type == 'rich' or type == 'rich_heading':
+            if type in ['rich', 'rich_heading']:
                 element['type'] = type
                 element['data'] = rich_data
+
             elements.append(element)
 
+    def flush_accumulated_rich():
+        """
+        Flush the accumulated rich text blocks from `accumilated_rich`.
+        This function decides if the accumulated data is a 'rich' element (with links)
+        or just plain text blocks.
+        """
+        if accumilated_rich:
+            has_link = any('url' in item for item in accumilated_rich)
+            if has_link:
+                add_element(type='rich', rich_data=accumilated_rich.copy())
+            else:
+                for item in accumilated_rich:
+                    add_element(text=item['text'])
+            accumilated_rich.clear()
+
+    def handle_paragraph(child):
+        """
+        Process a <p> element:
+        - Accumulate text
+        - Detect links and images
+        - Decide if resulting data is rich or simple
+        """
+        rich_data = []
+        paragraph_text = ""
+
+        for p_child in child.children:
+            if isinstance(p_child, str):
+                # Regular text node
+                paragraph_text += p_child.strip() + " "
+            elif p_child.name == 'a':
+                # Link inside paragraph
+                url = p_child.get('href', '')
+                # If paragraph_text has content, flush it first
+                if paragraph_text.strip():
+                    rich_data.append({"text": paragraph_text.strip(), "heading": "", "media": {}})
+                    paragraph_text = ""
+                # Add link element (rich)
+                if not url.startswith("https://arabgt.com/wp-content"):
+                    rich_data.append({
+                        "text": p_child.get_text(strip=True),
+                        "url": replace_url(url),
+                        "heading": "",
+                        "media": {}
+                    })
+                    external_links.add(url)
+                else:
+                    # It's an image link
+                    link_text = p_child.get_text(strip=True)
+                    if link_text:
+                        add_element(text=link_text)  # Add any text before the image
+                    add_element(media={"image": replace_url(url)})
+
+            elif p_child.name == 'img':
+                # Image inside paragraph
+                if paragraph_text.strip():
+                    add_element(text=paragraph_text.strip())
+                    paragraph_text = ""
+                add_element(media={"image": p_child.get('src', '')})
+
+        # Flush remaining paragraph text
+        if paragraph_text.strip():
+            rich_data.append({"text": paragraph_text.strip(), "heading": "", "media": {}})
+
+        # Decide if rich or simple paragraph
+        if len(rich_data) > 1:
+            add_element(type='rich', rich_data=rich_data)
+        elif len(rich_data) == 1:
+            single_block = rich_data[0]
+            if 'url' in single_block:
+                add_element(text=single_block['text'], url=single_block['url'])
+            else:
+                add_element(text=single_block['text'])
+
+    def handle_heading(child):
+        """
+        Process heading elements (h1-h6).
+        Headings might contain links and can become rich_headings.
+        """
+        heading_rich_data = []
+        heading_text = ""
+
+        for h_child in child.children:
+            if isinstance(h_child, str):
+                heading_text += h_child.strip() + " "
+            elif h_child.name == 'a':
+                # Link inside heading
+                url = h_child.get('href', '')
+                # Flush accumulated text before the link
+                if heading_text.strip():
+                    heading_rich_data.append({"text": heading_text.strip(), "heading": "", "media": {}})
+                    heading_text = ""
+                # Add link within heading
+                if not url.startswith("https://arabgt.com/wp-content"):
+                    heading_rich_data.append({
+                        "text": h_child.get_text(strip=True),
+                        "url": replace_url(url),
+                        "heading": "",
+                        "media": {}
+                    })
+                    external_links.add(url)
+                else:
+                    # It's an image link inside a heading
+                    if h_child.get_text(strip=True):
+                        add_element(text=h_child.get_text(strip=True))
+                    add_element(media={"image": replace_url(url)})
+
+        # Flush any leftover text after heading links
+        if heading_text.strip():
+            heading_rich_data.append({"text": heading_text.strip(), "heading": "", "media": {}})
+
+        # Determine if heading is rich or simple
+        if len(heading_rich_data) > 1:
+            add_element(type='rich_heading', rich_data=heading_rich_data)
+        elif len(heading_rich_data) == 1:
+            # Single block - possibly with or without a URL
+            single_block = heading_rich_data[0]
+            add_element(heading=single_block['text'], url=single_block.get('url', None))
+        else:
+            # No links, just plain heading text
+            add_element(heading=child.get_text(strip=True))
+
+    # ------------------------------------------------------------
+    # Main Loop Over Child Nodes
+    # ------------------------------------------------------------
     for child in element.children:
+        # (1) TEXT NODES
         if isinstance(child, str):
             text = child.strip()
             if text:
                 accumilated_rich.append({"text": text, "heading": "", "media": {}})
+
+        # (2) NON-HEADING LINK NODES
         elif child.name == 'a' and child.parent.name not in ['h1', 'h2', 'h3', 'h4', 'h5', 'h6']:
             url = child.get('href', '')
             link_text = child.get_text(strip=True)
             external_links.add(url)
-            if(not url.startswith("https://arabgt.com/wp-content")):
-              accumilated_rich.append({"text": link_text, "url": replace_url(url), "heading": "", "media": {}})
-              external_links.add(url)
-            else:
-              if link_text.strip():
-                  add_element(text=link_text.strip())
-                  link_text = ""
-              add_element(media={"image": replace_url(url)})
-        else:
-            if accumilated_rich:
-                has_link = any('url' in item for item in accumilated_rich)
-                if has_link:
-                    add_element(type='rich', rich_data=accumilated_rich.copy())
-                else:
-                    for item in accumilated_rich:
-                        add_element(text=item['text'])
-                accumilated_rich.clear()
 
+            # If it's not an internal image link
+            if not url.startswith("https://arabgt.com/wp-content"):
+                accumilated_rich.append({
+                    "text": link_text,
+                    "url": replace_url(url),
+                    "heading": "",
+                    "media": {}
+                })
+                external_links.add(url)
+            else:
+                # It's an image link
+                if link_text.strip():
+                    add_element(text=link_text.strip())
+                add_element(media={"image": replace_url(url)})
+
+        else:
+            # (3) Flush any accumulated text before processing new tag
+            flush_accumulated_rich()
+
+            # (4) Handle Various Tags
             if child.name in ['ul', 'ol']:
+                # Lists become bullet points or rich data
                 list_elements = process_list_item_with_regex(str(child))
                 if list_elements:
                     elements.extend(list_elements)
 
             elif child.name == 'p':
-                rich_data = []
-                paragraph_text = ""
-                for p_child in child.children:
-                    if isinstance(p_child, str):
-                        paragraph_text += p_child.strip() + " "
-                    elif p_child.name == 'a':
-                        url = p_child.get('href', '')
-                        if paragraph_text.strip():
-                            rich_data.append({"text": paragraph_text.strip(), "heading": "", "media": {}})
-                            paragraph_text = ""
-                        if(not url.startswith("https://arabgt.com/wp-content")):
-                          rich_data.append({"text": p_child.get_text(strip=True), "url": replace_url(url), "heading": "", "media": {}})
-                          external_links.add(url)
-                        else:
-                          if p_child.get_text(strip=True):
-                              add_element(text=p_child.get_text(strip=True))
-                              link_text = ""
-                          add_element(media={"image": replace_url(url)})
-                        
-                    elif p_child.name == 'img':
-                        if paragraph_text.strip():
-                            add_element(text=paragraph_text.strip())
-                            paragraph_text = ""
-                        add_element(media={"image": p_child.get('src', '')})
-
-                if paragraph_text.strip():
-                    rich_data.append({"text": paragraph_text.strip(), "heading": "", "media": {}})
-
-                if len(rich_data) > 1:
-                    add_element(type='rich', rich_data=rich_data)
-                elif len(rich_data) == 1:
-                    if 'url' in rich_data[0]:
-                        add_element(text=rich_data[0]['text'], url=rich_data[0]['url'])
-                    else:
-                        add_element(text=rich_data[0]['text'])
+                handle_paragraph(child)
 
             elif child.name == 'a':
+                # Heading links or inline links inside something else
                 href = child.get('href', '')
                 external_links.add(href)
                 if child.parent.name in ['h1', 'h2', 'h3', 'h4', 'h5', 'h6']:
@@ -250,42 +345,17 @@ def extract_elements(element):
                     add_element(text=child.get_text(strip=True), url=href)
 
             elif child.name in ['h1', 'h2', 'h3', 'h4', 'h5', 'h6']:
-                heading_rich_data = []
-                heading_text = ""
-                for h_child in child.children:
-                    if isinstance(h_child, str):
-                        heading_text += h_child.strip() + " "
-                    elif h_child.name == 'a':
-                        url = h_child.get('href', '')
-                        if heading_text.strip():
-                            heading_rich_data.append({"text": heading_text.strip(), "heading": "", "media": {}})
-                            heading_text = ""
-                        if(not url.startswith("https://arabgt.com/wp-content")):
-                          heading_rich_data.append({"text": h_child.get_text(strip=True), "url": replace_url(url), "heading": "", "media": {}})
-                          external_links.add(url)
-                        else:
-                          if h_child.get_text(strip=True):
-                              add_element(text=h_child.get_text(strip=True))
-                              link_text = ""
-                          add_element(media={"image": replace_url(url)})
-
-                if heading_text.strip():
-                    heading_rich_data.append({"text": heading_text.strip(), "heading": "", "media": {}})
-
-                if len(heading_rich_data) > 1:
-                    add_element(type='rich_heading', rich_data=heading_rich_data)
-                elif len(heading_rich_data) == 1:
-                    add_element(heading=heading_rich_data[0]['text'], url=heading_rich_data[0].get('url', None))
-                else:
-                    add_element(heading=child.get_text(strip=True))
+                handle_heading(child)
 
             elif child.name == 'strong':
+                # Bold text inside content; can be heading or part of accum_rich
                 if not accumilated_rich:
-                    add_element(heading=child.get_text(strip=True))
+                    handle_heading(child)
                 else:
                     accumilated_rich.append({"text": child.get_text(strip=True), "heading": "", "media": {}})
 
             elif child.name == 'iframe':
+                # Embedded iframes (YouTube or other)
                 src = child.get('src', '')
                 if 'youtube' in src:
                     youtube_id_match = re.search(r"embed/([^?]+)", src)
@@ -297,27 +367,27 @@ def extract_elements(element):
                     add_element(media={"iframe": src})
 
             elif child.name == 'img':
+                # Standalone image
                 src = child.get('src', '')
                 add_element(media={"image": src})
 
             elif '[gallery' in str(child):
+                # Handle gallery shortcodes
                 gallery_elements = handle_galleries(str(child))
                 elements.extend(gallery_elements)
 
             else:
+                # Nested elements - recurse
                 nested_elements, nested_links = extract_elements(child)
                 elements.extend(nested_elements)
                 external_links.update(nested_links)
 
-    if accumilated_rich:
-        has_link = any('url' in item for item in accumilated_rich)
-        if has_link:
-            add_element(type='rich', rich_data=accumilated_rich.copy())
-        else:
-            for item in accumilated_rich:
-                add_element(text=item['text'])
-        accumilated_rich.clear()
+    # ------------------------------------------------------------
+    # Final Flush of Accumulated Rich Content
+    # ------------------------------------------------------------
+    flush_accumulated_rich()
 
+    # Return the structured elements and external links as lists
     return elements, list(external_links)
 
 
