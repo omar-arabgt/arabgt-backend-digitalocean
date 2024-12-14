@@ -60,6 +60,7 @@ class UserSerializer(serializers.ModelSerializer):
             "send_notification",
             "profile_photo",
             "is_onboarded",
+            "has_notification",
         ]
 
     def get_gender(self, obj):
@@ -111,6 +112,7 @@ class UserUpdateSerializer(serializers.ModelSerializer):
             "send_notification",
             "profile_photo",
             "is_onboarded",
+            "has_notification",
         ]
 
 
