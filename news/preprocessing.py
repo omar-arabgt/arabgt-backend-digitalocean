@@ -401,6 +401,34 @@ def replace_gallery_ids_with_links(elements):
     
     return elements
 
+def clean_instagram_references(elements):
+    filtered = []
+    
+    for item in elements:
+        text_val = item.get('text', '').strip()
+        has_instagram_text = "View this post on Instagram" in text_val
+        has_shared_by_text = "A post shared by" in text_val
+
+        has_url = 'url' in item
+        has_media = item.get('media', {})
+        has_heading = item.get('heading', '').strip()
+        has_external_links = 'external_links' in item
+
+        has_other_data = has_url or has_media or has_heading or has_external_links
+
+        if text_val == "View this post on Instagram" and not has_other_data:
+            continue
+        elif has_instagram_text or has_shared_by_text:
+            if has_other_data:
+                item['text'] = ""
+                filtered.append(item)
+            else:
+                continue
+        else:
+            filtered.append(item)
+
+    return filtered
+
 
 
 def get_thumbnail(post_id):
@@ -584,6 +612,7 @@ def preprocess_article(article):
 
 
     final_elements = replace_gallery_ids_with_links(final_elements)
+    final_elements = clean_instagram_references(final_elements)
     
     related_articles, cleaned_external_links = process_external_links(external_links)
 
