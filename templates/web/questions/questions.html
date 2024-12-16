@@ -32,22 +32,26 @@
                     <input type="text" name="groups_question_id" value="{{ groups_question_id }}" placeholder="بحث عن هوية المنشور" class="px-2 py-1 w-full md:w-60 agt-default-input">
                     <input type="text" name="groups_q" value="{{ groups_search_query }}" placeholder="بحث عن اسم أو هوية المستخدم" class="px-2 py-1 w-full md:w-60 agt-default-input">
                 {% endif %}
-                <select name="forums_group" class="custom-select w-full md:w-60 px-2 py-1 tom-select agt-default-input">
-                    <option value="">{% if active_tab == 'forums' %}في كافة الاقسام{% else %}في كافة المجموعات{% endif %}</option>
-                    {% if active_tab == 'forums' %}
-                        {% for forum in forums %}
-                            <option value="{{ forum.id }}" {% if forum.id == forums_group %}selected{% endif %}>
-                                {{ forum.name }}
-                            </option>
-                        {% endfor %}
-                    {% elif active_tab == 'groups' %}
-                        {% for group in groups %}
-                            <option value="{{ group.id }}" {% if group.id == forums_group %}selected{% endif %}>
-                                {{ group.name }}
-                            </option>
-                        {% endfor %}
-                    {% endif %}
-                </select>
+                {% if active_tab == 'forums' %}
+                  <select name="forum_id" class="custom-select w-full md:w-60 px-2 py-1 tom-select agt-default-input">
+                      <option value="">في كافة الاقسام</option>
+                      {% for forum in forums %}
+                          <option value="{{ forum.id }}" {% if forum.id == forum_id %}selected{% endif %}>
+                              {{ forum.name }}
+                          </option>
+                      {% endfor %}
+                  </select>
+                {% elif active_tab == 'groups' %}
+                  <select name="group_id" class="custom-select w-full md:w-60 px-2 py-1 tom-select agt-default-input">
+                      <option value="">في كافة المجموعات</option>
+                      {% for group in groups %}
+                          <option value="{{ group.id }}" {% if group.id == group_id %}selected{% endif %}>
+                              {{ group.name }}
+                          </option>
+                      {% endfor %}
+                  </select>
+                {% endif %}
+
                 {% if active_tab == 'forums' %}
                   <input type="date" name="forums_date" value="{{ forums_date }}" class="w-full md:w-60 px-2 py-1 agt-default-input">
                 {% elif active_tab == 'groups' %}
