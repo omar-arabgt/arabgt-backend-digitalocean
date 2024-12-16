@@ -544,11 +544,13 @@ class UserDeleteView(LoginRequiredMixin, DeleteView):
         Handles the deletion of the user, ensuring that superusers and staff members cannot be deleted.
         """
         user = self.get_object()
+        delete_reason = request.POST.get('delete_reason', '').strip()
+
         
         if user.is_superuser or user.is_staff:
             return redirect(self.success_url)
 
-        user.delete()
+        user.delete(delete_reason=delete_reason)
         return redirect(self.success_url)
 
 
