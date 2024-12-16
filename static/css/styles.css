@@ -105,6 +105,13 @@ html, body {
   border-bottom: 2px solid #E2072C;
 }
 
+.agt-default-input--variant {
+  background-color: #F8F8F8;
+  border: 1px solid #ebebeb;
+  border-bottom: 2px solid #E2072C;
+  border-radius: 3px;
+}
+
 .agt-default-input * {
   background-color: #F8F8F8 !important;
   font-size: 16px !important;
