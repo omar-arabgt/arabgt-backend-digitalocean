@@ -89,7 +89,7 @@ def set_point(user_id, point_type):
     point, cache_key, limit, expire = getattr(PointType, point_type).value
     if cache_key and limit and expire:
         KEY = f"{cache_key}:{user_id}"
-        count = cache.get_or_set(KEY, 0, 60*60*expire)
+        count = cache.get_or_set(KEY, 0, 60*60*24*expire)
         if count >= limit:
             return
         cache.set(KEY, count + 1)
