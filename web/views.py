@@ -817,7 +817,8 @@ class ForumGroupQuestionsView(LoginRequiredMixin, TemplateView):
         context['active_tab'] = tab
         context[f'{tab}_search_query'] = self.request.GET.get(f'{tab}_q', '')
         context[f'{tab}_question_id'] = self.request.GET.get(f'{tab}_question_id', '')
-        context['forums_group'] = int(self.request.GET.get('forums_group')) if self.request.GET.get('forums_group', False) else ""
+        context['forum_id'] = int(self.request.GET.get('forum_id')) if self.request.GET.get('forum_id', False) else ""
+        context['group_id'] = int(self.request.GET.get('group_id')) if self.request.GET.get('group_id', False) else ""
         context[f'{tab}_date'] = self.request.GET.get(f'{tab}_date', '')
         context['forums'] = Forum.objects.all()
         context['groups'] = Group.objects.all()
@@ -831,7 +832,7 @@ class ForumGroupQuestionsView(LoginRequiredMixin, TemplateView):
             questions = Question.objects.filter(forum__isnull=False)
             search_query = self.request.GET.get(f'{tab}_q', '')
             question_id = self.request.GET.get(f'{tab}_question_id', '')
-            group_filter = self.request.GET.get(f'{tab}_forum_group', '')
+            forum_id = self.request.GET.get('forum_id', '')
             date_filter = self.request.GET.get(f'{tab}_date', '')
 
             if search_query:
@@ -840,8 +841,8 @@ class ForumGroupQuestionsView(LoginRequiredMixin, TemplateView):
                 )
             if question_id:
                 questions = questions.filter(id=question_id)
-            if group_filter:
-                questions = questions.filter(forum__id=group_filter)
+            if forum_id:
+                questions = questions.filter(forum__id=forum_id)
             if date_filter:
                 questions = questions.filter(created_at__date=date_filter)
 
@@ -849,7 +850,7 @@ class ForumGroupQuestionsView(LoginRequiredMixin, TemplateView):
             questions = Question.objects.filter(group__isnull=False)
             search_query = self.request.GET.get(f'{tab}_q', '')
             question_id = self.request.GET.get(f'{tab}_question_id', '')
-            group_filter = self.request.GET.get(f'{tab}_groups_forum_group', '')
+            group_id = self.request.GET.get('group_id', '')
             date_filter = self.request.GET.get(f'{tab}_date', '')
 
             if search_query:
@@ -858,8 +859,8 @@ class ForumGroupQuestionsView(LoginRequiredMixin, TemplateView):
                 )
             if question_id:
                 questions = questions.filter(id=question_id)
-            if group_filter:
-                questions = questions.filter(group__id=group_filter)
+            if group_id:
+                questions = questions.filter(group__id=group_id)
             if date_filter:
                 questions = questions.filter(created_at__date=date_filter)
 
