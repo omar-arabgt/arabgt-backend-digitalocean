@@ -233,8 +233,9 @@ class SubscribeNewsletter(APIView):
         """
         Handles the subscription or unsubscription process for the newsletter.
         """
-        email = request.data.get("email")
-        unsubscribe = request.data.get("unsubscribe")
+        email = request.data.get("email") or request.GET.get("email")
+
+        unsubscribe = request.data.get("unsubscribe") or request.GET.get("unsubscribe")
 
         try:
             if not email:
