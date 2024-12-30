@@ -92,7 +92,10 @@ def set_point(user_id, point_type):
         count = cache.get_or_set(KEY, 0, 60*60*24*expire)
         if count >= limit:
             return
-        cache.set(KEY, count + 1)
+
+        client = cache._cache.get_client()
+        ttl = client.ttl(cache.make_key(KEY))
+        cache.set(KEY, count + 1, ttl)
 
     with transaction.atomic():
         from .models import User
