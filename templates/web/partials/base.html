@@ -43,6 +43,35 @@
                 });
             });
         </script>
+        <script>
+          document.addEventListener('DOMContentLoaded', function () {
+          const dateLabels = document.querySelectorAll('.date-label');
+          dateLabels.forEach(function (label) {
+            const inputId = label.getAttribute('for');
+            const dateInput = document.getElementById(inputId);
+            if (dateInput) {
+              label.addEventListener('click', function (e) {
+                e.preventDefault();
+                if (dateInput.showPicker) {
+                  dateInput.showPicker();
+                } else {
+                  dateInput.focus();
+                  setTimeout(() => {
+                    dateInput.click();
+                  }, 0);
+                }
+              });
+        
+              function toggleLabel() {
+                label.style.display = dateInput.value ? 'none' : 'flex';
+              }
+              dateInput.addEventListener('input', toggleLabel);
+              dateInput.addEventListener('change', toggleLabel);
+              toggleLabel();
+            }
+          });
+        });
+      </script>
     {% endif %}
 </body>
 </html>

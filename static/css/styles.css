@@ -158,3 +158,24 @@ html, body {
 .custom-radio label {
     cursor: pointer;
 }
+
+.date-label {
+  background-color: #F8F8F8;
+  left: 5px;
+  top: 2px;
+  display: flex;
+  align-items: center;
+  height: 80%;
+  width: 75%;
+  color: #9ca3af;
+  pointer-events: auto; 
+  user-select: none;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+@media screen and (max-width: 500px) {
+  .date-label {
+    width: 85%;
+  }
+}

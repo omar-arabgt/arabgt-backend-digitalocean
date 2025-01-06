@@ -53,9 +53,25 @@
                 {% endif %}
 
                 {% if active_tab == 'forums' %}
-                  <input type="date" name="forums_date" value="{{ forums_date }}" class="w-full md:w-60 px-2 py-1 agt-default-input">
+                <div class="w-full md:w-44 md:mb-0 mb-4 flex flex-col relative">
+                  <input type="date" id="forums_date" name="forums_date" value="{{ forums_date }}" class="w-full h-full md:w-44 px-2 py-1 agt-default-input" >
+                  <label 
+                    for="forums_date" 
+                    class="date-label absolute top-2 left-2"
+                  >
+                    تاريخ النشر
+                  </label>
+                </div>
                 {% elif active_tab == 'groups' %}
-                  <input type="date" name="groups_date" value="{{ groups_date }}" class="w-full md:w-60 px-2 py-1 agt-default-input">
+                  <div class="w-full md:w-44 md:mb-0 mb-4 flex flex-col relative">
+                    <input type="date" id="groups_date" name="groups_date" value="{{ groups_date }}" class="w-full h-full md:w-44 px-2 py-1 agt-default-input" >
+                    <label 
+                      for="groups_date" 
+                      class="date-label absolute top-2 left-2"
+                    >
+                      تاريخ النشر
+                    </label>
+                  </div>
                 {% endif %}
                 
             </div>
