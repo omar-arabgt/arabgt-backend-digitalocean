@@ -531,6 +531,11 @@
 									"key": "file",
 									"type": "file",
 									"src": "/path/example.png"
+								},
+								{
+									"key": "file",
+									"type": "file",
+									"src": "/path/example2.png"
 								}
 							]
 						},
@@ -630,7 +635,12 @@
 								{
 									"key": "file",
 									"type": "file",
-									"src": "/Users/mehmetcan/Desktop/Screenshot 2024-08-01 at 12.28.49.png"
+									"src": "/path/example.png"
+								},
+								{
+									"key": "file",
+									"type": "file",
+									"src": "/path/example2.png"
 								}
 							]
 						},
@@ -752,6 +762,30 @@
 						""
 					]
 				}
+			},
+			"response": []
+		},
+		{
+			"name": "file upload limit",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": "{{url}}/api/file_upload_limit/"
+			},
+			"response": []
+		},
+		{
+			"name": "remove file",
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": {
+						"token": "{{access_token}}"
+					}
+				},
+				"method": "DELETE",
+				"header": [],
+				"url": "{{url}}/api/file/9/"
 			},
 			"response": []
 		},

@@ -275,11 +275,10 @@ class Question(TimeStampedModel):
     forum = models.ForeignKey("Forum", related_name="questions", blank=True, null=True, on_delete=models.SET_NULL)
     group = models.ForeignKey("Group", related_name="questions", blank=True, null=True, on_delete=models.SET_NULL)
     content = models.TextField()
-    file = models.FileField(upload_to="question", blank=True, null=True)
-    file_extension = models.CharField(max_length=20, blank=True, null=True)
     pinned_by = models.ManyToManyField("User", related_name="pinned_questions", blank=True)
     report_count = models.IntegerField(default=0)
     reactions = GenericRelation("Reaction")
+    files = GenericRelation("File")
 
     @property
     def like_count(self):
@@ -297,9 +296,8 @@ class Reply(TimeStampedModel):
     question = models.ForeignKey("Question", related_name="replies", blank=True, null=True, on_delete=models.CASCADE)
     parent_reply = models.ForeignKey("Reply", related_name="replies", blank=True, null=True, on_delete=models.CASCADE)
     content = models.TextField(blank=True)
-    file = models.FileField(upload_to="reply", blank=True, null=True)
-    file_extension = models.CharField(max_length=20, blank=True, null=True)
     reactions = GenericRelation("Reaction")
+    files = GenericRelation("File")
 
     @property
     def like_count(self):
@@ -343,3 +341,19 @@ class AdminNotification(TimeStampedModel):
     title = models.CharField(max_length=255)
     content = models.TextField()
     link = models.CharField(max_length=255, blank=True, null=True)
+
+
+class File(TimeStampedModel):
+    file = models.FileField(upload_to="files")
+    content_type = models.ForeignKey(ContentType, on_delete=models.CASCADE)
+    object_id = models.PositiveIntegerField()
+    content_object = GenericForeignKey("content_type", "object_id")
+    file_type =  models.CharField(max_length=5, blank=True, choices=FileType.choices)
+
+    def save(self, *args, **kwargs):
+        self.file.name = f"{self.content_type.name}/{self.file.name}"
+        super().save(*args, **kwargs)
+
+    def delete(self, using=None, keep_parents=False):
+        self.file.delete()
+        super().delete()
