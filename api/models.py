@@ -47,6 +47,7 @@ class User(TimeStampedModel, AbstractUser):
     profile_photo = models.ImageField(blank=True, null=True)
     is_onboarded = models.BooleanField(default=False)
     has_notification = models.BooleanField(default=False)
+    newsletter = models.BooleanField(blank=True, null=True)
 
     def save(self, *args, **kwargs):
         if getattr(self, "userprofilepoint", None):
@@ -60,9 +61,10 @@ class User(TimeStampedModel, AbstractUser):
 
         for point_field in point_fields:
             field = point_field.name
-            if not getattr(userprofilepoint, field) and getattr(self, field):
-                point += profile_point
-                setattr(userprofilepoint, field, True)
+            if not getattr(userprofilepoint, field):
+                if getattr(self, field) or (isinstance(self._meta.get_field(field), models.BooleanField) and getattr(self, field) is not None):
+                    point += profile_point
+                    setattr(userprofilepoint, field, True)
         self.point = self.point + point
 
         super().save(*args, **kwargs)
@@ -101,7 +103,6 @@ class User(TimeStampedModel, AbstractUser):
         verify_fields = [
             "first_name",
             "last_name",
-            "nick_name",
             "birth_date",
             "country",
             "nationality",
@@ -163,6 +164,8 @@ class UserProfilePoint(models.Model):
     country = models.BooleanField(default=False)
     gender = models.BooleanField(default=False)
     phone_number = models.BooleanField(default=False)
+    has_business = models.BooleanField(default=False)
+    newsletter = models.BooleanField(default=False)
     favorite_presenter = models.BooleanField(default=False)
     favorite_show = models.BooleanField(default=False)
     hobbies = models.BooleanField(default=False)
