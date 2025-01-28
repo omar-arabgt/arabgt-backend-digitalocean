@@ -122,6 +122,34 @@
 			"response": []
 		},
 		{
+			"name": "Email Change",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n \"email\": \"new-email\"\n}"
+				},
+				"url": {
+					"raw": "{{BASE}}/auth/email_change/",
+					"host": [
+						"{{BASE}}"
+					],
+					"path": [
+						"auth",
+						"email_change",
+						""
+					]
+				}
+			},
+			"response": []
+		},
+		{
 			"name": "Logout",
 			"request": {
 				"auth": {

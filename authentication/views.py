@@ -3,9 +3,11 @@ from allauth.socialaccount.providers.facebook.views import FacebookOAuth2Adapter
 from allauth.socialaccount.providers.google.views import GoogleOAuth2Adapter
 from allauth.socialaccount.providers.apple.views import AppleOAuth2Adapter
 from allauth.socialaccount.providers.oauth2.client import OAuth2Client
+from allauth.account.models import EmailAddress
 from dj_rest_auth.registration.views import SocialLoginView
+from rest_framework.views import APIView, Response
 
-from .serializers import CustomSocialLoginSerializer
+from .serializers import CustomSocialLoginSerializer, EmailChangeSerializer
 
 
 class FacebookLogin(SocialLoginView):
@@ -26,3 +28,13 @@ class AppleLogin(SocialLoginView):
 
 class EmailConfirmed(TemplateView):
     template_name = "authentication/email_confirmed.html"
+
+
+class EmailChange(APIView):
+
+    def post(self, request, *args, **kwargs):
+        serializer = EmailChangeSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        email = serializer.data.get("email")
+        EmailAddress.objects.add_new_email(request, request.user, email)
+        return Response("OK")
