@@ -18,7 +18,7 @@
             <thead>
                 <tr class="bg-gray-200">
                     <th class="border border-gray-300 px-4 py-2">رقم<br>المستخدم</th>
-                    <th class="border border-gray-300 px-4 py-2">تاريخ<br>التسجيل</th>
+                    <th class="border border-gray-300 px-4 py-2">تاريخ<br>الحذف</th>
                     <th class="border border-gray-300 px-4 py-2">اسم المستخدم</th>
                     <th class="border border-gray-300 px-4 py-2">الاسم الاخير</th>
                     <th class="border border-gray-300 px-4 py-2">اللقب</th>
@@ -33,7 +33,7 @@
                 {% for user in deleted_user_list %}
                 <tr class="hover:bg-gray-100">
                     <td class="border border-gray-300 font-bold px-4 py-2">{{ user.user_id }}</td>
-                    <td class="border border-gray-300 font-bold px-4 py-2">{{ user.date_joined|date:"Y-m-d" }}</td>
+                    <td class="border border-gray-300 font-bold px-4 py-2">{{ user.created_at|date:"Y-m-d" }}</td>
                     <td class="border border-gray-300 font-bold px-4 py-2">{{ user.username }}</td>
                     <td class="border border-gray-300 font-bold px-4 py-2">{{ user.last_name }}</td>
                     <td class="border border-gray-300 font-bold px-4 py-2">{{ user.nick_name }}</td>
