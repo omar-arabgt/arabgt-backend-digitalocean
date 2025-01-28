@@ -6,6 +6,7 @@ from django.contrib.postgres.fields import ArrayField
 from django.contrib.contenttypes.models import ContentType
 from django.contrib.contenttypes.fields import GenericForeignKey, GenericRelation
 from django.db.models import Q
+from django.utils.translation import gettext_lazy as _
 
 
 from .choices import *
@@ -45,21 +46,27 @@ class User(TimeStampedModel, AbstractUser):
     send_notification = models.BooleanField(default=True)
     profile_photo = models.ImageField(blank=True, null=True)
     is_onboarded = models.BooleanField(default=False)
+    has_notification = models.BooleanField(default=False)
 
     def save(self, *args, **kwargs):
-        created = False
-        if not self.id:
-            created = True
-        super().save(*args, **kwargs)
-        if created:
-            UserProfilePoint.objects.create(user_id=self.id)
+        if getattr(self, "userprofilepoint", None):
+            userprofilepoint = self.userprofilepoint
+        else:
+            userprofilepoint = UserProfilePoint(user=self)
 
-        point_fields = UserProfilePoint._all_fields()
-        for field in point_fields:
-            if not getattr(self.userprofilepoint, field) and getattr(self, field) is not None:
-                set_point.delay(self.id, PointType.FILL_PROFILE_FIELD.name)
-                setattr(self.userprofilepoint, field, True)
-        self.userprofilepoint.save()
+        point_fields = UserProfilePoint._meta.get_fields()
+        profile_point, _, _, _ = PointType.FILL_PROFILE_FIELD.value
+        point = 0
+
+        for point_field in point_fields:
+            field = point_field.name
+            if not getattr(userprofilepoint, field) and getattr(self, field):
+                point += profile_point
+                setattr(userprofilepoint, field, True)
+        self.point = self.point + point
+
+        super().save(*args, **kwargs)
+        userprofilepoint.save()
 
     def delete(self, delete_reason=None, *args, **kwargs):
         DeletedUser.objects.create(
@@ -91,7 +98,20 @@ class User(TimeStampedModel, AbstractUser):
 
     @property
     def is_verified(self):
-        return self.userprofilepoint.is_all_done
+        verify_fields = [
+            "first_name",
+            "last_name",
+            "nick_name",
+            "birth_date",
+            "country",
+            "nationality",
+            "gender",
+            "phone_number",
+        ]
+        for field in verify_fields:
+            if not getattr(self.userprofilepoint, field):
+                return False
+        return True
 
     @property
     def rank(self):
@@ -151,24 +171,6 @@ class UserProfilePoint(models.Model):
     car_sorting = models.BooleanField(default=False)
     has_car = models.BooleanField(default=False)
     car_type = models.BooleanField(default=False)
-
-    @property
-    def is_all_done(self):
-        fields = self._all_fields()
-        for field in fields:
-            if not getattr(self, field):
-                return False
-        return True
-
-    @classmethod
-    def _all_fields(cls):
-        _fields = cls._meta.get_fields()
-        fields = []
-        for field in _fields:
-            if field.auto_created or field.is_relation:
-                continue
-            fields.append(field.name)
-        return fields
 
 
 class FavoritePresenter(TimeStampedModel):
@@ -236,10 +238,9 @@ class PostAction(TimeStampedModel):
         if not self._is_saved and self.is_saved:
             self.saved_at = now
 
-        if point_type:
-            set_point.delay(self.user_id, point_type)
-
         super().save(*args, **kwargs)
+        if point_type:
+            set_point(self.user_id, point_type)
 
 
 class Forum(TimeStampedModel):
@@ -265,11 +266,6 @@ class GroupMembership(TimeStampedModel):
     class Meta:
         unique_together = ("user", "group")
 
-    def save(self, *args, **kwargs):
-        if not self.id:
-            set_point.delay(self.user_id, PointType.GROUP_MEMBERSHIP.name)
-        super().save(*args, **kwargs)
-
 
 class Question(TimeStampedModel):
     user = models.ForeignKey("User", related_name="questions", on_delete=models.CASCADE)
@@ -280,11 +276,6 @@ class Question(TimeStampedModel):
     report_count = models.IntegerField(default=0)
     reactions = GenericRelation("Reaction")
     files = GenericRelation("File")
-
-    def save(self, *args, **kwargs):
-        self.clean()
-        super().save(*args, **kwargs)
-        set_point.delay(self.user_id, PointType.QUESTION.name)
 
     @property
     def like_count(self):
@@ -305,14 +296,6 @@ class Reply(TimeStampedModel):
     reactions = GenericRelation("Reaction")
     files = GenericRelation("File")
 
-    def save(self, *args, **kwargs):
-        self.clean()
-        super().save(*args, **kwargs)
-        set_point.delay(self.user_id, PointType.REPLY.name)
-        if not self.id:
-            model = self.question or self.parent_reply
-            send_push_notification.delay(model.user_id, "title", "content")
-
     @property
     def like_count(self):
         content_type = ContentType.objects.get_for_model(self)
@@ -332,13 +315,6 @@ class Reaction(TimeStampedModel):
 
     class Meta:
         unique_together = ("user", "content_type", "object_id")
-
-    def save(self, *args, **kwargs):
-        self.clean()
-        if not self.id:
-            set_point.delay(self.user_id, PointType.REACTION.name)
-            send_push_notification.delay(self.content_object.user_id, "title", "content")
-        return super().save(*args, **kwargs)
 
 
 class MobileRelease(TimeStampedModel):

@@ -88,6 +88,7 @@ class UserSerializer(serializers.ModelSerializer):
             "send_notification",
             "profile_photo",
             "is_onboarded",
+            "has_notification",
         ]
 
     def get_gender(self, obj):
@@ -139,6 +140,7 @@ class UserUpdateSerializer(serializers.ModelSerializer):
             "send_notification",
             "profile_photo",
             "is_onboarded",
+            "has_notification",
         ]
 
 
@@ -314,10 +316,14 @@ class MobileReleaseSerializer(serializers.ModelSerializer):
 
 
 class NotificationSerializer(serializers.ModelSerializer):
+    user_first_name = serializers.SerializerMethodField()
 
     class Meta:
         model = Notification
-        fields = "__all__"
+        fields = ["id", "title", "content", "link", "is_admin_notification", "user_first_name", "created_at"]
+
+    def get_user_first_name(self, obj):
+        return obj.user.first_name
 
 
 class ForumSerializer(serializers.ModelSerializer):

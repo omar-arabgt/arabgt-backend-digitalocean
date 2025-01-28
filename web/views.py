@@ -14,12 +14,15 @@ from django.core.paginator import Paginator
 from django.utils.timezone import localtime
 import openpyxl
 
-from api.models import User, Newsletter, DeletedUser, Group, Forum, Question, Reply, AdminNotification
+from api.models import User, Newsletter, DeletedUser, Group, Forum, Question, Reply, AdminNotification, Post
 from api.tasks import send_push_notification, NOTIFICATION_ALL
 from .utils import get_merged_user_data, get_signup_method, get_car_sorting_index, CAR_SORTING_LIST
 from api.choices import COUNTRIES, GENDERS, STATUS, HOBBIES, INTERESTS, CAR_BRANDS_ITEMS, CAR_SORTING_ITEMS, UserRank
 from .forms import *
 from django.utils.timezone import make_naive
+from django.conf import settings
+from django.utils.translation import gettext_lazy as _
+
 
 class GroupListView(LoginRequiredMixin, ListView):
     """
@@ -55,6 +58,7 @@ class GroupListView(LoginRequiredMixin, ListView):
         """
         context = super().get_context_data(**kwargs)
         context['page_name'] = 'قائمة المجموعات'
+        context['search_query'] = self.request.GET.get('q', '')
         return context
 
 
@@ -143,7 +147,7 @@ class UserListView(LoginRequiredMixin, ListView):
         query = self.request.GET.get('q', '')
         filters = Q(is_staff=False, is_superuser=False)
         if query:
-            filters &= Q(username__icontains=query)
+            filters &= Q(Q(username__icontains=query) | Q(email__icontains=query) | Q(first_name__icontains=query))
 
         return User.objects.filter(filters)
 
@@ -153,6 +157,7 @@ class UserListView(LoginRequiredMixin, ListView):
         """
         context = super().get_context_data(**kwargs)
         context['page_name'] = 'قائمة المستخدمين'
+        context['search_query'] = self.request.GET.get('q', '')
         return context
 
 
@@ -220,6 +225,7 @@ class ForumListView(LoginRequiredMixin, ListView):
         """
         context = super().get_context_data(**kwargs)
         context['page_name'] = 'قائمة المنتديات'
+        context['search_query'] = self.request.GET.get('q', '')
         return context
 
 
@@ -538,11 +544,13 @@ class UserDeleteView(LoginRequiredMixin, DeleteView):
         Handles the deletion of the user, ensuring that superusers and staff members cannot be deleted.
         """
         user = self.get_object()
+        delete_reason = request.POST.get('delete_reason', '').strip()
+
         
         if user.is_superuser or user.is_staff:
             return redirect(self.success_url)
 
-        user.delete()
+        user.delete(delete_reason=delete_reason)
         return redirect(self.success_url)
 
 
@@ -748,6 +756,16 @@ class NotificationView(LoginRequiredMixin, FormView):
         title = form.cleaned_data.get("title")
         content = form.cleaned_data.get("content")
         link = form.cleaned_data.get("link")
+        post_id = form.cleaned_data.get("post_id")
+        
+        if post_id:
+            exists = Post.objects.filter(post_id=post_id).exists()
+            if exists:
+                link = f"{settings.APP_URL}/post-details?id={post_id}"
+            else:
+                form.add_error("post_id", _("Post does not exist!"))
+                return self.form_invalid(form)
+
         send_push_notification.delay(NOTIFICATION_ALL, title, content, link, True)
         return super().form_valid(form)
   
@@ -781,7 +799,8 @@ class ForumGroupQuestionsView(LoginRequiredMixin, TemplateView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         tab = self.request.GET.get('tab', 'forums')
-        
+        extra_query_params = any(key != 'tab' for key in self.request.GET.keys())
+
         if tab == 'forums':
             questions = self.get_filtered_questions(tab)
             paginator = Paginator(questions, 10)
@@ -796,23 +815,25 @@ class ForumGroupQuestionsView(LoginRequiredMixin, TemplateView):
             context['groups_questions'] = context['page_obj']
 
         context['active_tab'] = tab
-        context[f'{tab}_search_query'] = self.request.GET.get('q', '')
-        context[f'{tab}_question_id'] = self.request.GET.get('question_id', '')
-        context[f'{tab}_group_filter'] = self.request.GET.get('forum_group', '')
-        context[f'{tab}_date_filter'] = self.request.GET.get('date', '')
+        context[f'{tab}_search_query'] = self.request.GET.get(f'{tab}_q', '')
+        context[f'{tab}_question_id'] = self.request.GET.get(f'{tab}_question_id', '')
+        context['forum_id'] = int(self.request.GET.get('forum_id')) if self.request.GET.get('forum_id', False) else ""
+        context['group_id'] = int(self.request.GET.get('group_id')) if self.request.GET.get('group_id', False) else ""
+        context[f'{tab}_date'] = self.request.GET.get(f'{tab}_date', '')
         context['forums'] = Forum.objects.all()
         context['groups'] = Group.objects.all()
         context['page_name'] = 'الأسئلة و النقاشات'
+        context['show_clear_button'] = extra_query_params
 
         return context
 
     def get_filtered_questions(self, tab):
         if tab == 'forums':
             questions = Question.objects.filter(forum__isnull=False)
-            search_query = self.request.GET.get('q', '')
-            question_id = self.request.GET.get('question_id', '')
-            group_filter = self.request.GET.get('forum_group', '')
-            date_filter = self.request.GET.get('date', '')
+            search_query = self.request.GET.get(f'{tab}_q', '')
+            question_id = self.request.GET.get(f'{tab}_question_id', '')
+            forum_id = self.request.GET.get('forum_id', '')
+            date_filter = self.request.GET.get(f'{tab}_date', '')
 
             if search_query:
                 questions = questions.filter(
@@ -820,17 +841,17 @@ class ForumGroupQuestionsView(LoginRequiredMixin, TemplateView):
                 )
             if question_id:
                 questions = questions.filter(id=question_id)
-            if group_filter:
-                questions = questions.filter(forum__id=group_filter)
+            if forum_id:
+                questions = questions.filter(forum__id=forum_id)
             if date_filter:
                 questions = questions.filter(created_at__date=date_filter)
 
         elif tab == 'groups':
             questions = Question.objects.filter(group__isnull=False)
-            search_query = self.request.GET.get('q', '')
-            question_id = self.request.GET.get('question_id', '')
-            group_filter = self.request.GET.get('forum_group', '')
-            date_filter = self.request.GET.get('date', '')
+            search_query = self.request.GET.get(f'{tab}_q', '')
+            question_id = self.request.GET.get(f'{tab}_question_id', '')
+            group_id = self.request.GET.get('group_id', '')
+            date_filter = self.request.GET.get(f'{tab}_date', '')
 
             if search_query:
                 questions = questions.filter(
@@ -838,8 +859,8 @@ class ForumGroupQuestionsView(LoginRequiredMixin, TemplateView):
                 )
             if question_id:
                 questions = questions.filter(id=question_id)
-            if group_filter:
-                questions = questions.filter(group__id=group_filter)
+            if group_id:
+                questions = questions.filter(group__id=group_id)
             if date_filter:
                 questions = questions.filter(created_at__date=date_filter)
 

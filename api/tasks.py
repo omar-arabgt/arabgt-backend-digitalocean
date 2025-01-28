@@ -35,7 +35,28 @@ def send_push_notification(user_id, title, content, link=None, by_admin=False):
     else:
         users = User.objects.filter(id=user_id, send_notification=True)
 
+    if by_admin:
+        AdminNotification.objects.create(
+            title=title,
+            content=content,
+            link=link,
+        )
+
     if users:
+        notifications = []
+        for user in users:
+            n = Notification(
+                user=user,
+                title=title,
+                content=content,
+                link=link,
+                is_admin_notification=by_admin,
+            )
+        notifications.append(n)
+
+        Notification.objects.bulk_create(notifications)
+        users.update(has_notification=True)
+
         user_ids = users.values_list("id", flat=True)
         user_ids = [str(i) for i in user_ids]
 
@@ -52,28 +73,7 @@ def send_push_notification(user_id, title, content, link=None, by_admin=False):
             )
             api_instance.create_notification(notification)
 
-        notifications = []
-        for user in users:
-            n = Notification(
-                user=user,
-                title=title,
-                content=content,
-                link=link,
-                is_admin_notification=by_admin,
-            )
-        notifications.append(n)
 
-        Notification.objects.bulk_create(notifications)
-
-        if by_admin:
-            AdminNotification.objects.create(
-                title=title,
-                content=content,
-                link=link,
-            )
-
-
-@shared_task
 def set_point(user_id, point_type):
     """
     Awards points to a user based on a specific point type.
@@ -89,10 +89,13 @@ def set_point(user_id, point_type):
     point, cache_key, limit, expire = getattr(PointType, point_type).value
     if cache_key and limit and expire:
         KEY = f"{cache_key}:{user_id}"
-        count = cache.get_or_set(KEY, 0, 60*60*expire)
+        count = cache.get_or_set(KEY, 0, 60*60*24*expire)
         if count >= limit:
             return
-        cache.set(KEY, count + 1)
+
+        client = cache._cache.get_client()
+        ttl = client.ttl(cache.make_key(KEY))
+        cache.set(KEY, count + 1, ttl)
 
     with transaction.atomic():
         from .models import User

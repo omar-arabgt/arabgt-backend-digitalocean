@@ -69,7 +69,7 @@ class UserRetrieveUpdateDestroyView(RetrieveUpdateDestroyAPIView):
                 subscribe_newsletter(request.user.email)
             except Exception as e:
                 return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
-            set_point.delay(request.user.id, PointType.FILL_PROFILE_FIELD.name)
+            set_point(request.user.id, PointType.FILL_PROFILE_FIELD.name)
 
         # we copy same code as super().update and just use different serializer class on response 
         partial = kwargs.pop('partial', False)
@@ -233,8 +233,9 @@ class SubscribeNewsletter(APIView):
         """
         Handles the subscription or unsubscription process for the newsletter.
         """
-        email = request.data.get("email")
-        unsubscribe = request.data.get("unsubscribe")
+        email = request.data.get("email") or request.GET.get("email")
+
+        unsubscribe = request.data.get("unsubscribe") or request.GET.get("unsubscribe")
 
         try:
             if not email:
@@ -477,7 +478,7 @@ class SectionPostsView(ListAPIView):
         if section_name == 'خصيصاً لك':
             if not user.is_authenticated:
                 raise PermissionDenied("You must be logged in to view this section")
-            queryset = Post.objects.filter(tag__overlap=user.favorite_cars)
+            queryset = Post.objects.filter(Q(tag__overlap=user.favorite_cars) | Q(tag__contains=['اخترنا-لك']))
         elif categories[0] in ["videos", "car_reviews"]:
             queryset = Post.objects.filter(post_type=categories[0])
         else:
@@ -684,7 +685,7 @@ class NotificationList(ListAPIView):
         """
         Retrieves the queryset of notifications for the current authenticated user.
         """
-        queryset = Notification.objects.filter(user=self.request.user)
+        queryset = Notification.objects.filter(user=self.request.user).order_by("-created_at")
         return queryset
 
 
@@ -727,10 +728,11 @@ class SetPointView(APIView):
         point_type = str(request.data.get("point_type")).upper()
         
         if point_type not in point_types:
-            return Response(_(f"point_type is not correct. Choices: {point_types}"), status=status.HTTP_400_BAD_REQUEST)
+            return Response({"error": _(f"point_type is not correct. Choices: {point_types}")}, status=status.HTTP_400_BAD_REQUEST)
         
-        set_point.delay(request.user.id, point_type)
-        return Response("OK")
+        set_point(request.user.id, point_type)
+        point = User.objects.get(id=request.user.id).point
+        return Response({"point": point})
 
 
 class VerifyOTP(APIView):
@@ -771,7 +773,7 @@ class VerifyOTP(APIView):
                 return Response({"error": "Invalid OTP"}, status=status.HTTP_400_BAD_REQUEST)
         else:
             otp = random.randint(1000, 9999)
-            body = f"Verification code: {otp}"
+            body = f"ArabGT App verification code: {otp}\n\nY5gKMEFNvsj"
             send_sms_notification(phone_number, body)
             cache.set(CACHE_KEY, otp, 180)
 
