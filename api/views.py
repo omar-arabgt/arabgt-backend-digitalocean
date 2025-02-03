@@ -870,10 +870,9 @@ class FileUploadLimitView(APIView):
         return Response(response)
 
 
+
 class UserProfileView(RetrieveAPIView):
+    queryset = User.objects.all()
     serializer_class = UserProfileSerializer
     permission_classes = [IsAuthenticated]
-    
-    def get_object(self):
-        user_id = self.kwargs.get('user_id')
-        return UserProfilePoint.objects.get(user_id=user_id)
+    lookup_field = "id"  # Users will be accessed via their ID
