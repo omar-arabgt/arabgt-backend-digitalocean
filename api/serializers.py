@@ -382,14 +382,13 @@ class ReactionSerializer(serializers.ModelSerializer):
         return data
 
 class UserProfileSerializer(serializers.ModelSerializer):
-    favorite_presenter = FavoritePresenterSerializer(read_only=True)
-    favorite_show = FavoriteShowSerializer(read_only=True)
     name = serializers.SerializerMethodField()
-    
+    favorite_presenter = serializers.CharField(source="favorite_presenter.name", allow_null=True)
+    favorite_show = serializers.CharField(source="favorite_show.name", allow_null=True)
+
     class Meta:
-        model = UserProfilePoint
-        fields = ['name', 'nick_name', 'nationality', 'favorite_presenter', 'favorite_show', 'hobbies']
+        model = User
+        fields = ["name", "nick_name", "nationality", "favorite_presenter", "favorite_show", "hobbies"]
 
     def get_name(self, obj):
-        user = obj.user
-        return f"{user.first_name} {user.last_name}".strip()
+        return f"{obj.first_name} {obj.last_name}".strip()
