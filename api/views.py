@@ -868,3 +868,10 @@ class FileUploadLimitView(APIView):
             "video_extensions": UPLOAD_VIDEO_EXTENSIONS,
         }
         return Response(response)
+
+
+class UserProfileView(RetrieveAPIView):
+    queryset = User.objects.all()
+    serializer_class = UserProfileSerializer
+    permission_classes = [IsAuthenticated]
+    lookup_field = "id"

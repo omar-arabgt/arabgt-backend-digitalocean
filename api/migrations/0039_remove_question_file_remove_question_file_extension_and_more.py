@@ -7,12 +7,12 @@ import django.db.models.deletion
 
 class Migration(migrations.Migration):
 
-    dependencies = [
+   dependencies = [
         ('contenttypes', '0002_remove_content_type_name'),
         ('api', '0038_user_has_notification_alter_deleteduser_country_and_more'),
     ]
 
-    operations = [
+   operations = [
         migrations.RemoveField(
             model_name='question',
             name='file',
@@ -29,6 +29,22 @@ class Migration(migrations.Migration):
             model_name='reply',
             name='file_extension',
         ),
+        migrations.AddField(
+            model_name='user',
+            name='newsletter',
+            field=models.BooleanField(blank=True, null=True),
+        ),
+        migrations.AddField(
+            model_name='userprofilepoint',
+            name='has_business',
+            field=models.BooleanField(default=False),
+        ),
+        migrations.AddField(
+            model_name='userprofilepoint',
+            name='newsletter',
+            field=models.BooleanField(default=False),
+        ),
+
         migrations.AlterField(
             model_name='deleteduser',
             name='car_type',
