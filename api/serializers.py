@@ -382,18 +382,14 @@ class ReactionSerializer(serializers.ModelSerializer):
         return data
 
 class UserProfileSerializer(serializers.ModelSerializer):
-    nickname = serializers.CharField(source="userprofilepoint.nick_name", read_only=True)
-    nationality = serializers.CharField(source="userprofilepoint.nationality", read_only=True)
-    favorite_presenter = serializers.SerializerMethodField()
-    favorite_show = serializers.SerializerMethodField()
-    hobbies = serializers.CharField(source="userprofilepoint.hobbies", read_only=True)
-
+    favorite_presenter = FavoritePresenterSerializer(read_only=True)
+    favorite_show = FavoriteShowSerializer(read_only=True)
+    name = serializers.SerializerMethodField()
+    
     class Meta:
-        model = User
-        fields = ["first_name", "last_name", "nickname", "nationality", "favorite_presenter", "favorite_show", "hobbies"]
+        model = UserProfilePoint
+        fields = ['name', 'nick_name', 'nationality', 'favorite_presenter', 'favorite_show', 'hobbies']
 
-    def get_favorite_presenter(self, obj):
-        return obj.userprofilepoint.favorite_presenter.name if obj.userprofilepoint.favorite_presenter else None
-
-    def get_favorite_show(self, obj):
-        return obj.userprofilepoint.favorite_show.name if obj.userprofilepoint.favorite_show else None
+    def get_name(self, obj):
+        user = obj.user
+        return f"{user.first_name} {user.last_name}".strip()
