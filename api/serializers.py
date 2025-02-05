@@ -381,14 +381,46 @@ class ReactionSerializer(serializers.ModelSerializer):
         data["user"] = user
         return data
 
+
+
 class UserProfileSerializer(serializers.ModelSerializer):
-    name = serializers.SerializerMethodField()
-    favorite_presenter = serializers.CharField(source="favorite_presenter.name", allow_null=True)
-    favorite_show = serializers.CharField(source="favorite_show.name", allow_null=True)
+    favorite_presenter = FavoritePresenterSerializer(read_only=True)
+    favorite_show = FavoriteShowSerializer(read_only=True)
+    profile_image = serializers.SerializerMethodField()
+    next_rank = serializers.SerializerMethodField()
+    country_display = serializers.SerializerMethodField()
+    hobbies = serializers.SerializerMethodField()
 
     class Meta:
         model = User
-        fields = ["name", "nick_name", "nationality", "favorite_presenter", "favorite_show", "hobbies"]
+        fields = (
+            'id', 
+            'username', 
+            'nick_name', 
+            'country_display',
+            'favorite_presenter', 
+            'favorite_show', 
+            'hobbies',
+            'profile_image',
+            'point',
+            'rank',
+            'next_rank',
+            'is_verified'
+        )
 
+    def get_profile_image(self, obj):
+        if obj.profile_photo:
+            return self.context['request'].build_absolute_uri(obj.profile_photo.url)
+        return None
+
+    def get_next_rank(self, obj):
+        return obj.next_rank_value
+    
     def get_name(self, obj):
-        return f"{obj.first_name} {obj.last_name}".strip()
+        return f"{obj.first_name} {obj.last_name}".strip() 
+    
+    def get_country_display(self, obj):
+        return obj.get_country_display()
+    
+    def get_hobbies(self, obj):
+        return [dict(HOBBIES).get(hobby, hobby) for hobby in obj.hobbies]

@@ -780,21 +780,39 @@ class VerifyOTP(APIView):
         return Response("OK")
 
 
+
+
 class GroupListView(ListAPIView):
     """
-    Lists all active groups.
+    Lists all active groups with search functionality.
 
     Input:
-    - No specific input required.
+    - search (optional): Search query parameter to filter groups
+      Example: /api/groups/?search=example
 
     Functionality:
-    - Retrieves and lists all active groups from the database.
+    - Retrieves and lists all active groups from the database
+    - Filters groups based on search query if provided
+    - Performs case-insensitive partial matching on name and description fields
 
     Output:
-    - Returns a list of active groups using the GroupSerializer.
+    - Returns a filtered list of active groups using the GroupSerializer
     """
     serializer_class = GroupSerializer
-    queryset = Group.objects.filter(is_active=True)
+    filter_backends = [SearchFilter]
+    search_fields = ['name', 'description']
+
+    def get_queryset(self):
+        queryset = Group.objects.filter(is_active=True)
+        search_query = self.request.query_params.get('search', None)
+        
+        if search_query:
+            queryset = queryset.filter(
+                Q(name__icontains=search_query) |
+                Q(description__icontains=search_query)
+            )
+        
+        return queryset
 
 
 class GroupMembershipView(UpdateAPIView):
