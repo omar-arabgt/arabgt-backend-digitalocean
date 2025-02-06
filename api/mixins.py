@@ -10,14 +10,14 @@ class FileMixin:
     @transaction.atomic
     def create(self, validated_data):
         validated_data["user"] = self.context["request"].user
-        files = validated_data.pop("file")
+        files = validated_data.pop("file", [])
         instance = super().create(validated_data)
         self._process_file(instance, files)
         return instance
 
     @transaction.atomic
     def update(self, instance, validated_data):
-        files = validated_data.pop("file")
+        files = validated_data.pop("file", [])
         self._process_file(instance, files, update=True)
         return super().update(instance, validated_data)
 
