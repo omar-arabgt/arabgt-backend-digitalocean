@@ -24,7 +24,7 @@ class CustomFormMixin:
 class UserForm(CustomFormMixin, forms.ModelForm):
     class Meta:
         model = User
-        fields = ['username', 'email', 'nick_name', 'phone_number', 'birth_date', 'gender', 'nationality', 'country', 'has_business', 'has_car', 'car_type', 'hobbies', 'interests', 'car_sorting', 'favorite_presenter', 'favorite_show']
+        fields = ['username', 'email', 'nick_name', 'phone_number', 'birth_date', 'gender', 'nationality', 'country', 'has_business', 'has_car', 'car_type', 'hobbies', 'interests', 'car_sorting', 'favorite_presenter', 'favorite_shows']
         widgets = {
             'birth_date': forms.DateInput(attrs={'type': 'date'}),
         }
@@ -42,7 +42,7 @@ class UserForm(CustomFormMixin, forms.ModelForm):
             'car_type': 'نوع السيارة',
             'hobbies': 'هوايات',
             'favorite_presenter': 'المذيع المفضل',
-            'favorite_show': 'العرض المفضل',
+            'favorite_shows': 'العرض المفضل',
         }
         help_texts = {
             'username': 'مطلوب. 150 حرف أو أقل. حروف، أرقام و @/./+/-/_ فقط.',
