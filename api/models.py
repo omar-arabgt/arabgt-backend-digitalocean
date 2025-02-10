@@ -41,7 +41,7 @@ class User(TimeStampedModel, AbstractUser):
     favorite_cars = ArrayField(models.CharField(max_length=30, choices=CAR_BRANDS_ITEMS), default=list, blank=True)
     car_sorting = ArrayField(models.CharField(max_length=30, choices=CAR_SORTING_ITEMS), default=list, blank=True)
     favorite_presenter = models.ForeignKey("FavoritePresenter", blank=True, null=True, on_delete=models.SET_NULL)
-    favorite_show = models.ForeignKey("FavoriteShow", blank=True, null=True, on_delete=models.SET_NULL)
+    favorite_shows = models.ManyToManyField("FavoriteShow", blank=True)
     point = models.IntegerField(default=5)
     send_notification = models.BooleanField(default=True)
     profile_photo = models.ImageField(blank=True, null=True)
@@ -91,7 +91,7 @@ class User(TimeStampedModel, AbstractUser):
             favorite_cars=self.favorite_cars,
             car_sorting=self.car_sorting,
             favorite_presenter=str(self.favorite_presenter) if self.favorite_presenter else '',
-            favorite_show=str(self.favorite_show) if self.favorite_show else '',
+            favorite_shows=[str(i) for i in self.favorite_shows.all()],
             delete_reason=delete_reason,
             point=self.point,
             rank=self.rank,
@@ -148,7 +148,7 @@ class DeletedUser(TimeStampedModel):
     favorite_cars = ArrayField(models.CharField(max_length=30, choices=CAR_BRANDS_ITEMS), default=list, blank=True)
     car_sorting = ArrayField(models.CharField(max_length=30, choices=CAR_SORTING_ITEMS), default=list, blank=True)
     favorite_presenter = models.CharField(max_length=255, blank=True)
-    favorite_show = models.CharField(max_length=255, blank=True)
+    favorite_shows = ArrayField(models.CharField(max_length=255), default=list, blank=True)
     delete_reason = models.TextField(blank=True)
     point = models.IntegerField(blank=True, null=True)
     rank = models.CharField(max_length=8, blank=True, null=True)
@@ -167,7 +167,7 @@ class UserProfilePoint(models.Model):
     has_business = models.BooleanField(default=False)
     newsletter = models.BooleanField(default=False)
     favorite_presenter = models.BooleanField(default=False)
-    favorite_show = models.BooleanField(default=False)
+    favorite_shows = models.BooleanField(default=False)
     hobbies = models.BooleanField(default=False)
     interests = models.BooleanField(default=False)
     favorite_cars = models.BooleanField(default=False)

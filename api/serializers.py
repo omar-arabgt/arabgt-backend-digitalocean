@@ -57,7 +57,7 @@ class UserSerializer(serializers.ModelSerializer):
     interests = serializers.SerializerMethodField()
     favorite_cars = serializers.SerializerMethodField()
     favorite_presenter = FavoritePresenterSerializer()
-    favorite_show = FavoriteShowSerializer()
+    favorite_shows = FavoriteShowSerializer(many=True)
 
     class Meta:
         model = User
@@ -80,7 +80,7 @@ class UserSerializer(serializers.ModelSerializer):
             "favorite_cars",
             "car_sorting",
             "favorite_presenter",
-            "favorite_show",
+            "favorite_shows",
             "point",
             "rank",
             "is_verified",
@@ -137,7 +137,7 @@ class UserUpdateSerializer(serializers.ModelSerializer):
             "favorite_cars",
             "car_sorting",
             "favorite_presenter",
-            "favorite_show",
+            "favorite_shows",
             "send_notification",
             "profile_photo",
             "is_onboarded",
@@ -385,7 +385,7 @@ class ReactionSerializer(serializers.ModelSerializer):
 
 class UserProfileSerializer(serializers.ModelSerializer):
     favorite_presenter = FavoritePresenterSerializer(read_only=True)
-    favorite_show = FavoriteShowSerializer(read_only=True)
+    favorite_shows = FavoriteShowSerializer(read_only=True, many=True)
     profile_image = serializers.SerializerMethodField()
     next_rank = serializers.SerializerMethodField()
     country_display = serializers.SerializerMethodField()
@@ -399,7 +399,7 @@ class UserProfileSerializer(serializers.ModelSerializer):
             'nick_name', 
             'country_display',
             'favorite_presenter', 
-            'favorite_show', 
+            'favorite_shows', 
             'hobbies',
             'profile_image',
             'point',

@@ -188,6 +188,7 @@ class ViewUserView(LoginRequiredMixin, DetailView):
         context['INTERESTS'] = INTERESTS
         context['CAR_BRANDS'] = CAR_BRANDS_ITEMS
         context['CAR_SORTING'] = CAR_SORTING_ITEMS
+        context['favorite_shows'] = ",".join([str(i) for i in self.object.favorite_shows.all()])
         return context
 
 
@@ -391,8 +392,8 @@ class ExportUserToExcelView(LoginRequiredMixin, ListView):
                 'point': user.point,
                 'has_car': user.has_car,
                 'car_type': user.car_type,
-                'favorite_presenter': str(user.favorite_presenter) if user.favorite_show else '',
-                'favorite_show': str(user.favorite_show) if user.favorite_show else '',
+                'favorite_presenter': str(user.favorite_presenter) if user.favorite_presenter else '',
+                'favorite_shows': ",".join([str(i) for i in user.favorite_shows.all()]),
                 'hobbies': ', '.join(user.hobbies),
                 'has_business': user.has_business,
                 'car_sorting': user.car_sorting,
@@ -432,7 +433,7 @@ class ExportUserToExcelView(LoginRequiredMixin, ListView):
             'Have a Car',  # Have a Car
             'Brand Model',  # Car Brand Model
             'Favorite Presenter',  # Favorite Presenter
-            'Favorite Show',  # Favorite Show
+            'Favorite Shows',  # Favorite Shows
             'Hobbies',  # Hobbies
             'Is Business Owner',  # Is Business Owner
             *CAR_SORTING_LIST
@@ -469,7 +470,7 @@ class ExportUserToExcelView(LoginRequiredMixin, ListView):
                 'Yes' if user_details.get('has_car') else 'No',  # Have a Car
                 user_details.get('car_type', ''),  # Car Brand Model
                 user_details.get('favorite_presenter', ''),  # Favorite Presenter
-                user_details.get('favorite_show', ''),  # Favorite Show
+                user_details.get('favorite_shows', ''),  # Favorite Shows
                 user_details.get('hobbies', ''),  # Hobbies
                 'Yes' if user_details.get('has_business') else 'No',  # Is Business Owner
                 *get_car_sorting_index(user_details.get("car_sorting", []))
