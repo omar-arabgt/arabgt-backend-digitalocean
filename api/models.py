@@ -54,6 +54,8 @@ class User(TimeStampedModel, AbstractUser):
             userprofilepoint = self.userprofilepoint
         else:
             userprofilepoint = UserProfilePoint(user=self)
+            super().save(*args, **kwargs)
+            userprofilepoint.save()
 
         point_fields = UserProfilePoint._meta.get_fields()
         profile_point, _, _, _ = PointType.FILL_PROFILE_FIELD.value
