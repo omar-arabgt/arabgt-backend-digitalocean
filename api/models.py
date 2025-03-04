@@ -50,11 +50,11 @@ class User(TimeStampedModel, AbstractUser):
     newsletter = models.BooleanField(blank=True, null=True)
 
     def save(self, *args, **kwargs):
+        super().save(*args, **kwargs)
         if getattr(self, "userprofilepoint", None):
             userprofilepoint = self.userprofilepoint
         else:
             userprofilepoint = UserProfilePoint(user=self)
-            super().save(*args, **kwargs)
             userprofilepoint.save()
 
         point_fields = UserProfilePoint._meta.get_fields()
@@ -64,13 +64,22 @@ class User(TimeStampedModel, AbstractUser):
         for point_field in point_fields:
             field = point_field.name
             if not getattr(userprofilepoint, field):
-                if getattr(self, field) or (isinstance(self._meta.get_field(field), models.BooleanField) and getattr(self, field) is not None):
+                field_type = type(self._meta.get_field(field))
+                if field_type is models.ManyToManyField:
+                    continue
+                elif field_type is models.BooleanField:
+                    set_point = getattr(self, field) is not None
+                else:
+                    set_point = getattr(self, field)
+
+                if set_point:
                     point += profile_point
                     setattr(userprofilepoint, field, True)
-        self.point = self.point + point
 
-        super().save(*args, **kwargs)
-        userprofilepoint.save()
+        if point:
+            self.point += point
+            super().save(update_fields=["point"])
+            userprofilepoint.save()
 
     def delete(self, delete_reason=None, *args, **kwargs):
         DeletedUser.objects.create(

@@ -1,10 +1,10 @@
-from django.db.models.signals import post_save
+from django.db.models.signals import post_save, m2m_changed
 from django.dispatch import receiver
 from django.conf import settings
 from django.utils.translation import gettext_lazy as _
 
 
-from .models import GroupMembership, Question, Reply, Reaction
+from .models import GroupMembership, Question, Reply, Reaction, User
 from .choices import PointType
 from .tasks import set_point, send_push_notification
 
@@ -62,3 +62,12 @@ def post_save_reaction(sender, instance, created, **kwargs):
             link = f"{settings.APP_URL}/question-details?id={question_id}"
             content = f"{instance.user.first_name} {message}: {obj.content}"
             send_push_notification.delay(obj.user_id, message, content, link)
+
+
+@receiver(m2m_changed, sender=User.favorite_shows.through)
+def favorite_shows_changes(sender, instance, action, **kwargs):
+    profile_point = instance.userprofilepoint
+    if action == "post_add" and not profile_point.favorite_shows and instance.favorite_shows.exists():
+        profile_point.favorite_shows = True
+        profile_point.save(update_fields=["favorite_shows"])
+        set_point(instance.id, PointType.FILL_PROFILE_FIELD.name)
