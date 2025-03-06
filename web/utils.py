@@ -29,7 +29,7 @@ def get_merged_user_data(query='', nationality=None, country=None, birthdate=Non
     """
     
     # Filtering active users
-    user_filters = Q(is_staff=False, is_superuser=False)
+    user_filters = Q(is_staff=False, is_superuser=False, emailaddress__verified=True)
     if query:
         user_filters &= Q(Q(username__icontains=query) | Q(email__icontains=query) | Q(first_name__icontains=query) | Q(last_name__icontains=query) | Q(nick_name__icontains=query))
     if nationality:
