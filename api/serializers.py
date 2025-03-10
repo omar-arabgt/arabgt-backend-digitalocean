@@ -322,7 +322,7 @@ class NotificationSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Notification
-        fields = ["id", "title", "content", "link", "is_admin_notification", "user_first_name", "created_at"]
+        fields = ["id", "title", "content", "link", "external_link", "is_admin_notification", "user_first_name", "created_at"]
 
     def get_user_first_name(self, obj):
         return obj.user.first_name

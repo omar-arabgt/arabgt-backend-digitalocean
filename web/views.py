@@ -756,10 +756,12 @@ class NotificationView(LoginRequiredMixin, FormView):
     def form_valid(self, form):
         title = form.cleaned_data.get("title")
         content = form.cleaned_data.get("content")
-        link = form.cleaned_data.get("link")
+        external_link = form.cleaned_data.get("link")
         post_id = form.cleaned_data.get("post_id")
-        
+        link = None
+
         if post_id:
+            external_link = None
             exists = Post.objects.filter(post_id=post_id).exists()
             if exists:
                 link = f"{settings.APP_URL}/post-details?id={post_id}"
@@ -767,7 +769,7 @@ class NotificationView(LoginRequiredMixin, FormView):
                 form.add_error("post_id", _("Post does not exist!"))
                 return self.form_invalid(form)
 
-        send_push_notification.delay(NOTIFICATION_ALL, title, content, link, True)
+        send_push_notification.delay(NOTIFICATION_ALL, title, content, link, external_link, True)
         return super().form_valid(form)
   
     def post(self, request, *args, **kwargs):
