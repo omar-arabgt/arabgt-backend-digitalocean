@@ -1,5 +1,6 @@
 from django.contrib.contenttypes.models import ContentType
 from django.db import transaction
+from django.utils.translation import gettext_lazy as _
 from rest_framework.serializers import ValidationError
 
 from .choices import *
@@ -51,7 +52,7 @@ class FileMixin:
             file_serializers.append(file_serializer)
 
         if image_count > UPLOAD_MAX_IMAGE_NUMBER or video_count > UPLOAD_MAX_VIDEO_NUMBER:
-            raise ValidationError({"error": "Maximum file limit exceeded!"})
+            raise ValidationError({"error": _("Maximum file limit exceeded!")})
 
         for i in file_serializers:
             i.save()
