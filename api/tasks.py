@@ -15,7 +15,7 @@ NOTIFICATION_ALL = "notification_all"
 
 
 @shared_task
-def send_push_notification(user_id, title, content, link=None, by_admin=False):
+def send_push_notification(user_id, title, content, link=None, external_link=None, by_admin=False):
     """
     Sends a push notification to a specific user or all users who have notifications enabled.
 
@@ -40,6 +40,7 @@ def send_push_notification(user_id, title, content, link=None, by_admin=False):
             title=title,
             content=content,
             link=link,
+            external_link=external_link,
         )
 
     if users:
@@ -50,6 +51,7 @@ def send_push_notification(user_id, title, content, link=None, by_admin=False):
                 title=title,
                 content=content,
                 link=link,
+                external_link=external_link,
                 is_admin_notification=by_admin,
             )
         notifications.append(n)

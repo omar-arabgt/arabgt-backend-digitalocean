@@ -61,7 +61,7 @@
                         <td class="text-right py-3 px-4 border-l text-xs sm:text-sm">{{ notification.content|truncatewords:10 }}</td>
                         <td class="text-right py-3 px-4 border-l text-xs sm:text-sm">{{ notification.created_at|date:"Y-m-d" }}</td>
                         <td class="text-right py-3 px-4 text-xs sm:text-sm">
-                            <a href="{{ notification.link }}" target="_blank" class="text-blue-500 underline">{{ notification.link }}</a>
+                            <a href="{{ notification.link }}" target="_blank" class="text-blue-500 underline">{% if notification.link %} {{ notification.link }} {% else%} {{ notification.external_link }} {% endif %}</a>
                         </td>
                     </tr>
                     {% empty %}

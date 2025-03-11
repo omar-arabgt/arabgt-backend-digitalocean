@@ -345,6 +345,7 @@ class Notification(TimeStampedModel):
     title = models.CharField(max_length=255)
     content = models.TextField()
     link = models.CharField(max_length=255, blank=True, null=True)
+    external_link = models.CharField(max_length=255, blank=True, null=True)
     is_admin_notification = models.BooleanField(default=False)
 
 
@@ -352,6 +353,7 @@ class AdminNotification(TimeStampedModel):
     title = models.CharField(max_length=255)
     content = models.TextField()
     link = models.CharField(max_length=255, blank=True, null=True)
+    external_link = models.CharField(max_length=255, blank=True, null=True)
 
 
 class File(TimeStampedModel):
