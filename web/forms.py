@@ -121,26 +121,15 @@ class GroupForm(CustomFormMixin, forms.ModelForm):
 class ForumForm(CustomFormMixin, forms.ModelForm):
     class Meta:
         model = Forum
-        fields = ['name', 'description', 'image' ]
+        fields = ['name', 'description']
         labels = {
             'name': 'اسم المنتدى',
             'description': 'وصف المنتدى',
-            'image': 'صورة',   
         }
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         if self.instance.pk:
-            del self.fields['image']
-            self.fields['image'] = forms.FileField(
-                label='صورة:',
-                required=False,
-                label_suffix="",
-                help_text="",
-                widget=forms.FileInput(attrs={
-                    'class': 'w-full px-3 py-2 agt-default-input'
-                })
-            )
             self.fields['is_active'] = forms.ChoiceField(
                 label='مفعل؟',
                 choices=[(True, 'نعم'), (False, 'لا')],
@@ -149,8 +138,6 @@ class ForumForm(CustomFormMixin, forms.ModelForm):
                 }),
                 initial=self.instance.is_active
             )
-        else:
-            self.fields['image'].label = 'صورة'
 
     def save(self, commit=True):
         instance = super().save(commit=False)

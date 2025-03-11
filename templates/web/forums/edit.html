@@ -26,12 +26,6 @@
             </div>
             {% endfor %}
         </div>
-        {% if form.instance.image %}
-        <div class="mt-4">
-            <span class="block font-bold mb-2">الصورة الحالية:</span>
-            <img src="{{ form.instance.image.url }}" alt="Current Image" class="max-w-40 h-auto">
-        </div>
-        {% endif %}
         <div class="flex justify-end gap-4 mt-4">
             <button type="submit" class="agt-bg-red-900 hover:bg-red-700 text-white font-bold py-3 px-8 rounded">حفظ التغييرات</button>
         </div>
