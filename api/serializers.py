@@ -214,7 +214,7 @@ class ReplyWriteSerializer(FileMixin, serializers.ModelSerializer):
 
     class Meta:
         model = Reply
-        fields = ["question", "parent_reply", "content", "file"]
+        fields = ["id", "question", "parent_reply", "content", "file"]
 
 
 class ReplyReadSerializer(serializers.ModelSerializer):
@@ -261,7 +261,7 @@ class QuestionWriteSerializer(FileMixin, serializers.ModelSerializer):
 
     class Meta:
         model = Question
-        fields = ["content", "group", "forum", "file"]
+        fields = ["id", "content", "group", "forum", "file"]
 
 
 class QuestionReadSerializer(serializers.ModelSerializer):
