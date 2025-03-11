@@ -145,7 +145,7 @@ class UserListView(LoginRequiredMixin, ListView):
         Filters the list of users based on the search query and excludes staff and superusers.
         """
         query = self.request.GET.get('q', '')
-        filters = Q(is_staff=False, is_superuser=False)
+        filters = Q(is_staff=False, is_superuser=False, emailaddress__verified=True)
         if query:
             filters &= Q(Q(username__icontains=query) | Q(email__icontains=query) | Q(first_name__icontains=query))
 
