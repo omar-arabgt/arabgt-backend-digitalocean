@@ -70,7 +70,8 @@ def send_push_notification(user_id, title, content, link=None, external_link=Non
                 include_external_user_ids=user_ids,
                 contents={"en": content},
                 headings={"en": title},
-                url=link,
+                url=external_link,
+                data={"url": link},
                 channel_for_external_user_ids="push",
             )
             api_instance.create_notification(notification)
