@@ -86,6 +86,14 @@ class GroupForm(CustomFormMixin, forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        self.fields['is_active'] = forms.ChoiceField(
+            label='مفعل؟',
+            choices=[(True, 'نعم'), (False, 'لا')],
+            widget=forms.RadioSelect(attrs={
+                'class': 'custom-radio',
+            }),
+            initial=self.instance.is_active
+        )
         if self.instance.pk:
             del self.fields['image']
             self.fields['image'] = forms.FileField(
@@ -97,22 +105,12 @@ class GroupForm(CustomFormMixin, forms.ModelForm):
                     'class': 'w-full px-3 py-2 agt-default-input'
                 })
             )
-            self.fields['is_active'] = forms.ChoiceField(
-                label='مفعل؟',
-                choices=[(True, 'نعم'), (False, 'لا')],
-                widget=forms.RadioSelect(attrs={
-                    'class': 'custom-radio',
-                }),
-                initial=self.instance.is_active
-            )
         else:
             self.fields['image'].label = 'صورة'
 
     def save(self, commit=True):
         instance = super().save(commit=False)
-        if not self.instance.pk:
-            instance.is_active = True
-        elif 'is_active' in self.cleaned_data:
+        if 'is_active' in self.cleaned_data:
             instance.is_active = self.cleaned_data['is_active']
         if commit:
             instance.save()
@@ -129,21 +127,18 @@ class ForumForm(CustomFormMixin, forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        if self.instance.pk:
-            self.fields['is_active'] = forms.ChoiceField(
-                label='مفعل؟',
-                choices=[(True, 'نعم'), (False, 'لا')],
-                widget=forms.RadioSelect(attrs={
-                    'class': 'custom-radio',
-                }),
-                initial=self.instance.is_active
-            )
+        self.fields['is_active'] = forms.ChoiceField(
+            label='مفعل؟',
+            choices=[(True, 'نعم'), (False, 'لا')],
+            widget=forms.RadioSelect(attrs={
+                'class': 'custom-radio',
+            }),
+            initial=self.instance.is_active
+        )
 
     def save(self, commit=True):
         instance = super().save(commit=False)
-        if not self.instance.pk:
-            instance.is_active = True
-        elif 'is_active' in self.cleaned_data:
+        if 'is_active' in self.cleaned_data:
             instance.is_active = self.cleaned_data['is_active']
         if commit:
             instance.save()

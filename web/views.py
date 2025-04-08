@@ -393,7 +393,7 @@ class ExportUserToExcelView(LoginRequiredMixin, ListView):
                 'has_car': user.has_car,
                 'car_type': user.car_type,
                 'favorite_presenter': str(user.favorite_presenter) if user.favorite_presenter else '',
-                'favorite_shows': ",".join([str(i) for i in user.favorite_shows.all()]),
+                'favorite_shows': ",".join([str(i) for i in user.favorite_shows]) if isinstance(user.favorite_shows, list) else '',
                 'hobbies': ', '.join(user.hobbies),
                 'has_business': user.has_business,
                 'car_sorting': user.car_sorting,
