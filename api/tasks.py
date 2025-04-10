@@ -107,6 +107,24 @@ def set_point(user_id, point_type):
         user.save(update_fields=["point"])
 
 
+def format_phone_number_for_twilio(phone_number: str) -> str:
+    """
+    Format a phone number to Twilio-friendly format:
+    If it starts with '00', replace it with '++' (double plus).
+    
+    Args:
+        phone_number (str): The original phone number string.
+    
+    Returns:
+        str: The formatted phone number.
+    """
+    phone_number = phone_number.strip()
+    
+    if phone_number.startswith('00'):
+        return '++' + phone_number[2:]
+    return phone_number
+
+
 @shared_task
 def send_sms_notification(phone_number, body):
     """
@@ -122,6 +140,6 @@ def send_sms_notification(phone_number, body):
     client = Client(settings.TWILIO_ACCOUNT_SID, settings.TWILIO_AUTH_TOKEN)
     client.messages.create(
         from_=settings.TWILIO_FROM_NUMBER,
-        to=phone_number,
+        to=format_phone_number_for_twilio(phone_number),
         body=body,
     )
