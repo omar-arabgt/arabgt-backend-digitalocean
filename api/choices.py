@@ -1,7 +1,7 @@
 from enum import Enum
 from django.db import models
 
-from .utils import get_detailed_item_dict
+from .utils import get_detailed_item_dict, get_detailed_item_dict_brand
 
 class UserRank(Enum):
     USER = 0
@@ -198,19 +198,19 @@ CARS = [
 
 CAR_BRANDS_ITEMS = [
         ("Acura", "أكيورا"),
-        ("Alfa Romeo", "ألفا روميو"),
+        ("Alfa-Romeo", "ألفا روميو"),
         ("Alpina", "ألبينا"),
         ("Alpine", "ألباين"),
         ("Apex", "أبيكس"),
         ("Arrinera", "أرينيرا"),
         ("Artega", "أرتيغا"),
         ("Ascari", "أسكاري"),
-        ("Aston Martin", "أستون مارتن"),
+        ("Aston-Martin", "أستون مارتن"),
         ("Audi", "أودي"),
         ("Abarth", "أبارث"),
         ("Arcfox", "أركفوكس"),
         ("ABT", "إيه بي تي"),
-        ("AC Schnitzer", "إيه سي شنايزر"),
+        ("AC-Schnitzer", "إيه سي شنايزر"),
         ("Bestune", "بستيون"),
         ("Brilliance", "بريليانس"),
         ("BAC", "بي إيه سي"),
@@ -244,7 +244,7 @@ CAR_BRANDS_ITEMS = [
         ("Daihatsu", "دايهاتسو"),
         ("Daimler", "دايملر"),
         ("Datsun", "داتسون"),
-        ("De Tomaso", "دي توماسو"),
+        ("De-Tomaso", "دي توماسو"),
         ("Devon", "ديفون"),
         ("Dongfeng", "دونج فينج"),
         ("Dodge", "دودج"),
@@ -268,7 +268,7 @@ CAR_BRANDS_ITEMS = [
         ("GTA", "جي تي إيه"),
         ("Geely", "جيلي"),
         ("Genesis", "جينيسيس"),
-        ("Gordon Murray", "جوردون موراي"),
+        ("Gordon-Murray", "جوردون موراي"),
         ("Gumpert", "جومبيرت"),
         ("GMC", "جي إم سي"),
         ("JMC", "جاي ام سي"),
@@ -298,12 +298,12 @@ CAR_BRANDS_ITEMS = [
         ("Kleemann", "كليمان"),
         ("JMEV", "جي إم إي في"),
         ("Koenigsegg", "كونيجسيج"),
-        ("Li Auto", "لي أوتو"),
+        ("Li-Auto", "لي أوتو"),
         ("Lada", "لادا"),
         ("Lamborghini", "لمبرجيني"),
         ("Lancia", "لانشيا"),
         ("Landwind", "لاند ويند"),
-        ("Land Rover", "لاند روفر"),
+        ("Land-Rover", "لاند روفر"),
         ("Larte", "لارت"),
         ("Leblanc", "لو بلانك"),
         ("Lexus", "لكزس"),
@@ -313,7 +313,7 @@ CAR_BRANDS_ITEMS = [
         ("Loremo", "لوريمو"),
         ("Lotus", "لوتس"),
         ("Lucid", "لوسيد"),
-        ("Lynk & Co", "لينك آند كو"),
+        ("Lynk&Co", "لينك آند كو"),
         ("MG", "إم جي"),
         ("Maxus", "ماكسيوس"),
         ("Mahindra", "ماهيندرا"),
@@ -406,8 +406,9 @@ CAR_BRANDS_ITEMS = [
         ("Zenos", "زينوس"),
         ("Zotye", "زوتي"),
         ("Zeekr", "زيكر"),
-        ("ZX Auto", "زد اكس اوتو"),
+        ("ZX-Auto", "زد اكس اوتو"),
 ]
+
 
 
 COUNTRIES= [('AW', 'آروبا'),
@@ -714,5 +715,5 @@ CAR_SORTING_DICT = get_detailed_item_dict(CAR_SORTING_ITEMS, "sort_cars")
 CAR_SORTING = list(CAR_SORTING_DICT.values())
 
 
-CAR_BRAND_DICT = get_detailed_item_dict(CAR_BRANDS_ITEMS, "car_brand")
+CAR_BRAND_DICT = get_detailed_item_dict_brand(CAR_BRANDS_ITEMS, "+car_logos")
 CAR_BRANDS = list(CAR_BRAND_DICT.values())

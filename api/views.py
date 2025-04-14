@@ -401,36 +401,49 @@ class HomePageView(APIView):
     Output:
     - Returns the homepage content divided into sections.
     """
-    @method_decorator(cache_page(60 * 60 * 24, key_prefix="home_page_view_cache"))
+    # @method_decorator(cache_page(60 * 60 * 24, key_prefix="home_page_view_cache"))
     def get(self, request):
         """
         Retrieves posts for each section on the homepage, organized by section name.
         """
+
+        # Define sections and whether they are hidden
         sections = [
-            {'اختيارات المحررين': ['اختيارات المحررين']},
-            {'أحدث أخبار السيارات': ['جديد الأخبار', 'سيارات 2023', 'سيارات 2024', 'سيارات معدلة', 'معارض عالمية', 'صور رقمية وتجسسية', 'متفرقات', 'فيس لفت', 'سوبر كارز', 'سيارات نادرة', 'ميكانيك', 'نصائح']},
-            {'تكنولوجيا السيارات': ['سيارات كهربائية', 'القيادة الذاتية', 'تكنولوجيا السيارات', 'تكنولوجيا متقدمة']},
-            {'مقالات': ['اختيارات المحررين', 'تقارير وبحوث', 'توب 5', 'قوائم عرب جي تي']},
-            {'وكلاء وبيانات': ['وكلاء وبيانات']},
-            {'فيديوهات': ['videos']},  # post_type videos
-            {'مراجعات السيارات': ['car_reviews']}  # post_type car_reviews
+            {'name': 'اختيارات المحررين', 'categories': ['اختيارات المحررين'], 'is_hidden': False, 'is_dark_theme': False},
+            {'name': 'أحدث أخبار السيارات', 'categories': ['جديد الأخبار', 'سيارات 2023', 'سيارات 2024', 'سيارات معدلة', 'معارض عالمية', 'صور رقمية وتجسسية', 'متفرقات', 'فيس لفت', 'سوبر كارز', 'سيارات نادرة', 'ميكانيك', 'نصائح'], 'is_hidden': False, 'is_dark_theme': True},
+            {'name': 'تكنولوجيا السيارات', 'categories': ['سيارات كهربائية', 'القيادة الذاتية', 'تكنولوجيا السيارات', 'تكنولوجيا متقدمة'], 'is_hidden': False, 'is_dark_theme': True},
+            {'name': 'مقالات', 'categories': ['اختيارات المحررين', 'تقارير وبحوث', 'توب 5', 'قوائم عرب جي تي'], 'is_hidden': True, 'is_dark_theme': False},
+            {'name': 'وكلاء وبيانات', 'categories': ['وكلاء وبيانات'], 'is_hidden': True, 'is_dark_theme': False},
+            {'name': 'فيديوهات', 'categories': ['videos'], 'is_hidden': True, 'is_dark_theme': False},
+            {'name': 'مراجعات السيارات', 'categories': ['car_reviews'], 'is_hidden': False, 'is_dark_theme': False},
         ]
 
         result = []
+
         for section in sections:
-            section_name = list(section.keys())[0]
-            categories = section[section_name]
-            if categories[0] == 'videos':
+            name = section['name']
+            categories = section['categories']
+            is_hidden = section['is_hidden']
+            is_dark_theme = section['is_dark_theme']
+
+            if is_hidden:
+                posts = []  # No query, just empty
+            elif categories[0] == 'videos':
                 posts = Post.objects.filter(post_type='videos').order_by('-publish_date')[:3]
             elif categories[0] == 'car_reviews':
                 posts = Post.objects.filter(post_type='car_reviews').order_by('-publish_date')[:3]
+            elif name == 'أحدث أخبار السيارات':
+                posts = Post.objects.filter(Q(category__overlap=categories)).order_by('-publish_date')[:6]
             else:
                 posts = Post.objects.filter(Q(category__overlap=categories)).order_by('-publish_date')[:3]
-            
+
             section_data = {
-                'section_name': section_name,
-                'posts': posts
+                'section_name': name,
+                'posts': posts,
+                'is_hidden': is_hidden,
+                'is_dark_theme': is_dark_theme
             }
+
             result.append(section_data)
 
         serializer = HomepageSectionSerializer(result, many=True)

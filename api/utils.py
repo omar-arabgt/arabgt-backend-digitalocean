@@ -1,6 +1,16 @@
 from django.utils.translation import gettext_lazy as _
 from django.conf import settings
 
+def get_detailed_item_dict_brand(items, s3_directory):
+    d = {}
+    for en_label, ar_label in items:
+        item = {
+            "label": ar_label,
+            "value": en_label,
+            "image_url": f"https://{settings.AWS_S3_CUSTOM_DOMAIN}/{s3_directory}/{en_label}.png"
+        }
+        d[en_label] = item
+    return d
 
 def get_detailed_item_dict(items, s3_directory):
     d = {}
