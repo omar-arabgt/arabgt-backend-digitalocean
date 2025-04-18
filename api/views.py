@@ -297,7 +297,7 @@ class ContactUsView(APIView):
         # DEV ONLY
         # DEV ONLY
         # DEV ONLY
-        to_emails = ['basheer@audteye.com', 'zeyad@audteye.com']
+        to_emails = ["info@arabgt.com"]
         context = {
             'name': name,
             'email': email,
@@ -350,7 +350,7 @@ class AdvertisementRequest(APIView):
         """
         subject = 'Advertisement Requests From ArabGT Mobile App'
         # DEV ONLY
-        to_emails = ['basheer@audteye.com', 'zeyad@audteye.com']
+        to_emails = ["info@arabgt.com"]
         context = {
             'name': name,
             'email': email,
@@ -411,7 +411,7 @@ class HomePageView(APIView):
         sections = [
             {'name': 'اختيارات المحررين', 'categories': ['اختيارات المحررين'], 'is_hidden': False, 'is_dark_theme': False},
             {'name': 'أحدث أخبار السيارات', 'categories': ['جديد الأخبار', 'سيارات 2023', 'سيارات 2024', 'سيارات معدلة', 'معارض عالمية', 'صور رقمية وتجسسية', 'متفرقات', 'فيس لفت', 'سوبر كارز', 'سيارات نادرة', 'ميكانيك', 'نصائح'], 'is_hidden': False, 'is_dark_theme': True},
-            {'name': 'تكنولوجيا السيارات', 'categories': ['سيارات كهربائية', 'القيادة الذاتية', 'تكنولوجيا السيارات', 'تكنولوجيا متقدمة'], 'is_hidden': False, 'is_dark_theme': True},
+            {'name': 'تكنولوجيا السيارات', 'categories': ['سيارات كهربائية', 'القيادة الذاتية', 'تكنولوجيا السيارات', 'تكنولوجيا متقدمة'], 'is_hidden': False, 'is_dark_theme': False},
             {'name': 'مقالات', 'categories': ['اختيارات المحررين', 'تقارير وبحوث', 'توب 5', 'قوائم عرب جي تي'], 'is_hidden': True, 'is_dark_theme': False},
             {'name': 'وكلاء وبيانات', 'categories': ['وكلاء وبيانات'], 'is_hidden': True, 'is_dark_theme': False},
             {'name': 'فيديوهات', 'categories': ['videos'], 'is_hidden': True, 'is_dark_theme': False},
@@ -491,7 +491,8 @@ class SectionPostsView(ListAPIView):
         if section_name == 'خصيصاً لك':
             if not user.is_authenticated:
                 raise PermissionDenied("You must be logged in to view this section")
-            queryset = Post.objects.filter(Q(tag__overlap=user.favorite_cars) | Q(tag__contains=['اخترنا-لك']))
+            favorite_cars = [car if car == "BMW" else car.lower() for car in user.favorite_cars]
+            queryset = Post.objects.filter(Q(tag__overlap=favorite_cars) | Q(tag__contains=['اخترنا-لك']))
         elif categories[0] in ["videos", "car_reviews"]:
             queryset = Post.objects.filter(post_type=categories[0])
         else:
