@@ -751,47 +751,33 @@ class SetPointView(APIView):
 
 class VerifyOTP(APIView):
     """
-    Verifies the OTP (One Time Password) for phone number verification.
-
-    Input:
-    - Phone number and OTP in the POST request data.
-
-    Functionality:
-    - Sends an OTP to the phone number or verifies the provided OTP.
-
-    Output:
-    - Returns a success message upon successful verification or OTP generation.
+    Handles sending and verifying OTP via Twilio Verify API.
     """
     permission_classes = [IsAuthenticated]
 
     def post(self, request):
-        """
-        Handles the generation and verification of OTP for phone number verification.
-        """
-        user = self.request.user
+        user = request.user
         phone_number = request.data.get("phone_number")
         otp = request.data.get("otp")
 
         if not phone_number:
-            return Response({"error": "phone_number can not be empty!"}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({"error": "phone_number cannot be empty"}, status=status.HTTP_400_BAD_REQUEST)
 
-        CACHE_KEY = f"otp:{user.id}:{phone_number}"
-
-        if otp:
-            stored_otp = cache.get(CACHE_KEY)
-            if otp == stored_otp:
-                cache.delete(CACHE_KEY)
-                user.phone_number = phone_number
-                user.save(update_fields=["phone_number"])
+        try:
+            if otp:
+                # Step 2: Check code
+                if check_otp_code(phone_number, str(otp)):
+                    user.phone_number = phone_number
+                    user.save(update_fields=["phone_number"])
+                    return Response("OK")
+                else:
+                    return Response({"error": "Invalid or expired OTP"}, status=status.HTTP_400_BAD_REQUEST)
             else:
-                return Response({"error": "Invalid OTP"}, status=status.HTTP_400_BAD_REQUEST)
-        else:
-            otp = random.randint(1000, 9999)
-            body = f"ArabGT App verification code: {otp}\n\nY5gKMEFNvsj"
-            send_sms_notification(phone_number, body)
-            cache.set(CACHE_KEY, otp, 180)
-
-        return Response("OK")
+                # Step 1: Send code
+                send_otp_code(phone_number)
+                return Response("OK")
+        except Exception as e:
+            return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
 

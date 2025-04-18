@@ -143,3 +143,46 @@ def send_sms_notification(phone_number, body):
         to=format_phone_number_for_twilio(phone_number),
         body=body,
     )
+
+
+@shared_task
+def send_otp_code(phone_number: str) -> str:
+    """
+    Sends an OTP code to the specified phone number using Twilio Verify.
+
+    Returns:
+        status (str): Status of the verification attempt (e.g., 'pending')
+    """
+    ACCOUNT_SID = settings.TWILIO_ACCOUNT_SID
+    AUTH_TOKEN = settings.TWILIO_AUTH_TOKEN
+    VERIFY_SERVICE_SID = settings.TWILIO_VERIFY_SERVICE_SID
+    client = Client(ACCOUNT_SID, AUTH_TOKEN)
+
+    verification = client.verify \
+        .v2 \
+        .services(VERIFY_SERVICE_SID) \
+        .verifications \
+        .create(to=format_phone_number_for_twilio(phone_number), channel='sms')
+    
+    return verification.status
+
+@shared_task
+def check_otp_code(phone_number: str, code: str) -> bool:
+    """
+    Verifies the OTP code for the specified phone number.
+
+    Returns:
+        bool: True if verification is approved, False otherwise.
+    """
+    ACCOUNT_SID = settings.TWILIO_ACCOUNT_SID
+    AUTH_TOKEN = settings.TWILIO_AUTH_TOKEN
+    VERIFY_SERVICE_SID = settings.TWILIO_VERIFY_SERVICE_SID
+
+    client = Client(ACCOUNT_SID, AUTH_TOKEN)
+    verification_check = client.verify \
+        .v2 \
+        .services(VERIFY_SERVICE_SID) \
+        .verification_checks \
+        .create(to=format_phone_number_for_twilio(phone_number), code=code)
+    
+    return verification_check.status == "approved"
