@@ -51,3 +51,12 @@ def subscribe_newsletter(email, unsubscribe=False):
         serializer = NewsletterSerializer(data={"email": email})
         serializer.is_valid(raise_exception=True)
         serializer.save()
+
+
+import re
+
+def normalize_arabic(text):
+    # Remove diacritics and normalize common variations
+    text = re.sub(r'[ًٌٍَُِّْـ]', '', text)  # remove tashkeel
+    text = re.sub(r'[إأآا]', 'ا', text)     # normalize alef
+    return text

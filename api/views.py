@@ -488,11 +488,49 @@ class SectionPostsView(ListAPIView):
         categories = sections[section_name]
         user = self.request.user
 
+        # if section_name == 'خصيصاً لك':
+        #     if not user.is_authenticated:
+        #         raise PermissionDenied("You must be logged in to view this section")
+        #     favorite_cars_en = [car if car == "BMW" else car.lower() for car in user.favorite_cars]
+        #     queryset = Post.objects.filter(Q(tag__overlap=favorite_cars_en) | Q(tag__contains=['اخترنا-لك']))
+
         if section_name == 'خصيصاً لك':
             if not user.is_authenticated:
                 raise PermissionDenied("You must be logged in to view this section")
-            favorite_cars = [car if car == "BMW" else car.lower() for car in user.favorite_cars]
-            queryset = Post.objects.filter(Q(tag__overlap=favorite_cars) | Q(tag__contains=['اخترنا-لك']))
+
+            SPECIAL_ARABIC_OVERRIDES = {
+            "BMW": "بي إم دبليو",
+            "Mercedes-Benz": "مرسيدس",
+            }
+            english_to_arabic = dict(CAR_BRANDS_ITEMS)
+
+            favorite_tags = set()
+
+            for car in user.favorite_cars:
+                car_lower = car.lower()
+
+                # Always include the lowercase English name
+                if car == "BMW":
+                    favorite_tags.add("BMW")
+                else:
+                    favorite_tags.add(car_lower)
+
+                # Determine Arabic equivalent (override > mapping > skip)
+                if car in SPECIAL_ARABIC_OVERRIDES:
+                    arabic_name = SPECIAL_ARABIC_OVERRIDES[car]
+                elif car in english_to_arabic:
+                    arabic_name = english_to_arabic[car]
+                else:
+                    arabic_name = None
+
+                if arabic_name:
+                    favorite_tags.add(normalize_arabic(arabic_name))
+            print(favorite_tags)
+            queryset = Post.objects.filter(
+                Q(tag__overlap=list(favorite_tags)) | Q(tag__contains=['اخترنا-لك'])
+            )
+
+
         elif categories[0] in ["videos", "car_reviews"]:
             queryset = Post.objects.filter(post_type=categories[0])
         else:
