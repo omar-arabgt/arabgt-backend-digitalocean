@@ -313,10 +313,10 @@ class MobileReleaseSerializer(serializers.ModelSerializer):
 
     def get_download_url(self, obj):
         if obj.platform == MobilePlatform.IOS:
-            download_url = settings.IOS_STORE_URL
+            return settings.IOS_STORE_URL
         elif obj.platform == MobilePlatform.ANDROID:
-            download_url = settings.ANDROID_STORE_URL
-        return download_url
+            return settings.ANDROID_STORE_URL
+        return None  # safe fallback
 
 
 class NotificationSerializer(serializers.ModelSerializer):

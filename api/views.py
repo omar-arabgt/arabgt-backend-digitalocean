@@ -693,29 +693,40 @@ class ReplyRetrieveUpdateDestroyView(RetrieveUpdateDestroyAPIView):
         return ReplyWriteSerializer
 
 
-class MobileReleaseView(RetrieveAPIView):
+class MobileReleaseView(APIView):
     """
     Retrieves the latest mobile release version for the specified platform.
-
-    Input:
-    - Platform and version number passed as query parameters.
-
-    Functionality:
-    - Retrieves the latest release version that is greater than the provided version number.
-
-    Output:
-    - Returns the mobile release details.
+    If the user's version is the latest, returns is_uptodate=True.
     """
-    serializer_class = MobileReleaseSerializer
+    serializer_class = MobileReleaseSerializer  # Optional, for clarity
 
-    def get_object(self):
-        """
-        Retrieves the latest mobile release for the specified platform and version number.
-        """
+    def get(self, request, *args, **kwargs):
         platform = self.request.GET.get("platform", "")
-        version_number = self.request.GET.get("version_number", 0)
-        obj = MobileRelease.objects.filter(platform=platform, version_number__gt=version_number).last()
-        return obj
+        try:
+            version_number = int(self.request.GET.get("version_number", 0))
+        except ValueError:
+            version_number = 0
+
+        latest_release = MobileRelease.objects.filter(
+            platform=platform
+        ).order_by("-version_number").first()
+
+        if latest_release is None:
+            return Response(
+                {"detail": "No releases found for this platform."},
+                status=status.HTTP_404_NOT_FOUND
+            )
+
+        is_uptodate = version_number >= latest_release.version_number
+
+        release_data = None
+        if not is_uptodate:
+            release_data = MobileReleaseSerializer(latest_release).data
+
+        return Response({
+            "is_uptodate": is_uptodate,
+            "release": release_data
+        })
 
 
 class NotificationList(ListAPIView):
