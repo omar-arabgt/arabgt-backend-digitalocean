@@ -218,6 +218,8 @@ class Post(TimeStampedModel):
     content = models.JSONField(default=dict)
     post_type = models.CharField(max_length=255)
     modify_date = models.DateTimeField()
+    is_published = models.BooleanField(default=True)
+
 
 
 class PostAction(TimeStampedModel):

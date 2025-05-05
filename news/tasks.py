@@ -70,6 +70,7 @@ def fetch_and_process_post(post, override_existing=False):
                     "category": categories,
                     "tag": tags,
                     "modify_date": post["post_modified"],
+                    "is_published": True,
                 }
             )
         else:
@@ -91,6 +92,7 @@ def fetch_and_process_post(post, override_existing=False):
                     category=categories,
                     tag=tags,
                     modify_date=post["post_modified"],
+                    is_published= True,
                 )
 
         # # Process related articles if they exist

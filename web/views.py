@@ -928,3 +928,36 @@ def delete_question(request, question_id):
     
     return redirect(reverse('question_detail', args=[question_id]))
 
+from api.models import Post
+from .forms import PostManageForm
+from django.contrib import messages
+from django.core.exceptions import ObjectDoesNotExist
+
+class PostManageView(FormView):
+    template_name = 'web/posts_manage/container.html'
+    form_class = PostManageForm
+    success_url = '?page=1'
+
+    def form_valid(self, form):
+        post_id = form.cleaned_data['post_id']
+        action = form.cleaned_data['action']
+        
+        try:
+            post = Post.objects.get(post_id=post_id)
+            
+            if action == 'draft':
+                post.is_published = False
+                post.save()
+                messages.success(self.request, "تم تحويل المقال إلى مسودة بنجاح.")
+            elif action == 'publish':
+                post.is_published = True
+                post.save()
+                messages.success(self.request, "تم نشر المقال بنجاح.")
+
+            elif action == 'delete':
+                post.delete()
+                messages.success(self.request, "تم حذف المقال بنجاح.")
+        except ObjectDoesNotExist:
+            messages.error(self.request, "لم يتم العثور على مقال بالمعرف المحدد.")
+        
+        return super().form_valid(form)
