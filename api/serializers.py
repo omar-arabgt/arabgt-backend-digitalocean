@@ -19,16 +19,16 @@ class FileSerializer(serializers.ModelSerializer):
 
         if file_extension in UPLOAD_IMAGE_EXTENSIONS:
             if file_size > UPLOAD_MAX_IMAGE_SIZE:
-                raise ValidationError({"error": "Maximum file size exceeded!"})
+                raise ValidationError({"error": "حجم الملف كبير جداً تعدى الحد المسموح به"})
             attrs["file_type"] = FileType.IMAGE
 
         elif file_extension in UPLOAD_VIDEO_EXTENSIONS:
             if file_size > UPLOAD_MAX_VIDEO_SIZE:
-                raise ValidationError({"error": "Maximum file size exceeded!"})
+                raise ValidationError({"error": "حجم الملف كبير جداً تعدى الحد المسموح به"})
             attrs["file_type"] = FileType.VIDEO
 
         else:
-            raise serializers.ValidationError({"error": "Invalid file extension!"})
+            raise serializers.ValidationError({"error": "صيغة هذا الملف غير مدعومة"})
         
         return super().validate(attrs)
 
@@ -188,6 +188,8 @@ class PostSerializer(serializers.ModelSerializer):
 class HomepageSectionSerializer(serializers.Serializer):
     section_name = serializers.CharField()
     posts = PostListSerializer(many=True)
+    is_hidden = serializers.BooleanField()
+    is_dark_theme = serializers.BooleanField()
 
 
 class PostActionSerializer(serializers.ModelSerializer):
@@ -311,10 +313,10 @@ class MobileReleaseSerializer(serializers.ModelSerializer):
 
     def get_download_url(self, obj):
         if obj.platform == MobilePlatform.IOS:
-            download_url = settings.IOS_STORE_URL
+            return settings.IOS_STORE_URL
         elif obj.platform == MobilePlatform.ANDROID:
-            download_url = settings.ANDROID_STORE_URL
-        return download_url
+            return settings.ANDROID_STORE_URL
+        return None  # safe fallback
 
 
 class NotificationSerializer(serializers.ModelSerializer):

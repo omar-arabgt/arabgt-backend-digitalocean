@@ -178,3 +178,10 @@ Use the provided **Postman collection**:
 | **docker-entrypoint.sh** | Entry point script for Django setup            |
 | **Dockerfile**           | Builds the Django container                     |
 | **requirements.txt**     | Python dependencies                            |
+
+
+
+## Import existing users from csv
+
+```docker exec -it arabgt_web /bin/bash```
+```python import_user.py```

@@ -107,6 +107,24 @@ def set_point(user_id, point_type):
         user.save(update_fields=["point"])
 
 
+def format_phone_number_for_twilio(phone_number: str) -> str:
+    """
+    Format a phone number to Twilio-friendly format:
+    If it starts with '00', replace it with '++' (double plus).
+    
+    Args:
+        phone_number (str): The original phone number string.
+    
+    Returns:
+        str: The formatted phone number.
+    """
+    phone_number = phone_number.strip()
+    
+    if phone_number.startswith('00'):
+        return '++' + phone_number[2:]
+    return phone_number
+
+
 @shared_task
 def send_sms_notification(phone_number, body):
     """
@@ -122,6 +140,49 @@ def send_sms_notification(phone_number, body):
     client = Client(settings.TWILIO_ACCOUNT_SID, settings.TWILIO_AUTH_TOKEN)
     client.messages.create(
         from_=settings.TWILIO_FROM_NUMBER,
-        to=phone_number,
+        to=format_phone_number_for_twilio(phone_number),
         body=body,
     )
+
+
+@shared_task
+def send_otp_code(phone_number: str) -> str:
+    """
+    Sends an OTP code to the specified phone number using Twilio Verify.
+
+    Returns:
+        status (str): Status of the verification attempt (e.g., 'pending')
+    """
+    ACCOUNT_SID = settings.TWILIO_ACCOUNT_SID
+    AUTH_TOKEN = settings.TWILIO_AUTH_TOKEN
+    VERIFY_SERVICE_SID = settings.TWILIO_VERIFY_SERVICE_SID
+    client = Client(ACCOUNT_SID, AUTH_TOKEN)
+
+    verification = client.verify \
+        .v2 \
+        .services(VERIFY_SERVICE_SID) \
+        .verifications \
+        .create(to=format_phone_number_for_twilio(phone_number), channel='sms')
+    
+    return verification.status
+
+@shared_task
+def check_otp_code(phone_number: str, code: str) -> bool:
+    """
+    Verifies the OTP code for the specified phone number.
+
+    Returns:
+        bool: True if verification is approved, False otherwise.
+    """
+    ACCOUNT_SID = settings.TWILIO_ACCOUNT_SID
+    AUTH_TOKEN = settings.TWILIO_AUTH_TOKEN
+    VERIFY_SERVICE_SID = settings.TWILIO_VERIFY_SERVICE_SID
+
+    client = Client(ACCOUNT_SID, AUTH_TOKEN)
+    verification_check = client.verify \
+        .v2 \
+        .services(VERIFY_SERVICE_SID) \
+        .verification_checks \
+        .create(to=format_phone_number_for_twilio(phone_number), code=code)
+    
+    return verification_check.status == "approved"
