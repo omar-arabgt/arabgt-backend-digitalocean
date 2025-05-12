@@ -40,11 +40,13 @@
           </div>
         </div>
         <p class="my-4 px-4 text-gray-800">{{ reply.content }}</p>
-        {% if reply.file %}
-          <div class="px-4 mb-4">
-              <img src="{{ reply.file.url }}" alt="Reply Image" class="w-32 h-auto">
-          </div>
-        {% endif %}
+        {% if reply.files.all %}
+        <div class="px-4 mb-4">
+          {% for file in reply.files.all %}
+            <img src="{{ file.file.url }}" alt="Reply Image" class="w-32 h-auto">
+          {% endfor %}
+        </div>
+      {% endif %}
         <div class="mb-5 bg-gray-50 p-4 border-b border-t border-gray-200 flex justify-between items-center">
             <div class="text-gray-700 flex items-center space-x-4 space-x-reverse">
                 <span class="flex items-center space-x-1 space-x-reverse">
