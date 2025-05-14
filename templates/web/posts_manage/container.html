@@ -1,0 +1,42 @@
+{% extends "web/partials/base.html" %}
+{% load static %}
+{% block title %}إدارة المقالات{% endblock %}
+
+{% block content %}
+<div class="container mx-auto p-4">
+
+    {% include "web/partials/heading.html" with title="إدارة المقالات" %}
+
+    {% if messages %}
+        {% for message in messages %}
+            <div class="p-4 mb-4 text-sm {% if message.tags == 'success' %}text-green-700 bg-green-100{% elif message.tags == 'error' %}text-red-700 bg-red-100{% endif %} rounded-lg" role="alert">
+                {{ message }}
+            </div>
+        {% endfor %}
+    {% endif %}
+
+    <form method="post">
+        {% csrf_token %}
+        <div class="mb-4">
+            <label class="block mb-2 font-bold">{{ form.post_id.label }}</label>
+            {{ form.post_id }}
+            {% for error in form.post_id.errors %}
+                <p class="text-red-500 text-sm">{{ error }}</p>
+            {% endfor %}
+        </div>
+
+        <div class="mb-4">
+            <label class="block mb-2 font-bold">{{ form.action.label }}</label>
+            {{ form.action }}
+            {% for error in form.action.errors %}
+                <p class="text-red-500 text-sm">{{ error }}</p>
+            {% endfor %}
+        </div>
+
+        <button type="submit" class="agt-bg-red-900 hover:bg-red-700 text-white font-bold py-3 px-6 rounded">
+            تنفيذ الإجراء
+        </button>
+    </form>
+
+</div>
+{% endblock %}

@@ -166,7 +166,7 @@ class PostListView(ListAPIView):
 
     def get_queryset(self):
         if self.request.GET.get("is_saved"):
-            return Post.objects.filter(postaction__is_saved=True, postaction__user=self.request.user.id).order_by("-postaction__saved_at")
+            return Post.objects.filter(postaction__is_saved=True, postaction__user=self.request.user.id, is_published=True).order_by("-postaction__saved_at")
         return Post.objects.all().order_by("-publish_date")
 
 
@@ -184,7 +184,8 @@ class PostRetrieveView(RetrieveAPIView):
     - Returns the post details using the PostSerializer.
     """
     serializer_class = PostSerializer
-    queryset = Post.objects.all()
+    def get_queryset(self):
+        return Post.objects.filter(is_published=True)
 
 
 class PostActionUpdateView(UpdateAPIView):
@@ -209,7 +210,7 @@ class PostActionUpdateView(UpdateAPIView):
         Retrieves the post by ID and ensures a PostAction object exists for the current user.
         """
         try:
-            post = Post.objects.get(id=self.kwargs.get("post_id"))
+            post = Post.objects.get(id=self.kwargs.get("post_id"), is_published=True)
         except:
             raise Http404
         post_action, _ = PostAction.objects.get_or_create(user=self.request.user, post=post)
@@ -429,13 +430,13 @@ class HomePageView(APIView):
             if is_hidden:
                 posts = []  # No query, just empty
             elif categories[0] == 'videos':
-                posts = Post.objects.filter(post_type='videos').order_by('-publish_date')[:3]
+                posts = Post.objects.filter(post_type='videos', is_published=True).order_by('-publish_date')[:3]
             elif categories[0] == 'car_reviews':
-                posts = Post.objects.filter(post_type='car_reviews').order_by('-publish_date')[:3]
+                posts = Post.objects.filter(post_type='car_reviews', is_published=True).order_by('-publish_date')[:3]
             elif name == 'أحدث أخبار السيارات':
-                posts = Post.objects.filter(Q(category__overlap=categories)).order_by('-publish_date')[:6]
+                posts = Post.objects.filter(Q(category__overlap=categories), is_published=True).order_by('-publish_date')[:6]
             else:
-                posts = Post.objects.filter(Q(category__overlap=categories)).order_by('-publish_date')[:3]
+                posts = Post.objects.filter(Q(category__overlap=categories), is_published=True).order_by('-publish_date')[:3]
 
             section_data = {
                 'section_name': name,
@@ -525,16 +526,15 @@ class SectionPostsView(ListAPIView):
 
                 if arabic_name:
                     favorite_tags.add(normalize_arabic(arabic_name))
-            print(favorite_tags)
-            queryset = Post.objects.filter(
-                Q(tag__overlap=list(favorite_tags)) | Q(tag__contains=['اخترنا-لك'])
-            )
+            # print(favorite_tags)
+                queryset = Post.objects.filter(Q(tag__overlap=list(favorite_tags)) | Q(tag__contains=['اخترنا-لك']), is_published=True)
+
 
 
         elif categories[0] in ["videos", "car_reviews"]:
-            queryset = Post.objects.filter(post_type=categories[0])
+            queryset = Post.objects.filter(post_type=categories[0], is_published=True)
         else:
-            queryset = Post.objects.filter(Q(category__overlap=categories))
+            queryset = Post.objects.filter(Q(category__overlap=categories), is_published=True)
         return queryset.order_by("-publish_date")
 
     def get(self, request, *args, **kwargs):

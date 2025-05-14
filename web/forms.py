@@ -181,3 +181,28 @@ class NotificationForm(forms.ModelForm):
     class Meta:
         model = Notification
         fields = ["title", "content", "link", "post_id"]
+
+
+
+class PostManageForm(forms.Form):
+    post_id = forms.IntegerField(
+        label='أدخل رقم تعريف المقال (Post ID)',
+        widget=forms.NumberInput(attrs={
+            'class': 'w-full px-3 py-2 border-b-2 border-red-500 bg-gray-100 text-gray-800',
+            'placeholder': 'رقم تعريف المقال'
+        })
+    )
+
+    ACTION_CHOICES = (
+        ('draft', 'تحويل إلى مسودة'),
+        ('publish', 'نشر المقال'),
+        ('delete', 'حذف المقال'),
+    )
+
+    action = forms.ChoiceField(
+        label='الإجراء المطلوب',
+        choices=ACTION_CHOICES,
+        widget=forms.RadioSelect(attrs={
+            'class': 'px-3 py-2 text-gray-800'
+        })
+    )

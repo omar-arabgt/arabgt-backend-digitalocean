@@ -35,4 +35,6 @@ urlpatterns = [
 
     path('delete/reply/<int:reply_id>/', delete_reply, name='delete_reply'),
     path('delete/question/<int:question_id>/', delete_question, name='delete_question'),
+    path('posts/manage/', PostManageView.as_view(), name='posts_manage'),
+
 ]
