@@ -4,15 +4,37 @@
   {% if page_obj.has_previous %}
       <a href="?{% query_transform request page=page_obj.previous_page_number %}" class="bg-gray-300 hover:bg-gray-400 text-black font-bold py-2 px-4 rounded mx-1">السابق</a>
   {% endif %}
-
+  
+  {% with page_obj.number|add:-5 as start %}
+  {% with page_obj.number|add:5 as end %}
+  
+  {% if start > 1 %}
+      <a href="?{% query_transform request page=1 %}" class="bg-gray-300 hover:bg-gray-400 text-black font-bold py-2 px-4 rounded mx-1">1</a>
+      {% if start > 2 %}
+          <span class="py-2 px-2">...</span>
+      {% endif %}
+  {% endif %}
+  
   {% for num in page_obj.paginator.page_range %}
-      {% if page_obj.number == num %}
-      <span class="agt-bg-red-900 text-white font-bold py-2 px-4 rounded mx-1">{{ num }}</span>
-      {% else %}
-          <a href="?{% query_transform request page=num %}" class="bg-gray-300 hover:bg-gray-400 text-black font-bold py-2 px-4 rounded mx-1">{{ num }}</a>
+      {% if num >= start and num <= end %}
+          {% if page_obj.number == num %}
+              <span class="agt-bg-red-900 text-white font-bold py-2 px-4 rounded mx-1">{{ num }}</span>
+          {% else %}
+              <a href="?{% query_transform request page=num %}" class="bg-gray-300 hover:bg-gray-400 text-black font-bold py-2 px-4 rounded mx-1">{{ num }}</a>
+          {% endif %}
       {% endif %}
   {% endfor %}
-
+  
+  {% if end < page_obj.paginator.num_pages %}
+      {% if end < page_obj.paginator.num_pages|add:-1 %}
+          <span class="py-2 px-2">...</span>
+      {% endif %}
+      <a href="?{% query_transform request page=page_obj.paginator.num_pages %}" class="bg-gray-300 hover:bg-gray-400 text-black font-bold py-2 px-4 rounded mx-1">{{ page_obj.paginator.num_pages }}</a>
+  {% endif %}
+  
+  {% endwith %}
+  {% endwith %}
+  
   {% if page_obj.has_next %}
       <a href="?{% query_transform request page=page_obj.next_page_number %}" class="bg-gray-300 hover:bg-gray-400 text-black font-bold py-2 px-4 rounded mx-1">التالي</a>
   {% endif %}

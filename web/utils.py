@@ -1,12 +1,14 @@
 from itertools import chain
-from django.db.models import Q, Value, CharField
+from django.db.models import Q, Value, CharField, F
 from django.utils.dateparse import parse_date
 from allauth.socialaccount.models import SocialAccount
 from api.models import User, DeletedUser
-from api.choices import UserRank, CAR_SORTING_ITEMS
+from api.choices import UserRank, CAR_SORTING_ITEMS, COUNTRIES
 
 
-def get_merged_user_data(query='', nationality=None, country=None, birthdate=None, gender=None, status=None, rank=None):
+    
+
+def get_merged_user_data(query='', nationality=None, country=None, birthdate=None, gender=None, status=None, rank=None, page=None, paginate_by=None):
     """
     Merges and filters data from the User and DeletedUser models based on the provided criteria.
 
@@ -27,95 +29,113 @@ def get_merged_user_data(query='', nationality=None, country=None, birthdate=Non
     Output:
     - Returns a combined, sorted, and filtered list of dictionaries containing user data.
     """
-    
-    # Filtering active users
     user_filters = Q(is_staff=False, is_superuser=False, emailaddress__verified=True)
+    deleted_user_filters = Q()
+    
     if query:
-        user_filters &= Q(Q(username__icontains=query) | Q(email__icontains=query) | Q(first_name__icontains=query) | Q(last_name__icontains=query) | Q(nick_name__icontains=query))
+        user_filters &= Q(Q(username__icontains=query) | Q(email__icontains=query) | 
+                        Q(first_name__icontains=query) | Q(last_name__icontains=query) | 
+                        Q(nick_name__icontains=query))
+        deleted_user_filters &= Q(Q(username__icontains=query) | Q(email__icontains=query) | 
+                                Q(first_name__icontains=query) | Q(last_name__icontains=query) | 
+                                Q(nick_name__icontains=query))
+    
     if nationality:
         user_filters &= Q(nationality=nationality)
+        deleted_user_filters &= Q(nationality=nationality)
+    
     if gender:
         user_filters &= Q(gender=gender)
+        deleted_user_filters &= Q(gender=gender)
+    
     if country:
         user_filters &= Q(country=country)
+        deleted_user_filters &= Q(country=country)
+    
     if rank:
         user_filters &= Q(point__gte=rank)
+        deleted_user_filters &= Q(point__gte=rank)
         next_rank_value = UserRank.next_rank_value(int(rank))
         if next_rank_value:
             user_filters &= Q(point__lt=next_rank_value)
+            deleted_user_filters &= Q(point__lt=next_rank_value)
+    
     if birthdate:
         try:
             date = parse_date(birthdate)
             if date:
                 user_filters &= Q(birth_date=date)
-        except ValueError:
-            pass
-
-    # Querying active users and annotating them with status 'active'
-    users = User.objects.filter(user_filters).values(
-        'id', 'first_name', 'last_name', 'nick_name', 'birth_date', 'gender',
-    ).annotate(
-        status=Value('active', output_field=CharField()),
-        delete_reason=Value('', output_field=CharField())
-    )
-
-    # Adding display fields for nationality and country
-    user_data = [
-        dict(user, get_nationality_display=User.objects.get(pk=user['id']).get_nationality_display(),
-             get_country_display=User.objects.get(pk=user['id']).get_country_display(),
-             rank=User.objects.get(pk=user['id']).rank)
-        for user in users
-    ]
-
-    # Filtering deleted users
-    deleted_user_filters = Q()
-    if query:
-        deleted_user_filters &= Q(username__icontains=query)
-    if nationality:
-        deleted_user_filters &= Q(nationality=nationality)
-    if gender:
-        deleted_user_filters &= Q(gender=gender)
-    if country:
-        deleted_user_filters &= Q(country=country)
-    if rank:
-        deleted_user_filters &= Q(point__gte=rank)
-        next_rank_value = UserRank.next_rank_value(int(rank))
-        if next_rank_value:
-            user_filters &= Q(point__lt=next_rank_value)
-    if birthdate:
-        try:
-            date = parse_date(birthdate)
-            if date:
                 deleted_user_filters &= Q(birth_date=date)
         except ValueError:
             pass
-
-    # Querying deleted users and annotating them with status 'deleted'
-    deleted_users = DeletedUser.objects.filter(deleted_user_filters).values(
-        'id', 'user_id', 'first_name', 'last_name', 'nick_name', 'birth_date', 'gender', 'delete_reason', 'rank'
-    ).annotate(
-        status=Value('deleted', output_field=CharField())
-    )
-
-    # Adding display fields for nationality and country
-    deleted_user_data = [
-        dict(user, get_nationality_display=DeletedUser.objects.get(pk=user['id']).get_nationality_display(),
-             get_country_display=DeletedUser.objects.get(pk=user['id']).get_country_display())
-        for user in deleted_users
-    ]
-
-    # Combining and sorting the user data and deleted user data
-    combined_queryset = sorted(
-        chain(user_data, deleted_user_data),
-        key=lambda instance: instance['id']
-    )
-
-    # Filtering by status if specified
-    if status:
-        combined_queryset = [user for user in combined_queryset if user['status'] == status]
-
-    return combined_queryset
-
+    
+    # Create empty result sets by default
+    users_result = []
+    deleted_users_result = []
+    
+    # Only query active users if needed
+    if not status or status == 'active':
+        # Use select_related to optimize the query
+        users = User.objects.filter(user_filters).select_related('nationality', 'country')
+        
+        # Apply sorting for consistency
+        users = users.order_by('id')
+        
+        # Annotate in the database rather than individually
+        users = users.annotate(
+            status=Value('active', output_field=CharField()),
+            delete_reason=Value('', output_field=CharField())
+        )
+        
+        # Extract only the needed fields
+        users_result = list(users.values(
+            'id', 'first_name', 'last_name', 'nick_name', 'birth_date', 'gender',
+            'status', 'delete_reason', 'nationality', 'country', 'point'
+        ).annotate(
+            get_nationality_display=F('nationality'),
+            get_country_display=F('country'),
+            rank=F('point')
+        ))
+        
+        # Fix display values for nationality and country in one batch
+        country_dict = dict(COUNTRIES)
+        for user in users_result:
+            user['get_nationality_display'] = country_dict.get(user['nationality'], user['nationality'])
+            user['get_country_display'] = country_dict.get(user['country'], user['country'])
+    
+    # Only query deleted users if needed
+    if not status or status == 'deleted':
+        # Similar optimizations for deleted users
+        deleted_users = DeletedUser.objects.filter(deleted_user_filters).select_related('nationality', 'country')
+        deleted_users = deleted_users.order_by('id')
+        
+        deleted_users = deleted_users.annotate(
+            status=Value('deleted', output_field=CharField())
+        )
+        
+        deleted_users_result = list(deleted_users.values(
+            'id', 'user_id', 'first_name', 'last_name', 'nick_name', 'birth_date', 
+            'gender', 'delete_reason', 'status', 'nationality', 'country', 'rank'
+        ))
+        
+        # Fix display values for deleted users
+        for user in deleted_users_result:
+            user['get_nationality_display'] = country_dict.get(user['nationality'], user['nationality'])
+            user['get_country_display'] = country_dict.get(user['country'], user['country'])
+    
+    # Combine results 
+    combined_results = users_result + deleted_users_result
+    
+    # Sort in memory (only sorting the current page results)
+    combined_results.sort(key=lambda x: x.get('id', 0))
+    
+    # Implement pagination if requested
+    if page is not None and paginate_by is not None:
+        start_idx = (page - 1) * paginate_by
+        end_idx = start_idx + paginate_by
+        return combined_results[start_idx:end_idx]
+    
+    return combined_results
 
 def get_signup_method(user_id):
     social_account = SocialAccount.objects.filter(user_id=user_id).first()

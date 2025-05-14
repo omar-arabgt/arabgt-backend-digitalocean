@@ -171,12 +171,12 @@ def fetch_and_process_wp_posts(post_id=None, override_all=False):
     for wp_post in wp_posts:
         fetch_and_process_post.delay(wp_post, override_existing)
 
-    # --- NEW LOGIC: Fetch posts modified within last 30 days ---
-    thirty_days_ago = timezone.now() - timedelta(days=30)
+    # --- NEW LOGIC: Fetch posts modified within last 2 days ---
+    two_days_ago = timezone.now() - timedelta(days=2)
     recent_modified_posts = WpPosts.objects.filter(
         post_type__in=["post", "videos", "car_reviews"],
         post_status="publish",
-        post_modified__gte=thirty_days_ago
+        post_modified__gte=two_days_ago
     ).values(
         "id", "post_content", "post_date", "post_title",
         "post_modified", "post_author", "post_type"

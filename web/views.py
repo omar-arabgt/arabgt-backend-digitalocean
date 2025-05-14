@@ -290,6 +290,7 @@ class ForumUpdateView(LoginRequiredMixin, UpdateView):
         return context
 
 
+
 class ExportUserListView(LoginRequiredMixin, ListView):
     """
     Displays a paginated and filtered list of merged User and DeletedUser data.
@@ -305,12 +306,13 @@ class ExportUserListView(LoginRequiredMixin, ListView):
     """
     template_name = 'web/export_users/list.html'
     context_object_name = 'merged_list'
-    paginate_by = 10
+    paginate_by = 50  # Increased for better performance
 
     def get_queryset(self):
         """
-        Retrieves and filters the merged user data based on the query parameters.
+        Get filtered user data with pagination.
         """
+        # Get filter parameters
         query = self.request.GET.get('q', '')
         nationality = self.request.GET.get('nationality')
         country = self.request.GET.get('country')
@@ -318,12 +320,13 @@ class ExportUserListView(LoginRequiredMixin, ListView):
         gender = self.request.GET.get('gender')
         status = self.request.GET.get('status')
         rank = self.request.GET.get('rank')
-
+        
+        # Get filtered data
         return get_merged_user_data(query, nationality, country, birthdate, gender, status, rank)
 
     def get_context_data(self, **kwargs):
         """
-        Adds additional context data, such as filter options and the page name.
+        Add filter parameters to context.
         """
         context = super().get_context_data(**kwargs)
         context['page_name'] = 'Merged User and DeletedUser List'
@@ -339,11 +342,15 @@ class ExportUserListView(LoginRequiredMixin, ListView):
         context['RANKS'] = list(UserRank)
         rank = self.request.GET.get('rank', "")
         if rank:
-            context['rank_filter'] = int(rank)
+            try:
+                context['rank_filter'] = int(rank)
+            except ValueError:
+                pass
         return context
 
 
 class ExportUserToExcelView(LoginRequiredMixin, ListView):
+
     """
     Exports the filtered merged User and DeletedUser data to an Excel file.
 
@@ -356,131 +363,213 @@ class ExportUserToExcelView(LoginRequiredMixin, ListView):
     Output:
     - Returns the Excel file containing the merged user data for download.
     """
-    def get_queryset(self):
-        """
-        Retrieves and filters the merged user data based on the query parameters.
-        """
-        query = self.request.GET.get('q', '')
-        nationality = self.request.GET.get('nationality')
-        country = self.request.GET.get('country')
-        birthdate = self.request.GET.get('birthdate')
-        gender = self.request.GET.get('gender')
-        status = self.request.GET.get('status')
-        rank = self.request.GET.get('rank')
-
-        return get_merged_user_data(query, nationality, country, birthdate, gender, status, rank)
-
-    def get_user_details(self, user_id, status):
-        """
-        Retrieves the User object from the database to get additional fields.
-        """
-        try:
-            if status == "deleted":
-                user = DeletedUser.objects.get(id=user_id)
-                user_id = user.user_id
-            else:
-                user = User.objects.get(id=user_id)
-                user_id = user.id
-
-            return {
-                'user_id': user_id,
-                'email': user.email,
-                'phone_number': user.phone_number,
-                'date_joined': make_naive(user.date_joined) if getattr(user, "date_joined", None) else '',  # Convert to naive datetime
-                'deletion_date': make_naive(user.last_login) if getattr(user, "last_login", None) else '',  # Convert to naive datetime
-                'send_notification': getattr(user, "send_notification", ""),
-                'point': user.point,
-                'has_car': user.has_car,
-                'car_type': user.car_type,
-                'favorite_presenter': str(user.favorite_presenter) if user.favorite_presenter else '',
-                'favorite_shows': ",".join([str(i) for i in user.favorite_shows]) if isinstance(user.favorite_shows, list) else '',
-                'hobbies': ', '.join(user.hobbies),
-                'has_business': user.has_business,
-                'car_sorting': user.car_sorting,
-            }
-        except User.DoesNotExist:
-            return {}
-
     def get(self, request, *args, **kwargs):
         """
-        Generates and returns an Excel file containing the filtered user data.
+        Export user data to Excel with streaming response.
         """
-        queryset = self.get_queryset()
+        # Get filter parameters
+        query = request.GET.get('q', '')
+        nationality = request.GET.get('nationality')
+        country = request.GET.get('country')
+        birthdate = request.GET.get('birthdate')
+        gender = request.GET.get('gender')
+        status = request.GET.get('status')
+        rank = request.GET.get('rank')
 
-        wb = openpyxl.Workbook()
-        ws = wb.active
-        ws.title = "Users and Deleted Users"
+        # Create response object for streaming
+        response = HttpResponse(
+            content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        )
+        response['Content-Disposition'] = 'attachment; filename=exported_users.xlsx'
 
+        # Create workbook
+        wb = openpyxl.Workbook(write_only=True)  # Use write_only mode for better performance
+        ws = wb.create_sheet("Users and Deleted Users")
+
+        # Add headers
         headers = [
-            'ID',  # User ID
-            'Status',  # User Status
-            'First Name',  # First Name
-            'Last Name',  # Last Name
-            'Nick Name',  # Nick Name
-            'Birth Date',  # Birth Date
-            'Gender',  # Gender
-            'Nationality',  # Nationality
-            'Country',  # Country
-            'Rank',  # Rank
-            'Delete Reason',  # Deletion Reason
-            'Email',  # Email
-            'Mobile',  # Mobile
+            'ID',
+            'Status',
+            'First Name',
+            'Last Name',
+            'Nick Name',
+            'Birth Date',
+            'Gender',
+            'Nationality',
+            'Country',
+            'Rank',
+            'Delete Reason',
+            'Email',
+            'Mobile',
             'Authentication',
-            'Registration Date',  # Registration Date
-            'Deletion Date',  # Deletion Date
-            'Newsletter Subscription',  # Newsletter Subscription
-            'Points',  # Points
-            'Have a Car',  # Have a Car
-            'Brand Model',  # Car Brand Model
-            'Favorite Presenter',  # Favorite Presenter
-            'Favorite Shows',  # Favorite Shows
-            'Hobbies',  # Hobbies
-            'Is Business Owner',  # Is Business Owner
+            'Registration Date',
+            'Deletion Date',
+            'Newsletter Subscription',
+            'Points',
+            'Have a Car',
+            'Brand Model',
+            'Favorite Presenter',
+            'Favorite Shows',
+            'Hobbies',
+            'Is Business Owner',
             *CAR_SORTING_LIST
         ]
-
         ws.append(headers)
 
-        for user in queryset:
-            user_details = self.get_user_details(user['id'], user["status"])
+        # Get filtered user data - process active users
+        if not status or status == 'active':
+            user_filters = Q(is_staff=False, is_superuser=False, emailaddress__verified=True)
+            if query:
+                user_filters &= Q(Q(username__icontains=query) | Q(email__icontains=query) | 
+                                Q(first_name__icontains=query) | Q(last_name__icontains=query) | 
+                                Q(nick_name__icontains=query))
+            if nationality:
+                user_filters &= Q(nationality=nationality)
+            if gender:
+                user_filters &= Q(gender=gender)
+            if country:
+                user_filters &= Q(country=country)
+            if rank:
+                user_filters &= Q(point__gte=rank)
+                next_rank_value = UserRank.next_rank_value(int(rank))
+                if next_rank_value:
+                    user_filters &= Q(point__lt=next_rank_value)
+            if birthdate:
+                try:
+                    date = parse_date(birthdate)
+                    if date:
+                        user_filters &= Q(birth_date=date)
+                except ValueError:
+                    pass
+
+            # Process users in batches to reduce memory usage
+            batch_size = 500
+            users_count = User.objects.filter(user_filters).count()
             
-            # Ensure datetime fields are naive (timezone removed)
-            registration_date = user_details.get('date_joined', '')
-            deletion_date = user_details.get('deletion_date', '')
+            for offset in range(0, users_count, batch_size):
+                users_batch = User.objects.filter(user_filters).order_by('id')[offset:offset+batch_size]
+                users_batch = users_batch.select_related('favorite_presenter')
 
-            ws.append([
-                user_details['user_id'],
-                "محذوف" if user['status'] == "deleted" else "مفعل",
-                user['first_name'],
-                user['last_name'],
-                user['nick_name'],
-                user['birth_date'],
-                "ذكر" if user['gender'] == "M" else "انثي" if user['gender'] == "F" else "",
-                user['get_nationality_display'],
-                user['get_country_display'],
-                user["rank"],
-                user["delete_reason"],
-                user_details.get('email', ''),  # Email
-                user_details.get('phone_number', ''),  # Mobile
-                get_signup_method(user['id']),
-                registration_date,  # Registration Date
-                deletion_date,  # Deletion Date
-                'Yes' if user_details.get('send_notification') else 'No',  # Newsletter Subscription
-                user_details.get('point', 0),  # Points
-                'Yes' if user_details.get('has_car') else 'No',  # Have a Car
-                user_details.get('car_type', ''),  # Car Brand Model
-                user_details.get('favorite_presenter', ''),  # Favorite Presenter
-                user_details.get('favorite_shows', ''),  # Favorite Shows
-                user_details.get('hobbies', ''),  # Hobbies
-                'Yes' if user_details.get('has_business') else 'No',  # Is Business Owner
-                *get_car_sorting_index(user_details.get("car_sorting", []))
-            ])
+                
+                for user in users_batch:
+                    # Convert timezone-aware datetime to naive datetime
+                    registration_date = make_naive(user.date_joined).strftime('%Y-%m-%d %H:%M:%S') if user.date_joined else ''
+                    
+                    # Get favorite shows as string
+                    favorite_shows = ",".join([str(i) for i in user.favorite_shows]) if isinstance(user.favorite_shows, list) else ''
+                    
+                    # Get hobbies as string
+                    hobbies = ', '.join(user.hobbies) if user.hobbies else ''
+                    
+                    # Get car sorting values
+                    car_sorting_values = get_car_sorting_index(user.car_sorting)
+                    
+                    # Prepare row data
+                    row = [
+                        user.id,
+                        "مفعل",
+                        user.first_name,
+                        user.last_name,
+                        user.nick_name,
+                        user.birth_date.strftime('%Y-%m-%d') if user.birth_date else '',
+                        "ذكر" if user.gender == "M" else "انثي" if user.gender == "F" else "",
+                        user.get_nationality_display(),
+                        user.get_country_display(),
+                        user.rank,
+                        "",  # Delete reason (empty for active users)
+                        user.email,
+                        user.phone_number,
+                        get_signup_method(user.id),
+                        registration_date,
+                        "",  # Deletion date (empty for active users)
+                        'Yes' if getattr(user, 'send_notification', False) else 'No',
+                        user.point,
+                        'Yes' if user.has_car else 'No',
+                        user.car_type,
+                        str(user.favorite_presenter) if user.favorite_presenter else '',
+                        favorite_shows,
+                        hobbies,
+                        'Yes' if user.has_business else 'No',
+                        *car_sorting_values
+                    ]
+                    
+                    ws.append(row)
 
-        response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
-        response['Content-Disposition'] = 'attachment; filename=exported_users.xlsx'
+        # Process deleted users
+        if not status or status == 'deleted':
+            deleted_user_filters = Q()
+            if query:
+                deleted_user_filters &= Q(Q(username__icontains=query) | Q(email__icontains=query) | 
+                                       Q(first_name__icontains=query) | Q(last_name__icontains=query) | 
+                                       Q(nick_name__icontains=query))
+            if nationality:
+                deleted_user_filters &= Q(nationality=nationality)
+            if gender:
+                deleted_user_filters &= Q(gender=gender)
+            if country:
+                deleted_user_filters &= Q(country=country)
+            if rank:
+                deleted_user_filters &= Q(point__gte=rank)
+                next_rank_value = UserRank.next_rank_value(int(rank))
+                if next_rank_value:
+                    deleted_user_filters &= Q(point__lt=next_rank_value)
+            if birthdate:
+                try:
+                    date = parse_date(birthdate)
+                    if date:
+                        deleted_user_filters &= Q(birth_date=date)
+                except ValueError:
+                    pass
+
+            # Process deleted users in batches
+            batch_size = 500
+            deleted_count = DeletedUser.objects.filter(deleted_user_filters).count()
+            
+            for offset in range(0, deleted_count, batch_size):
+                deleted_batch = DeletedUser.objects.filter(deleted_user_filters).order_by('id')[offset:offset+batch_size]
+                deleted_batch = deleted_batch.select_related('favorite_presenter')
+                
+                for user in deleted_batch:
+                    # Process similar to active users but with deleted user data
+                    deletion_date = make_naive(user.last_login).strftime('%Y-%m-%d %H:%M:%S') if getattr(user, 'last_login', None) else ''
+                    
+                    favorite_shows = ",".join([str(i) for i in user.favorite_shows]) if isinstance(user.favorite_shows, list) else ''
+                    hobbies = ', '.join(user.hobbies) if user.hobbies else ''
+                    car_sorting_values = get_car_sorting_index(user.car_sorting)
+                    
+                    row = [
+                        user.user_id,
+                        "محذوف",
+                        user.first_name,
+                        user.last_name,
+                        user.nick_name,
+                        user.birth_date.strftime('%Y-%m-%d') if user.birth_date else '',
+                        "ذكر" if user.gender == "M" else "انثي" if user.gender == "F" else "",
+                        user.get_nationality_display(),
+                        user.get_country_display(),
+                        user.rank,
+                        user.delete_reason,
+                        user.email,
+                        user.phone_number,
+                        get_signup_method(user.user_id),
+                        "",  # Registration date not available for deleted users
+                        deletion_date,
+                        'Yes' if getattr(user, 'send_notification', False) else 'No',
+                        user.point,
+                        'Yes' if user.has_car else 'No',
+                        user.car_type,
+                        str(user.favorite_presenter) if user.favorite_presenter else '',
+                        favorite_shows,
+                        hobbies,
+                        'Yes' if user.has_business else 'No',
+                        *car_sorting_values
+                    ]
+                    
+                    ws.append(row)
+
+        # Save workbook to response
         wb.save(response)
         return response
-
 class NewsletterListView(LoginRequiredMixin, ListView):
     """
     Displays a paginated list of newsletter subscriptions with optional search functionality.
