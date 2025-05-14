@@ -350,18 +350,8 @@ class ExportUserListView(LoginRequiredMixin, ListView):
 
 
 class ExportUserToExcelView(LoginRequiredMixin, ListView):
-
     """
-    Exports the filtered merged User and DeletedUser data to an Excel file.
-
-    Input:
-    - Optional query parameters for filtering the user data by various attributes such as nationality, country, birthdate, etc.
-
-    Functionality:
-    - Retrieves and filters the merged user data, writes it to an Excel file, and returns the file as an HTTP response.
-
-    Output:
-    - Returns the Excel file containing the merged user data for download.
+    Optimized view for exporting users to Excel.
     """
     def get(self, request, *args, **kwargs):
         """
@@ -448,15 +438,14 @@ class ExportUserToExcelView(LoginRequiredMixin, ListView):
             
             for offset in range(0, users_count, batch_size):
                 users_batch = User.objects.filter(user_filters).order_by('id')[offset:offset+batch_size]
-                users_batch = users_batch.select_related('favorite_presenter')
-
+                users_batch = users_batch.select_related('favorite_presenter')  # Only include valid ForeignKey
                 
                 for user in users_batch:
                     # Convert timezone-aware datetime to naive datetime
                     registration_date = make_naive(user.date_joined).strftime('%Y-%m-%d %H:%M:%S') if user.date_joined else ''
                     
                     # Get favorite shows as string
-                    favorite_shows = ",".join([str(i) for i in user.favorite_shows]) if isinstance(user.favorite_shows, list) else ''
+                    favorite_shows = ",".join([str(i) for i in user.favorite_shows.all()]) if user.favorite_shows.exists() else ''
                     
                     # Get hobbies as string
                     hobbies = ', '.join(user.hobbies) if user.hobbies else ''
@@ -527,7 +516,7 @@ class ExportUserToExcelView(LoginRequiredMixin, ListView):
             
             for offset in range(0, deleted_count, batch_size):
                 deleted_batch = DeletedUser.objects.filter(deleted_user_filters).order_by('id')[offset:offset+batch_size]
-                deleted_batch = deleted_batch.select_related('favorite_presenter')
+                # No select_related for DeletedUser as it has no foreign keys
                 
                 for user in deleted_batch:
                     # Process similar to active users but with deleted user data
@@ -558,7 +547,7 @@ class ExportUserToExcelView(LoginRequiredMixin, ListView):
                         user.point,
                         'Yes' if user.has_car else 'No',
                         user.car_type,
-                        str(user.favorite_presenter) if user.favorite_presenter else '',
+                        user.favorite_presenter,  # This is a CharField in DeletedUser
                         favorite_shows,
                         hobbies,
                         'Yes' if user.has_business else 'No',
