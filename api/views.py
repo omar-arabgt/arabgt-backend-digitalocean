@@ -527,7 +527,7 @@ class SectionPostsView(ListAPIView):
                 if arabic_name:
                     favorite_tags.add(normalize_arabic(arabic_name))
             # print(favorite_tags)
-                queryset = Post.objects.filter(Q(tag__overlap=list(favorite_tags)) | Q(tag__contains=['اخترنا-لك']), is_published=True)
+            queryset = Post.objects.filter(Q(tag__overlap=list(favorite_tags)) | Q(tag__contains=['اخترنا-لك']), is_published=True)
 
 
 
