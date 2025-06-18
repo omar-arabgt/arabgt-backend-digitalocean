@@ -1,8 +1,8 @@
-
 services:
   web:
     build: .
     container_name: arabgt_web
+    restart: unless-stopped  
     volumes:
       - .:/app
     # ports:
@@ -15,9 +15,36 @@ services:
     env_file:
       - core/.env
 
+  db_backup:
+    image: postgres:13
+    container_name: arabgt_db_backup
+    restart: unless-stopped  
+    depends_on:
+      - db
+    env_file:
+      - core/.env
+    volumes:
+      - /data/arabgt_backups:/backups
+      - ./backup-scripts:/scripts
+    command: >
+      sh -c "
+        while true; do
+          echo 'Creating database backup...'
+          pg_dump -h db -U $$POSTGRES_USER -d $$POSTGRES_DB > /backups/backup_$$(date +%Y%m%d_%H%M%S).sql
+          echo 'Backup completed'
+          
+          # Keep only last 7 days of backups
+          find /backups -name '*.sql' -mtime +7 -delete
+          
+          # Wait 24 hours before next backup
+          sleep 86400
+        done
+      "
+
   db:
     image: postgres:13
     container_name: arabgt_db
+    restart: unless-stopped  
     env_file:
       - core/.env
     ports:
@@ -28,9 +55,9 @@ services:
   redis:
     image: redis:alpine
     container_name: arabgt_redis
+    restart: unless-stopped  
     ports:
       - "6380:6379"
-    restart: always
     volumes:
       - /data/arabgt_rdb:/data
     env_file:
@@ -39,6 +66,7 @@ services:
   celery_worker:
     build: .
     container_name: arabgt_celery
+    restart: unless-stopped  
     command: celery -A core worker --loglevel=info
     volumes:
       - .:/app
@@ -50,6 +78,7 @@ services:
   celery_beat:
     build: .
     container_name: arabgt_celery_beat
+    restart: unless-stopped  
     env_file:
       - core/.env
     command: celery -A core beat --loglevel=info
@@ -64,6 +93,7 @@ services:
   mysql_db:
     image: mysql:8.0
     container_name: arabgt_mysql
+    restart: unless-stopped  
     env_file:
       - core/.env
     ports:
@@ -71,10 +101,10 @@ services:
     volumes:
       - /data/arabgt_mysqldb:/var/lib/mysql
   
-  
   nginx:
     image: nginx:latest
     container_name: arabgt_nginx
+    restart: unless-stopped  
     ports:
       - "443:443"
     volumes:
