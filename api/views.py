@@ -807,28 +807,33 @@ class VerifyOTP(APIView):
 
     def post(self, request):
         user = request.user
-        phone_number = request.data.get("phone_number")
+        phone_data = request.data.get("phone_number")
         otp = request.data.get("otp")
 
-        if not phone_number:
+        if not phone_data:
             return Response({"error": "phone_number cannot be empty"}, status=status.HTTP_400_BAD_REQUEST)
-
+        is_valid, result = validate_phone_number(phone_data)
+        if not is_valid:
+            return Response({
+                'success': False,
+                'error': result  # This will be the error message
+            }, status=status.HTTP_400_BAD_REQUEST)
+        formatted_phone = result
         try:
             if otp:
                 # Step 2: Check code
-                if check_otp_code(phone_number, str(otp)):
-                    user.phone_number = phone_number
+                if check_otp_code(formatted_phone, str(otp)):
+                    user.phone_number = formatted_phone
                     user.save(update_fields=["phone_number"])
                     return Response("OK")
                 else:
                     return Response({"error": "Invalid or expired OTP"}, status=status.HTTP_400_BAD_REQUEST)
             else:
                 # Step 1: Send code
-                send_otp_code(phone_number)
+                send_otp_code(formatted_phone)
                 return Response("OK")
         except Exception as e:
             return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-
 
 
 
