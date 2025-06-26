@@ -1,6 +1,8 @@
 # from rest_framework.serializers import ModelSerializer, ValidationError, Serializer
 from rest_framework import serializers
 from django.conf import settings
+import phonenumbers
+from phonenumbers import geocoder
 
 from .models import *
 from .mixins import *
@@ -58,7 +60,7 @@ class UserSerializer(serializers.ModelSerializer):
     favorite_cars = serializers.SerializerMethodField()
     favorite_presenter = FavoritePresenterSerializer()
     favorite_shows = FavoriteShowSerializer(many=True)
-
+    phone_number = serializers.SerializerMethodField()
     class Meta:
         model = User
         fields = [
@@ -115,6 +117,30 @@ class UserSerializer(serializers.ModelSerializer):
 
     def get_favorite_cars(self, obj):
         return [CAR_BRAND_DICT[key] for key in obj.favorite_cars] if obj.favorite_cars else []
+    def get_phone_number(self, obj):
+        """
+        Parse the phone number and return it in the desired format
+        """
+        if not obj.phone_number:
+            return None
+            
+        try:
+            # Parse the phone number
+            parsed = phonenumbers.parse(obj.phone_number, None)
+            
+            # Get the country code (as ISO country code)
+            country_code = geocoder.region_code_for_number(parsed)
+            
+            # Get the national number (without country code)
+            national_number = str(parsed.national_number)
+            
+            return {
+                "number": national_number,
+                "country_code": country_code
+            }
+        except phonenumbers.NumberParseException:
+            # If parsing fails, return the original phone number
+            return obj.phone_number
 
 
 class UserUpdateSerializer(serializers.ModelSerializer):
