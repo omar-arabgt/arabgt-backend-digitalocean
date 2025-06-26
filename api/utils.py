@@ -1,6 +1,9 @@
 from django.utils.translation import gettext_lazy as _
 from django.conf import settings
 
+import re
+import phonenumbers
+
 def get_detailed_item_dict_brand(items, s3_directory):
     d = {}
     for en_label, ar_label in items:
@@ -53,10 +56,35 @@ def subscribe_newsletter(email, unsubscribe=False):
         serializer.save()
 
 
-import re
-
 def normalize_arabic(text):
     # Remove diacritics and normalize common variations
     text = re.sub(r'[ًٌٍَُِّْـ]', '', text)  # remove tashkeel
     text = re.sub(r'[إأآا]', 'ا', text)     # normalize alef
     return text
+
+
+def validate_phone_number(phone_data):
+    try:
+        # Parse the phone number
+        phone_obj = phonenumbers.parse(
+            phone_data['number'], 
+            phone_data['country_code']
+        )
+        
+        # Check if it's a valid number
+        if not phonenumbers.is_valid_number(phone_obj):
+            return False, "Invalid phone number format"
+            
+        # Check if it's a possible number
+        if not phonenumbers.is_possible_number(phone_obj):
+            return False, "Phone number is  wrong"
+            
+        formatted_number = phonenumbers.format_number(
+            phone_obj, 
+            phonenumbers.PhoneNumberFormat.E164
+        )
+        
+        return True, formatted_number
+        
+    except phonenumbers.NumberParseException as e:
+        return False, f"Phone number parsing error: {str(e)}"
