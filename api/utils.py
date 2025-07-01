@@ -1,6 +1,5 @@
 from django.utils.translation import gettext_lazy as _
 from django.conf import settings
-
 import re
 import phonenumbers
 
@@ -29,31 +28,24 @@ def get_detailed_item_dict(items, s3_directory):
 
 def subscribe_newsletter(email, unsubscribe=False):
     """
-    Subscribes or unsubscribes a user from the newsletter.
-
-    Args:
-    - email: The email to subscribe or unsubscribe.
-    - unsubscribe: If True, the email is unsubscribed.
-
-    Raises:
-    - Exception: If the subscription is not found during unsubscribe or if the email is already subscribed.
+    Subscribes or unsubscribes a user from the newsletter using User model.
     """
-    from .models import Newsletter
-    from .serializers import NewsletterSerializer
+    from .models import User
+    try:
+        user = User.objects.get(email=email, is_staff=False, is_superuser=False)
+    except User.DoesNotExist:
+        raise Exception("User not found!")
 
     if unsubscribe:
-        try:
-            subscription = Newsletter.objects.get(email=email)
-        except Newsletter.DoesNotExist:
-            raise Exception("Subscription not found!")
-        subscription.delete()
+        if not user.newsletter:
+            raise Exception("User is not subscribed!")
+        user.newsletter = False
+        user.save(update_fields=['newsletter'])
     else:
-        if Newsletter.objects.filter(email=email).exists():
-            raise Exception("Email is already subscribed!")
-
-        serializer = NewsletterSerializer(data={"email": email})
-        serializer.is_valid(raise_exception=True)
-        serializer.save()
+        if user.newsletter:
+            raise Exception("User is already subscribed!")
+        user.newsletter = True
+        user.save(update_fields=['newsletter'])
 
 
 def normalize_arabic(text):

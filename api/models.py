@@ -22,9 +22,6 @@ class TimeStampedModel(models.Model):
         abstract = True
 
 
-class Newsletter(TimeStampedModel):
-    email = models.EmailField(unique=True)
-
 
 class User(TimeStampedModel, AbstractUser):
     nick_name = models.CharField(max_length=255, blank=True)
@@ -48,6 +45,11 @@ class User(TimeStampedModel, AbstractUser):
     is_onboarded = models.BooleanField(default=False)
     has_notification = models.BooleanField(default=False)
     newsletter = models.BooleanField(blank=True, null=True)
+
+    class Meta:
+        indexes = [
+            models.Index(fields=['newsletter']), 
+        ]
 
     def save(self, *args, **kwargs):
         super().save(*args, **kwargs)
