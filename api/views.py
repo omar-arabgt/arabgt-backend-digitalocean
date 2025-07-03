@@ -761,7 +761,7 @@ class ForumListView(ListAPIView):
     - Returns a list of forums using the ForumSerializer.
     """
     serializer_class = ForumSerializer
-    queryset = Forum.objects.filter(is_active=True)
+    queryset = Forum.objects.filter(is_active=True).order_by('id')
 
 
 class SetPointView(APIView):
