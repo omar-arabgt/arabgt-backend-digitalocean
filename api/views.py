@@ -219,37 +219,37 @@ class PostActionUpdateView(UpdateAPIView):
 
 class SubscribeNewsletter(APIView):
     """
-    Subscribes a user to the newsletter.
-
-    Input:
-    - email and unsubscribe in the GET request parameters.
-
-    Functionality:
-    - Create or delete a new newsletter subscription.
-
-    Output:
-    - Returns success or fail message
+    Subscribes/unsubscribes a registered user to/from the newsletter.
     """
     def post(self, request):
-        """
-        Handles the subscription or unsubscription process for the newsletter.
-        """
         email = request.data.get("email") or request.GET.get("email")
-
         unsubscribe = request.data.get("unsubscribe") or request.GET.get("unsubscribe")
 
         try:
             if not email:
                 raise Exception("Email is required")
 
+            # Find user by email
+            try:
+                user = User.objects.get(email=email, is_staff=False, is_superuser=False)
+            except User.DoesNotExist:
+                raise Exception("User not found or not eligible for newsletter")
+
             if unsubscribe:
-                subscribe_newsletter(email, unsubscribe=True)
+                if not user.newsletter:
+                    raise Exception("User is not subscribed to newsletter")
+                user.newsletter = False
+                user.save(update_fields=['newsletter'])
             else:
-                subscribe_newsletter(email)
+                if user.newsletter:
+                    raise Exception("User is already subscribed to newsletter")
+                user.newsletter = True
+                user.save(update_fields=['newsletter'])
+
         except Exception as e:
             return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
         
-        return Response("OK")
+        return Response({"success": True, "subscribed": user.newsletter})
 
 
 class ChoicesView(APIView):
@@ -292,12 +292,6 @@ class ContactUsView(APIView):
         Sends an email to the specified addresses with the contact form details.
         """
         subject = 'Contact Us message From ArabGT Mobile App'
-        # DEV ONLY
-        # DEV ONLY
-        # DEV ONLY
-        # DEV ONLY
-        # DEV ONLY
-        # DEV ONLY
         to_emails = ["info@arabgt.com"]
         context = {
             'name': name,
@@ -767,7 +761,7 @@ class ForumListView(ListAPIView):
     - Returns a list of forums using the ForumSerializer.
     """
     serializer_class = ForumSerializer
-    queryset = Forum.objects.filter(is_active=True)
+    queryset = Forum.objects.filter(is_active=True).order_by('id')
 
 
 class SetPointView(APIView):

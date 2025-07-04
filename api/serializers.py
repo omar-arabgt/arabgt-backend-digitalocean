@@ -225,11 +225,7 @@ class PostActionSerializer(serializers.ModelSerializer):
         exclude = ["user", "post"]
 
 
-class NewsletterSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Newsletter
-        fields = ['email', 'created_at']
-        read_only_fields = ['created_at']
+
 
 
 class ReplyWriteSerializer(FileMixin, serializers.ModelSerializer):

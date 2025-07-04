@@ -2,9 +2,67 @@
 {% load static %}
 {% block title %}قائمة المشتركين في النشرة{% endblock %}
 {% block content %}
+
+<style>
+#confirmationModal {
+    z-index: 9999 !important;
+}
+
+#confirmationModal .bg-white {
+    z-index: 10000 !important;
+    position: relative !important;
+}
+
+#confirmationModal button {
+    display: inline-block !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+    z-index: 10001 !important;
+    pointer-events: auto !important;
+    border: 2px solid !important;
+    transition: all 0.3s ease !important;
+}
+
+#confirmationModal #confirmBtn {
+    background-color: #dc2626 !important;
+    color: white !important;
+    border-color: #dc2626 !important;
+}
+
+#confirmationModal #confirmBtn:hover {
+    background-color: #b91c1c !important;
+    border-color: #b91c1c !important;
+}
+
+#confirmationModal #cancelBtn {
+    background-color: #6b7280 !important;
+    color: white !important;
+    border-color: #6b7280 !important;
+}
+
+#confirmationModal #cancelBtn:hover {
+    background-color: #4b5563 !important;
+    border-color: #4b5563 !important;
+}
+
+#confirmationModal.flex {
+    display: flex !important;
+}
+
+#confirmationModal .flex {
+    display: flex !important;
+}
+</style>
+
 <div class="container mx-auto p-4">
     {% include "web/partials/heading.html" with title="قائمة المشتركين في النشرة"%}
     {% include "web/partials/search_form.html" with placeholder="بحث عن المشتركين في النشرة ..." %}
+    
+    <div class="my-4 p-4 bg-blue-100 rounded">
+        <h3 class="font-bold mb-2">إحصائيات النشرة البريدية</h3>
+        <p>إجمالي المشتركين: {{ total_subscribers }}</p>
+    </div>
+
     <div class="my-8">
       <a class="border-2 border-red-600 hover:bg-red-600 hover:text-white text-red-600 font-bold px-6 py-2 rounded" href="{% url 'download_newsletter_excel' %}">تحميل القائمة</a>
     </div>
@@ -14,18 +72,20 @@
             <thead>
                 <tr class="bg-gray-200">
                     <th class="border border-gray-300 px-4 py-2">البريد الإلكتروني</th>
-                    <th class="border border-gray-300 px-4 py-2">تاريخ الاشتراك</th>
+                    <th class="border border-gray-300 px-4 py-2">الاسم</th>
+                    <th class="border border-gray-300 px-4 py-2">تاريخ التسجيل</th>
                     <th class="border border-gray-300 px-4 py-2">الإجراءات</th>
                 </tr>
             </thead>
             <tbody>
-                {% for newsletter in newsletter_list %}
-                <tr class="hover:bg-gray-100" data-email="{{ newsletter.email }}">
-                    <td class="border border-gray-300 font-bold px-4 py-2">{{ newsletter.email }}</td>
-                    <td class="border border-gray-300 font-bold px-4 py-2">{{ newsletter.created_at|date:"F j, Y, g:i A" }}</td>
+                {% for user in newsletter_list %}
+                <tr class="hover:bg-gray-100" data-email="{{ user.email }}">
+                    <td class="border border-gray-300 font-bold px-4 py-2">{{ user.email }}</td>
+                    <td class="border border-gray-300 font-bold px-4 py-2">{{ user.first_name }} {{ user.last_name }}</td>
+                    <td class="border border-gray-300 font-bold px-4 py-2">{{ user.date_joined|date:"F j, Y, g:i A" }}</td>
                     <td class="border border-gray-300 font-bold px-4 py-2">
                         <div class="w-full flex gap-4">
-                            <button class="w-full border border-2 border-red-600 hover:bg-red-600 hover:text-white text-red-600 font-bold py-2 px-4 rounded-md" onclick="unsubscribeNewsletter('{{ newsletter.email }}')">إلغاء الاشتراك</button>
+                            <button class="w-full border border-2 border-red-600 hover:bg-red-600 hover:text-white text-red-600 font-bold py-2 px-4 rounded-md" onclick="confirmUnsubscribe('{{ user.email }}')">إلغاء الاشتراك</button>
                         </div>
                     </td>
                 </tr>
@@ -36,8 +96,58 @@
     {% include "web/partials/pagination.html" %}
 </div>
 
+<!-- Confirmation Modal -->
+<div id="confirmationModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center">
+    <div class="bg-white p-8 rounded-lg shadow-2xl max-w-md w-full mx-4 border-2 border-gray-200">
+        <h3 class="text-xl font-bold mb-6 text-center text-gray-800">تأكيد إلغاء الاشتراك</h3>
+        <p class="text-gray-600 mb-4 text-center text-base">هل أنت متأكد من إلغاء اشتراك هذا المستخدم؟</p>
+        <p id="userEmail" class="text-blue-600 font-bold mb-8 text-center text-lg bg-blue-50 p-3 rounded border"></p>
+        
+        <div class="flex gap-4 justify-center">
+            <button id="confirmBtn" class="px-6 py-3 font-bold rounded-lg text-base min-w-[120px]" 
+                    style="background-color: #dc2626; color: white; border: 2px solid #dc2626;">
+                نعم، إلغاء الاشتراك
+            </button>
+            <button id="cancelBtn" class="px-6 py-3 font-bold rounded-lg text-base min-w-[120px]"
+                    style="background-color: #6b7280; color: white; border: 2px solid #6b7280;">
+                إلغاء
+            </button>
+        </div>
+    </div>
+</div>
+
 <script>
+    let currentEmail = '';
+    
+    function confirmUnsubscribe(email) {
+        currentEmail = email;
+        document.getElementById('userEmail').textContent = email;
+        const modal = document.getElementById('confirmationModal');
+        modal.classList.remove('hidden');
+        modal.classList.add('flex');
+        modal.style.display = 'flex';
+        
+        // Ensure buttons are visible
+        document.getElementById('confirmBtn').style.display = 'inline-block';
+        document.getElementById('cancelBtn').style.display = 'inline-block';
+    }
+    
+    function hideModal() {
+        const modal = document.getElementById('confirmationModal');
+        modal.classList.add('hidden');
+        modal.classList.remove('flex');
+        modal.style.display = 'none';
+        currentEmail = '';
+    }
+    
     function unsubscribeNewsletter(email) {
+        const row = document.querySelector(`tr[data-email="${email}"]`);
+        const button = row.querySelector('button');
+        const originalText = button.textContent;
+        
+        button.textContent = 'جاري الإلغاء...';
+        button.disabled = true;
+        
         const csrfToken = '{{ csrf_token }}';
 
         fetch("{% url 'subscribe-newsletter' %}", {
@@ -51,16 +161,64 @@
                 unsubscribe: true
             })
         })
-        .then(response => {
-            if (!response.ok) {
-                throw new Error('Network response was not ok');
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                row.remove();
+                hideModal();
+            } else {
+                throw new Error(data.error || 'Unknown error');
             }
-            location.reload();
         })
         .catch(error => {
             console.error('Error:', error);
-            alert('An error occurred. Please try again.');
+            alert('حدث خطأ. يرجى المحاولة مرة أخرى.');
+            button.textContent = originalText;
+            button.disabled = false;
+            hideModal();
         });
     }
+    
+    // Event listeners
+    document.getElementById('confirmBtn').addEventListener('click', function() {
+        if (currentEmail) {
+            unsubscribeNewsletter(currentEmail);
+        }
+    });
+    
+    document.getElementById('cancelBtn').addEventListener('click', hideModal);
+    
+    document.getElementById('confirmationModal').addEventListener('click', function(e) {
+        if (e.target === this) {
+            hideModal();
+        }
+    });
+    
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') {
+            hideModal();
+        }
+    });
+    
+    // Add hover effects
+    document.getElementById('confirmBtn').addEventListener('mouseenter', function() {
+        this.style.backgroundColor = '#b91c1c';
+        this.style.borderColor = '#b91c1c';
+    });
+    
+    document.getElementById('confirmBtn').addEventListener('mouseleave', function() {
+        this.style.backgroundColor = '#dc2626';
+        this.style.borderColor = '#dc2626';
+    });
+    
+    document.getElementById('cancelBtn').addEventListener('mouseenter', function() {
+        this.style.backgroundColor = '#4b5563';
+        this.style.borderColor = '#4b5563';
+    });
+    
+    document.getElementById('cancelBtn').addEventListener('mouseleave', function() {
+        this.style.backgroundColor = '#6b7280';
+        this.style.borderColor = '#6b7280';
+    });
 </script>
 {% endblock %}

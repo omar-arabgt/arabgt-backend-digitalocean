@@ -14,7 +14,7 @@ from django.core.paginator import Paginator
 from django.utils.timezone import localtime
 import openpyxl
 
-from api.models import User, Newsletter, DeletedUser, Group, Forum, Question, Reply, AdminNotification, Post
+from api.models import User, DeletedUser, Group, Forum, Question, Reply, AdminNotification, Post
 from api.tasks import send_push_notification, NOTIFICATION_ALL
 from .utils import get_merged_user_data, get_signup_method, get_car_sorting_index, CAR_SORTING_LIST
 from api.choices import COUNTRIES, GENDERS, STATUS, HOBBIES, INTERESTS, CAR_BRANDS_ITEMS, CAR_SORTING_ITEMS, UserRank
@@ -561,38 +561,40 @@ class ExportUserToExcelView(LoginRequiredMixin, ListView):
         return response
 class NewsletterListView(LoginRequiredMixin, ListView):
     """
-    Displays a paginated list of newsletter subscriptions with optional search functionality.
-
-    Input:
-    - Optional query parameter 'q' for searching newsletter subscriptions by email.
-
-    Functionality:
-    - Retrieves and lists newsletter subscriptions, optionally filtered by the search query.
-
-    Output:
-    - Renders the 'web/newsletter/list.html' template with the newsletter list and search context.
+    Displays a paginated list of users subscribed to newsletter.
     """
-    model = Newsletter
+    model = User
     template_name = 'web/newsletter/list.html'
     context_object_name = 'newsletter_list'
-    paginate_by = 10
+    paginate_by = 50
 
     def get_queryset(self):
         """
-        Filters the newsletter list based on the search query.
+        Filters users who have subscribed to newsletter.
         """
         query = self.request.GET.get('q')
+        queryset = User.objects.filter(
+            newsletter=True,
+            is_staff=False, 
+            is_superuser=False,
+            emailaddress__verified=True
+        )
+        
         if query:
-            return Newsletter.objects.filter(Q(email__icontains=query))
-        return Newsletter.objects.all()
+            queryset = queryset.filter(
+                Q(email__icontains=query) | 
+                Q(username__icontains=query) |
+                Q(first_name__icontains=query) |
+                Q(last_name__icontains=query)
+            )
+        
+        return queryset.order_by('-date_joined')
 
     def get_context_data(self, **kwargs):
-        """
-        Adds additional context data, such as the page name and search query.
-        """
         context = super().get_context_data(**kwargs)
-        context['page_name'] = 'قائمة النشرة البريدية'
+        context['page_name'] = 'قائمة المشتركين في النشرة'
         context['search_query'] = self.request.GET.get('q', '')
+        context['total_subscribers'] = User.objects.filter(newsletter=True).count()
         return context
 
 
@@ -695,34 +697,53 @@ class DeletedUserListView(LoginRequiredMixin, ListView):
 
 def download_newsletter_excel(request):
     """
-    Downloads an Excel file containing the newsletter subscriptions.
-
-    Input:
-    - No specific input required.
-
-    Functionality:
-    - Retrieves all newsletter subscriptions and writes them to an Excel file.
-
-    Output:
-    - Returns the Excel file as an HTTP response for download.
+    Downloads an Excel file containing newsletter subscribers from User model.
     """
+    response = HttpResponse(
+        content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+    )
+    response['Content-Disposition'] = 'attachment; filename=newsletter_subscribers.xlsx'
+    
     wb = openpyxl.Workbook()
     ws = wb.active
-    ws.title = "Newsletter"
-
-    headers = ['ID', 'Email', 'Created At']
+    ws.title = "Newsletter Subscribers"
+    
+    headers = [
+        'User ID', 'Email', 'First Name', 'Last Name', 'Username', 
+        'Registration Date', 'Phone Number', 'Country', 'Gender'
+    ]
     ws.append(headers)
-
-    newsletters = Newsletter.objects.all().values_list('id', 'email', 'created_at')
-    for newsletter in newsletters:
-        id, email, created_at = newsletter
-        if created_at:
-            created_at = localtime(created_at).replace(tzinfo=None)
-        ws.append([id, email, created_at])
-
-    response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
-    response['Content-Disposition'] = 'attachment; filename=newsletter.xlsx'
-
+    
+    # Get users subscribed to newsletter in batches
+    batch_size = 1000
+    users = User.objects.filter(
+        newsletter=True,
+        is_staff=False,
+        is_superuser=False,
+        emailaddress__verified=True
+    ).values_list(
+        'id', 'email', 'first_name', 'last_name', 'username', 
+        'date_joined', 'phone_number', 'country', 'gender'
+    )
+    
+    for user in users.iterator(chunk_size=batch_size):
+        user_id, email, first_name, last_name, username, date_joined, phone_number, country, gender = user
+        
+        registration_date = localtime(date_joined).replace(tzinfo=None) if date_joined else ''
+        gender_display = "ذكر" if gender == "M" else "انثي" if gender == "F" else ""
+        
+        ws.append([
+            user_id,
+            email,
+            first_name or '',
+            last_name or '',
+            username,
+            registration_date,
+            phone_number or '',
+            country or '',
+            gender_display
+        ])
+    
     wb.save(response)
     return response
 
