@@ -9,9 +9,11 @@ from django.utils.timezone import localtime
 from django.utils.dateparse import parse_date
 from django.http import HttpResponse
 from django.utils.dateparse import parse_date
-from django.db.models import Q, Count
+from django.db.models import Q, OuterRef, Subquery, Value, CharField
+from django.db.models.functions import Coalesce
 from django.core.paginator import Paginator
 from django.utils.timezone import localtime
+from allauth.socialaccount.models import SocialAccount
 import openpyxl
 
 from api.models import User, DeletedUser, Group, Forum, Question, Reply, AdminNotification, Post
@@ -432,57 +434,58 @@ class ExportUserToExcelView(LoginRequiredMixin, ListView):
                 except ValueError:
                     pass
 
-            # Process users in batches to reduce memory usage
-            batch_size = 500
-            users_count = User.objects.filter(user_filters).count()
-            
-            for offset in range(0, users_count, batch_size):
-                users_batch = User.objects.filter(user_filters).order_by('id')[offset:offset+batch_size]
-                users_batch = users_batch.select_related('favorite_presenter')  # Only include valid ForeignKey
+            social_provider_subquery = Subquery(
+                SocialAccount.objects.filter(user_id=OuterRef("id"))
+                .order_by("id")
+                .values("provider")[:1]
+            )
+            users = User.objects.filter(user_filters).annotate(
+                signup_method=Coalesce(social_provider_subquery, Value("email", output_field=CharField()))
+            ).prefetch_related("favorite_presenter", "favorite_shows").order_by("id")
+
+            for user in users:
+                # Convert timezone-aware datetime to naive datetime
+                registration_date = make_naive(user.date_joined).strftime('%Y-%m-%d %H:%M:%S') if user.date_joined else ''
                 
-                for user in users_batch:
-                    # Convert timezone-aware datetime to naive datetime
-                    registration_date = make_naive(user.date_joined).strftime('%Y-%m-%d %H:%M:%S') if user.date_joined else ''
-                    
-                    # Get favorite shows as string
-                    favorite_shows = ",".join([str(i) for i in user.favorite_shows.all()]) if user.favorite_shows.exists() else ''
-                    
-                    # Get hobbies as string
-                    hobbies = ', '.join(user.hobbies) if user.hobbies else ''
-                    
-                    # Get car sorting values
-                    car_sorting_values = get_car_sorting_index(user.car_sorting)
-                    
-                    # Prepare row data
-                    row = [
-                        user.id,
-                        "مفعل",
-                        user.first_name,
-                        user.last_name,
-                        user.nick_name,
-                        user.birth_date.strftime('%Y-%m-%d') if user.birth_date else '',
-                        "ذكر" if user.gender == "M" else "انثي" if user.gender == "F" else "",
-                        user.get_nationality_display(),
-                        user.get_country_display(),
-                        user.rank,
-                        "",  # Delete reason (empty for active users)
-                        user.email,
-                        user.phone_number,
-                        get_signup_method(user.id),
-                        registration_date,
-                        "",  # Deletion date (empty for active users)
-                        'Yes' if getattr(user, 'send_notification', False) else 'No',
-                        user.point,
-                        'Yes' if user.has_car else 'No',
-                        user.car_type,
-                        str(user.favorite_presenter) if user.favorite_presenter else '',
-                        favorite_shows,
-                        hobbies,
-                        'Yes' if user.has_business else 'No',
-                        *car_sorting_values
-                    ]
-                    
-                    ws.append(row)
+                # Get favorite shows as string
+                favorite_shows = ",".join([str(i) for i in user.favorite_shows.all()]) if user.favorite_shows.exists() else ''
+                
+                # Get hobbies as string
+                hobbies = ', '.join(user.hobbies) if user.hobbies else ''
+                
+                # Get car sorting values
+                car_sorting_values = get_car_sorting_index(user.car_sorting)
+                
+                # Prepare row data
+                row = [
+                    user.id,
+                    "مفعل",
+                    user.first_name,
+                    user.last_name,
+                    user.nick_name,
+                    user.birth_date.strftime('%Y-%m-%d') if user.birth_date else '',
+                    "ذكر" if user.gender == "M" else "انثي" if user.gender == "F" else "",
+                    user.get_nationality_display(),
+                    user.get_country_display(),
+                    user.rank,
+                    "",  # Delete reason (empty for active users)
+                    user.email,
+                    user.phone_number,
+                    user.signup_method,
+                    registration_date,
+                    "",  # Deletion date (empty for active users)
+                    'Yes' if getattr(user, 'send_notification', False) else 'No',
+                    user.point,
+                    'Yes' if user.has_car else 'No',
+                    user.car_type,
+                    str(user.favorite_presenter) if user.favorite_presenter else '',
+                    favorite_shows,
+                    hobbies,
+                    'Yes' if user.has_business else 'No',
+                    *car_sorting_values
+                ]
+
+                ws.append(row)
 
         # Process deleted users
         if not status or status == 'deleted':
@@ -510,55 +513,52 @@ class ExportUserToExcelView(LoginRequiredMixin, ListView):
                 except ValueError:
                     pass
 
-            # Process deleted users in batches
-            batch_size = 500
-            deleted_count = DeletedUser.objects.filter(deleted_user_filters).count()
+            deleted_users = DeletedUser.objects.filter(deleted_user_filters).order_by('id')
+            # No select_related for DeletedUser as it has no foreign keys
             
-            for offset in range(0, deleted_count, batch_size):
-                deleted_batch = DeletedUser.objects.filter(deleted_user_filters).order_by('id')[offset:offset+batch_size]
-                # No select_related for DeletedUser as it has no foreign keys
+            for user in deleted_users:
+                # Process similar to active users but with deleted user data
+                deletion_date = make_naive(user.last_login).strftime('%Y-%m-%d %H:%M:%S') if getattr(user, 'last_login', None) else ''
                 
-                for user in deleted_batch:
-                    # Process similar to active users but with deleted user data
-                    deletion_date = make_naive(user.last_login).strftime('%Y-%m-%d %H:%M:%S') if getattr(user, 'last_login', None) else ''
-                    
-                    favorite_shows = ",".join([str(i) for i in user.favorite_shows]) if isinstance(user.favorite_shows, list) else ''
-                    hobbies = ', '.join(user.hobbies) if user.hobbies else ''
-                    car_sorting_values = get_car_sorting_index(user.car_sorting)
-                    
-                    row = [
-                        user.user_id,
-                        "محذوف",
-                        user.first_name,
-                        user.last_name,
-                        user.nick_name,
-                        user.birth_date.strftime('%Y-%m-%d') if user.birth_date else '',
-                        "ذكر" if user.gender == "M" else "انثي" if user.gender == "F" else "",
-                        user.get_nationality_display(),
-                        user.get_country_display(),
-                        user.rank,
-                        user.delete_reason,
-                        user.email,
-                        user.phone_number,
-                        get_signup_method(user.user_id),
-                        "",  # Registration date not available for deleted users
-                        deletion_date,
-                        'Yes' if getattr(user, 'send_notification', False) else 'No',
-                        user.point,
-                        'Yes' if user.has_car else 'No',
-                        user.car_type,
-                        user.favorite_presenter,  # This is a CharField in DeletedUser
-                        favorite_shows,
-                        hobbies,
-                        'Yes' if user.has_business else 'No',
-                        *car_sorting_values
-                    ]
-                    
-                    ws.append(row)
+                favorite_shows = ",".join([str(i) for i in user.favorite_shows]) if isinstance(user.favorite_shows, list) else ''
+                hobbies = ', '.join(user.hobbies) if user.hobbies else ''
+                car_sorting_values = get_car_sorting_index(user.car_sorting)
+                
+                row = [
+                    user.user_id,
+                    "محذوف",
+                    user.first_name,
+                    user.last_name,
+                    user.nick_name,
+                    user.birth_date.strftime('%Y-%m-%d') if user.birth_date else '',
+                    "ذكر" if user.gender == "M" else "انثي" if user.gender == "F" else "",
+                    user.get_nationality_display(),
+                    user.get_country_display(),
+                    user.rank,
+                    user.delete_reason,
+                    user.email,
+                    user.phone_number,
+                    "",
+                    "",  # Registration date not available for deleted users
+                    deletion_date,
+                    'Yes' if getattr(user, 'send_notification', False) else 'No',
+                    user.point,
+                    'Yes' if user.has_car else 'No',
+                    user.car_type,
+                    user.favorite_presenter,  # This is a CharField in DeletedUser
+                    favorite_shows,
+                    hobbies,
+                    'Yes' if user.has_business else 'No',
+                    *car_sorting_values
+                ]
+                
+                ws.append(row)
 
         # Save workbook to response
         wb.save(response)
         return response
+    
+
 class NewsletterListView(LoginRequiredMixin, ListView):
     """
     Displays a paginated list of users subscribed to newsletter.
