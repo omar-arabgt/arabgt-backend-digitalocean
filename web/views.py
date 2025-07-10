@@ -903,22 +903,19 @@ class ForumGroupQuestionsView(LoginRequiredMixin, TemplateView):
         tab = self.request.GET.get('tab', 'forums')
         extra_query_params = any(key != 'tab' for key in self.request.GET.keys())
 
+        questions = self.get_filtered_questions(tab)
+        paginator = Paginator(questions, 10)
+        page_number = self.request.GET.get('page')
+        context['page_obj'] = paginator.get_page(page_number)
+
         if tab == 'forums':
-            questions = self.get_filtered_questions(tab)
-            paginator = Paginator(questions, 10)
-            page_number = self.request.GET.get('page')
-            context['page_obj'] = paginator.get_page(page_number)
             context['forums_questions'] = context['page_obj']
         elif tab == 'groups':
-            questions = self.get_filtered_questions(tab)
-            paginator = Paginator(questions, 10)
-            page_number = self.request.GET.get('page')
-            context['page_obj'] = paginator.get_page(page_number)
             context['groups_questions'] = context['page_obj']
 
         context['active_tab'] = tab
         context[f'{tab}_search_query'] = self.request.GET.get(f'{tab}_q', '')
-        context[f'{tab}_question_id'] = self.request.GET.get(f'{tab}_question_id', '')
+        context[f'{tab}_question_content'] = self.request.GET.get(f'{tab}_question_content', '')
         context['forum_id'] = int(self.request.GET.get('forum_id')) if self.request.GET.get('forum_id', False) else ""
         context['group_id'] = int(self.request.GET.get('group_id')) if self.request.GET.get('group_id', False) else ""
         context[f'{tab}_date'] = self.request.GET.get(f'{tab}_date', '')
@@ -930,41 +927,29 @@ class ForumGroupQuestionsView(LoginRequiredMixin, TemplateView):
         return context
 
     def get_filtered_questions(self, tab):
+        search_query = self.request.GET.get(f'{tab}_q', '')
+        question_content = self.request.GET.get(f'{tab}_question_content', '')
+        forum_id = self.request.GET.get('forum_id', '')
+        date_filter = self.request.GET.get(f'{tab}_date', '')
+        group_id = self.request.GET.get('group_id', '')
+
         if tab == 'forums':
             questions = Question.objects.filter(forum__isnull=False)
-            search_query = self.request.GET.get(f'{tab}_q', '')
-            question_id = self.request.GET.get(f'{tab}_question_id', '')
-            forum_id = self.request.GET.get('forum_id', '')
-            date_filter = self.request.GET.get(f'{tab}_date', '')
-
-            if search_query:
-                questions = questions.filter(
-                    Q(user__username__icontains=search_query) | Q(user__id__icontains=search_query)
-                )
-            if question_id:
-                questions = questions.filter(id=question_id)
-            if forum_id:
-                questions = questions.filter(forum__id=forum_id)
-            if date_filter:
-                questions = questions.filter(created_at__date=date_filter)
-
         elif tab == 'groups':
             questions = Question.objects.filter(group__isnull=False)
-            search_query = self.request.GET.get(f'{tab}_q', '')
-            question_id = self.request.GET.get(f'{tab}_question_id', '')
-            group_id = self.request.GET.get('group_id', '')
-            date_filter = self.request.GET.get(f'{tab}_date', '')
 
-            if search_query:
-                questions = questions.filter(
-                    Q(user__username__icontains=search_query) | Q(user__id__icontains=search_query)
-                )
-            if question_id:
-                questions = questions.filter(id=question_id)
-            if group_id:
-                questions = questions.filter(group__id=group_id)
-            if date_filter:
-                questions = questions.filter(created_at__date=date_filter)
+        if search_query:
+            questions = questions.filter(
+                Q(user__username__icontains=search_query) | Q(user__id__icontains=search_query)
+            )
+        if question_content:
+            questions = questions.filter(content__icontains=question_content)
+        if group_id:
+            questions = questions.filter(group__id=group_id)
+        if forum_id:
+            questions = questions.filter(forum__id=forum_id)
+        if date_filter:
+            questions = questions.filter(created_at__date=date_filter)
 
         return questions
 
