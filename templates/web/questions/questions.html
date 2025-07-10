@@ -26,11 +26,11 @@
         <div class="flex flex-col md:flex-row gap-4 justify-between items-start">
             <div class="flex flex-wrap md:flex-row gap-4 w-full">
                 {% if active_tab == 'forums' %}
-                    <input type="text" name="forums_question_content" value="{{ forums_question_content }}" placeholder="بحث عن هوية المنشور" class="px-2 py-1 w-full md:w-60 agt-default-input">
-                    <input type="text" name="forums_q" value="{{ forums_search_query }}" placeholder="بحث عن اسم أو هوية المستخدم" class="px-2 py-1 w-full md:w-60 agt-default-input">
+                    <input type="text" name="forums_question_content" value="{{ forums_question_content }}" placeholder="بحث في محتوى السؤال" class="px-2 py-1 w-full md:w-60 agt-default-input">
+                    <input type="text" name="forums_q" value="{{ forums_search_query }}" placeholder="بحث عن اسم المستخدم" class="px-2 py-1 w-full md:w-60 agt-default-input">
                 {% elif active_tab == 'groups' %}
-                    <input type="text" name="groups_question_content" value="{{ groups_question_content }}" placeholder="بحث عن هوية المنشور" class="px-2 py-1 w-full md:w-60 agt-default-input">
-                    <input type="text" name="groups_q" value="{{ groups_search_query }}" placeholder="بحث عن اسم أو هوية المستخدم" class="px-2 py-1 w-full md:w-60 agt-default-input">
+                    <input type="text" name="groups_question_content" value="{{ groups_question_content }}" placeholder="بحث في محتوى السؤال" class="px-2 py-1 w-full md:w-60 agt-default-input">
+                    <input type="text" name="groups_q" value="{{ groups_search_query }}" placeholder="بحث عن اسم المستخدم" class="px-2 py-1 w-full md:w-60 agt-default-input">
                 {% endif %}
                 {% if active_tab == 'forums' %}
                   <select name="forum_id" class="custom-select w-full md:w-60 px-2 py-1 tom-select agt-default-input">
@@ -96,9 +96,9 @@
         <table class="w-full border-collapse border border-gray-300">
             <thead>
                 <tr class="bg-gray-200">
-                    <th class="border border-gray-300 px-4 py-2">ID</th>
+                    <th class="border border-gray-300 px-4 py-2">رقم السؤال</th>
+                    <th class="border border-gray-300 px-4 py-2">القسم/المجموعة</th>
                     <th class="border border-gray-300 px-4 py-2">المحتوى</th>
-                    <th class="border border-gray-300 px-4 py-2">ID المستخدم</th>
                     <th class="border border-gray-300 px-4 py-2">تاريخ النشر</th>
                     <th class="border border-gray-300 px-4 py-2">عدد الردود</th>
                     <th class="border border-gray-300 px-4 py-2">عدد الإعجابات</th>
@@ -133,7 +133,7 @@
                         <tr class="hover:bg-gray-100">
                             <td class="border border-gray-300 font-bold px-4 py-2 text-center">{{ question.id }}</td>
                             <td class="border border-gray-300 font-bold px-4 py-2 text-center">{{ question.group.name }}</td>
-                            <td class="border border-gray-300 font-bold px-4 py-2 text-center">{{ question.user.id }}</td>
+                            <td class="border border-gray-300 font-bold px-4 py-2 text-center">{{ question.content|truncatechars:150 }}</td>
                             <td class="border border-gray-300 font-bold px-4 py-2 text-center">{{ question.created_at|date:"Y-m-d" }}</td>
                             <td class="border border-gray-300 font-bold px-4 py-2 text-center">{{ question.replies.count }}</td>
                             <td class="border border-gray-300 font-bold px-4 py-2 text-center">{{ question.reactions.count }}</td>
