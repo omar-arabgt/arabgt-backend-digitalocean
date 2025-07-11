@@ -10,7 +10,7 @@
                 <a href="{% url 'home' %}" class="block {% if '/web/home/' in request.path  %}text-red-600 font-bold bg-gray-100{% else %}hover:bg-gray-100 text-gray-800{% endif %} rounded-md py-4 px-4"x-4">لوحة التحكم</a>
             </li> {% endcomment %}
             <li class="mb-1">
-                <a href="{% url 'notifications' %}" class="block {% if '/web/notifications/' in request.path  %}text-red-600 font-bold bg-gray-100{% else %}hover:bg-gray-100 text-gray-800{% endif %} rounded-md py-4 px-4"x-4">إرسال التنبيهات</a>
+                <a href="{% url 'notifications' %}" class="block {% if '/web/notifications/' in request.path  %}text-red-600 font-bold bg-gray-100{% else %}hover:bg-gray-100 text-gray-800{% endif %} rounded-md py-4 px-4">إرسال التنبيهات</a>
             </li>
             <li class="mb-1">
                 <a href="{% url 'user_list' %}" class="block {% if '/web/users/' in request.path  %}text-red-600 font-bold bg-gray-100{% else %}hover:bg-gray-100 text-gray-800{% endif %} rounded-md py-4 px-4">قائمة المستخدمين</a>
