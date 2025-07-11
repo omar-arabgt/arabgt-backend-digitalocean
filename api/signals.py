@@ -6,7 +6,7 @@ from django.utils.translation import gettext_lazy as _
 
 from .models import GroupMembership, Question, Reply, Reaction, User
 from .choices import PointType
-from .tasks import set_point, send_push_notification, sync_send_notification_tag
+from .tasks import set_point, send_push_notification
 
 
 @receiver(post_save, sender=GroupMembership) 
@@ -71,8 +71,3 @@ def favorite_shows_changes(sender, instance, action, **kwargs):
         profile_point.favorite_shows = True
         profile_point.save(update_fields=["favorite_shows"])
         set_point(instance.id, PointType.FILL_PROFILE_FIELD.name)
-
-
-@receiver(post_save, sender=User)
-def post_save_user(sender, instance, **kwargs):
-    sync_send_notification_tag.delay(instance.id, instance.send_notification)
