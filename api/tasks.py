@@ -90,8 +90,13 @@ def sync_send_notification_tag(user_id, send_notification):
         "Authorization": f"Basic {settings.ONESIGNAL_API_KEY}",
         "Content-Type": "application/json"
     }
-    response = requests.request("PATCH", url, json=payload, headers=headers)
-    response.raise_for_status()
+    try:
+        response = requests.request("PATCH", url, json=payload, headers=headers)
+        response.raise_for_status()
+    except Exception as e:
+        print(e)
+        print(f'error on sync with {user_id}')
+
 
 
 def set_point(user_id, point_type):
