@@ -743,7 +743,8 @@ class NotificationList(ListAPIView):
         """
         Retrieves the queryset of notifications for the current authenticated user.
         """
-        queryset = Notification.objects.filter(user=self.request.user).order_by("-created_at")
+        queryset = Notification.objects.filter(user=self.request.user) \
+            .select_related("user").order_by("-created_at")
         return queryset
 
 
