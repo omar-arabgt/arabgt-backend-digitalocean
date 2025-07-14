@@ -202,6 +202,7 @@ class PostActionUpdateView(UpdateAPIView):
     Output:
     - Returns the updated or created PostAction.
     """
+    permission_classes = [IsAuthenticated]
     lookup_url_kwarg = "post_id"
     serializer_class = PostActionSerializer
 
@@ -778,6 +779,7 @@ class SetPointView(APIView):
     Output:
     - Returns a success message upon awarding points.
     """
+    permission_classes = [IsAuthenticated]
 
     def post(self, request, *args, **kwargs):
         """
