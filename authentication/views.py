@@ -36,5 +36,6 @@ class EmailChange(APIView):
         serializer = EmailChangeSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         email = serializer.data.get("email")
-        EmailAddress.objects.add_new_email(request, request.user, email)
+        if not EmailAddress.objects.filter(email=email, verified=True).exists():
+            EmailAddress.objects.add_new_email(request, request.user, email)
         return Response("OK")
