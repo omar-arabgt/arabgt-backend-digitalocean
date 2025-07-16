@@ -122,11 +122,6 @@ DATABASES = {
         'PASSWORD': env("POSTGRES_PASSWORD"),
         'HOST': env("POSTGRES_HOST"),
         'PORT': env("POSTGRES_PORT"),
-        'CONN_MAX_AGE': 60,  # Keep connections alive for 60 seconds
-        'CONN_HEALTH_CHECKS': True,  # Enable connection health checks
-        'OPTIONS': {
-            'MAX_CONNS': 20,  # Maximum connections per process
-        }
     },
     'mysql_db': {
         'ENGINE': 'django.db.backends.mysql',
