@@ -1,8 +1,10 @@
 import requests
+import logging
 
 from onesignal import ApiClient, Configuration
 from onesignal.api import default_api
 from onesignal.model.notification import Notification as OneSignalNotification
+from onesignal.exceptions import ApiException
 from twilio.rest import Client
 from django.conf import settings
 from django.core.cache import cache
@@ -11,6 +13,9 @@ from django.db import transaction
 from celery import shared_task
 
 from .choices import PointType
+
+
+logger = logging.getLogger(__name__)
 
 
 NOTIFICATION_ALL = "notification_all"
@@ -75,7 +80,12 @@ def send_push_notification(user_id, title, content, link=None, external_link=Non
                 channel_for_external_user_ids="push",
                 **user_filter,
             )
-            api_instance.create_notification(notification)
+            try:
+                api_instance.create_notification(notification)
+            except ApiException as e:
+                logger.error(
+                    f"Notification Error: {e.reason} - {e.body}\n Request: {notification.to_dict()}"
+                )
 
 
 @shared_task
