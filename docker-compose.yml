@@ -52,6 +52,16 @@ services:
     volumes:
       - /data/arabgt_db:/var/lib/postgresql/data
 
+  pgbouncer:
+    image: edoburu/pgbouncer
+    container_name: arabgt_pgbouncer
+    depends_on:
+      - db
+    ports:
+      - "6432:6432"
+    env_file:
+      - core/.env
+  
   redis:
     image: redis:alpine
     container_name: arabgt_redis
