@@ -114,18 +114,25 @@ WSGI_APPLICATION = 'core.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/4.2/ref/settings/#databases
 
+DB_HOST = env("POSTGRES_HOST")
+DB_PORT = env("POSTGRES_PORT")
+PGBOUNCER_HOST = env("PGBOUNCER_HOST", default=None)
+PGBOUNCER_PORT = env("POSTGRES_PORT", default=None)
+
+if PGBOUNCER_HOST and PGBOUNCER_PORT:
+    DB_HOST = PGBOUNCER_HOST
+    DB_PORT = PGBOUNCER_PORT
+
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
         'NAME': env("POSTGRES_DB"),
         'USER': env("POSTGRES_USER"),
         'PASSWORD': env("POSTGRES_PASSWORD"),
-        'HOST': env("POSTGRES_HOST"),
-        'PORT': env("POSTGRES_PORT"),
+        'HOST': DB_HOST,
+        'PORT': DB_PORT,
         'CONN_MAX_AGE': 60,  # Keep connections alive for 60 seconds
         'CONN_HEALTH_CHECKS': True,  # Enable connection health checks
-
-
     },
     'mysql_db': {
         'ENGINE': 'django.db.backends.mysql',
