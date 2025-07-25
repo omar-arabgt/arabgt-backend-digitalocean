@@ -117,7 +117,7 @@ WSGI_APPLICATION = 'core.wsgi.application'
 DB_HOST = env("POSTGRES_HOST")
 DB_PORT = env("POSTGRES_PORT")
 PGBOUNCER_HOST = env("PGBOUNCER_HOST", default=None)
-PGBOUNCER_PORT = env("POSTGRES_PORT", default=None)
+PGBOUNCER_PORT = env("PGBOUNCER_PORT", default=None)
 
 if PGBOUNCER_HOST and PGBOUNCER_PORT:
     DB_HOST = PGBOUNCER_HOST
@@ -131,8 +131,11 @@ DATABASES = {
         'PASSWORD': env("POSTGRES_PASSWORD"),
         'HOST': DB_HOST,
         'PORT': DB_PORT,
-        'CONN_MAX_AGE': 60,  # Keep connections alive for 60 seconds
+        'CONN_MAX_AGE': 30,  # Keep connections alive for 30 seconds (optimized for transaction pooling)
         'CONN_HEALTH_CHECKS': True,  # Enable connection health checks
+        'OPTIONS': {
+            'connect_timeout': 10,  # Connection timeout in seconds
+        },
     },
     'mysql_db': {
         'ENGINE': 'django.db.backends.mysql',

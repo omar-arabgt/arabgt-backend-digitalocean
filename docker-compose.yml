@@ -55,10 +55,35 @@ services:
   pgbouncer:
     image: edoburu/pgbouncer
     container_name: arabgt_pgbouncer
+    restart: unless-stopped
     depends_on:
       - db
     ports:
       - "6432:6432"
+    environment:
+      # Database connection settings
+      - DATABASES_HOST=db
+      - DATABASES_PORT=5432
+      - DATABASES_USER=${POSTGRES_USER:-user}
+      - DATABASES_PASSWORD=${POSTGRES_PASSWORD:-password}
+      - DATABASES_DBNAME=${POSTGRES_DB:-database}
+      
+      # PGBouncer listen port
+      - LISTEN_PORT=6432
+      
+      # Pool settings with defaults (controlled by .env)
+      - POOL_MODE=${POOL_MODE:-transaction}
+      - MAX_CLIENT_CONN=${MAX_CLIENT_CONN:-200}
+      - DEFAULT_POOL_SIZE=${DEFAULT_POOL_SIZE:-25}
+      - MIN_POOL_SIZE=${MIN_POOL_SIZE:-5}
+      - RESERVE_POOL_SIZE=${RESERVE_POOL_SIZE:-5}
+      - SERVER_RESET_QUERY=${SERVER_RESET_QUERY:-DISCARD ALL}
+      - SERVER_RESET_QUERY_ALWAYS=${SERVER_RESET_QUERY_ALWAYS:-1}
+      - IGNORE_STARTUP_PARAMETERS=${IGNORE_STARTUP_PARAMETERS:-extra_float_digits}
+      - SERVER_LIFETIME=${SERVER_LIFETIME:-3600}
+      - SERVER_IDLE_TIMEOUT=${SERVER_IDLE_TIMEOUT:-600}
+      - QUERY_TIMEOUT=${QUERY_TIMEOUT:-30000}
+      - CLIENT_IDLE_TIMEOUT=${CLIENT_IDLE_TIMEOUT:-0}
     env_file:
       - core/.env
   
