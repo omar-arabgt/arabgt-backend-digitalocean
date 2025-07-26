@@ -117,11 +117,18 @@ WSGI_APPLICATION = 'core.wsgi.application'
 DB_HOST = env("POSTGRES_HOST")
 DB_PORT = env("POSTGRES_PORT")
 PGBOUNCER_HOST = env("PGBOUNCER_HOST", default=None)
-PGBOUNCER_PORT = env("POSTGRES_PORT", default=None)
+PGBOUNCER_PORT = env("PGBOUNCER_PORT", default=None)
+USE_PGBOUNCER = bool(PGBOUNCER_HOST and PGBOUNCER_PORT)
 
-if PGBOUNCER_HOST and PGBOUNCER_PORT:
+# Determine connection settings
+if USE_PGBOUNCER:
     DB_HOST = PGBOUNCER_HOST
     DB_PORT = PGBOUNCER_PORT
+    CONN_MAX_AGE_VALUE = 0
+else:
+    DB_HOST = env("POSTGRES_HOST")
+    DB_PORT = env("POSTGRES_PORT") 
+    CONN_MAX_AGE_VALUE = 300
 
 DATABASES = {
     'default': {
@@ -131,8 +138,12 @@ DATABASES = {
         'PASSWORD': env("POSTGRES_PASSWORD"),
         'HOST': DB_HOST,
         'PORT': DB_PORT,
-        'CONN_MAX_AGE': 60,  # Keep connections alive for 60 seconds
-        'CONN_HEALTH_CHECKS': True,  # Enable connection health checks
+        'CONN_MAX_AGE': CONN_MAX_AGE_VALUE,
+        'CONN_HEALTH_CHECKS': True,
+        'OPTIONS': {
+            'connect_timeout': 10,
+            # Remove the 'options' parameter completely
+        }
     },
     'mysql_db': {
         'ENGINE': 'django.db.backends.mysql',
@@ -143,7 +154,6 @@ DATABASES = {
         'PORT': env("MYSQL_PORT"),
     }
 }
-
 DATABASE_ROUTERS = ['core.routers.ReadOnlyRouter']
 
 
@@ -318,6 +328,17 @@ CELERY_ACCEPT_CONTENT = ['json']
 CELERY_TASK_SERIALIZER = 'json'
 CELERY_RESULT_SERIALIZER = 'json'
 CELERY_TIMEZONE = 'UTC'
+
+# Celery optimizations for database connections
+CELERY_WORKER_PREFETCH_MULTIPLIER = 1
+CELERY_TASK_ACKS_LATE = True
+CELERY_WORKER_MAX_TASKS_PER_CHILD = 1000
+CELERY_DATABASE_SHORT_LIVED_SESSIONS = True
+
+
+# Ensure Celery closes database connections properly
+CELERY_TASK_ALWAYS_EAGER = False
+CELERY_TASK_EAGER_PROPAGATES = False
 
 CELERY_BEAT_SCHEDULE = {
     'initialize_slots': {
