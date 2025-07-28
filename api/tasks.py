@@ -73,8 +73,8 @@ def send_push_notification(user_id, title, content, link=None, external_link=Non
             api_instance = default_api.DefaultApi(api_client)
             notification = OneSignalNotification(
                 app_id=settings.ONESIGNAL_APP_ID,
-                contents={"en": content},
-                headings={"en": title},
+                contents={"en": content[:100]},
+                headings={"en": title[:25]},
                 url=external_link,
                 data={"url": link},
                 channel_for_external_user_ids="push",
