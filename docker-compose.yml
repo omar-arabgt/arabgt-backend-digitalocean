@@ -5,13 +5,12 @@ services:
     restart: unless-stopped  
     volumes:
       - .:/app
-    # ports:
-    #   - "8000:8000"
     expose:
       - 8000
     depends_on:
       - mysql_db
       - db
+      - pgbouncer
     env_file:
       - core/.env
 
@@ -51,42 +50,45 @@ services:
       - "5432:5432"
     volumes:
       - /data/arabgt_db:/var/lib/postgresql/data
+    command: postgres -c 'max_connections=300' -c 'shared_buffers=512MB' -c 'effective_cache_size=1GB'
+
+  pgbouncer_config:
+    image: alpine:latest
+    container_name: arabgt_pgbouncer_config
+    env_file:
+      - core/.env
+    command: >
+      sh -c "
+        apk add --no-cache gettext &&
+        export DB_HOST=\$${POSTGRES_HOST:-db} &&
+        export DB_PORT=\$${POSTGRES_PORT:-5432} &&
+        export DB_USER=\$${POSTGRES_USER} &&
+        export DB_PASSWORD=\$${POSTGRES_PASSWORD} &&
+        export DB_NAME=\$${POSTGRES_DB} &&
+        envsubst < /pgbouncer.ini.template > /config/pgbouncer.ini &&
+        envsubst < /userlist.txt.template > /config/userlist.txt &&
+        echo 'PGBouncer config generated successfully' &&
+        echo 'DB_HOST:' \$$DB_HOST &&
+        echo 'DB_USER:' \$$DB_USER &&
+        echo 'DB_NAME:' \$$DB_NAME
+      "
+    volumes:
+      - ./pgbouncer.ini.template:/pgbouncer.ini.template:ro
+      - ./userlist.txt.template:/userlist.txt.template:ro
+      - pgbouncer_config:/config
 
   pgbouncer:
-    image: edoburu/pgbouncer
+    image: edoburu/pgbouncer:latest
     container_name: arabgt_pgbouncer
     restart: unless-stopped
     depends_on:
       - db
+      - pgbouncer_config
     ports:
       - "6432:6432"
-    environment:
-      # Database connection settings
-      - DATABASES_HOST=db
-      - DATABASES_PORT=5432
-      - DATABASES_USER=${POSTGRES_USER:-user}
-      - DATABASES_PASSWORD=${POSTGRES_PASSWORD:-password}
-      - DATABASES_DBNAME=${POSTGRES_DB:-database}
-      
-      # PGBouncer listen port
-      - LISTEN_PORT=6432
-      
-      # Pool settings with defaults (controlled by .env)
-      - POOL_MODE=${POOL_MODE:-session}
-      - MAX_CLIENT_CONN=${MAX_CLIENT_CONN:-200}
-      - DEFAULT_POOL_SIZE=${DEFAULT_POOL_SIZE:-20}
-      - MIN_POOL_SIZE=${MIN_POOL_SIZE:-5}
-      - RESERVE_POOL_SIZE=${RESERVE_POOL_SIZE:-8}
-      - SERVER_RESET_QUERY=${SERVER_RESET_QUERY:-DISCARD ALL}
-      - SERVER_RESET_QUERY_ALWAYS=${SERVER_RESET_QUERY_ALWAYS:-1}
-      - IGNORE_STARTUP_PARAMETERS=${IGNORE_STARTUP_PARAMETERS:-extra_float_digits}
-      - SERVER_LIFETIME=${SERVER_LIFETIME:-3600}
-      - SERVER_IDLE_TIMEOUT=${SERVER_IDLE_TIMEOUT:-600}
-      - QUERY_TIMEOUT=${QUERY_TIMEOUT:-30000}
-      - CLIENT_IDLE_TIMEOUT=${CLIENT_IDLE_TIMEOUT:-0}
-    env_file:
-      - core/.env
-  
+    volumes:
+      - pgbouncer_config:/etc/pgbouncer:ro
+
   redis:
     image: redis:alpine
     container_name: arabgt_redis
@@ -102,11 +104,12 @@ services:
     build: .
     container_name: arabgt_celery
     restart: unless-stopped  
-    command: celery -A core worker --loglevel=info
+    command: celery -A core worker --loglevel=info --concurrency=4 --max-tasks-per-child=1000
     volumes:
       - .:/app
     depends_on:
       - redis
+      - pgbouncer
     env_file:
       - core/.env
 
@@ -123,6 +126,7 @@ services:
       - redis
       - web
       - celery_worker
+      - pgbouncer
 
   # mysql_db will be removed when we connect real database
   mysql_db:
@@ -150,3 +154,6 @@ services:
       - ./media:/media
     depends_on:
       - web
+
+volumes:
+  pgbouncer_config:
