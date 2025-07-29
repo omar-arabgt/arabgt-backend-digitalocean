@@ -162,3 +162,7 @@ cython_debug/
 #.idea/
 
 staticfiles/
+
+# PGBouncer generated configuration files (contain credentials)
+pgbouncer.ini
+userlist.txt
