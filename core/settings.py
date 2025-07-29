@@ -142,7 +142,6 @@ DATABASES = {
         'CONN_HEALTH_CHECKS': True,
         'OPTIONS': {
             'connect_timeout': 10,
-            # Remove the 'options' parameter completely
         }
     },
     'mysql_db': {
