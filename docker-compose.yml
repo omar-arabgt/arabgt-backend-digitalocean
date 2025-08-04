@@ -23,7 +23,7 @@ services:
     env_file:
       - core/.env
     volumes:
-      - /data/arabgt_backups:/backups
+      - ./data/backups:/backups
       - ./backup-scripts:/scripts
     command: >
       sh -c "
@@ -49,7 +49,7 @@ services:
     ports:
       - "5432:5432"
     volumes:
-      - /data/arabgt_db:/var/lib/postgresql/data
+      - ./data/postgres:/var/lib/postgresql/data
     command: postgres -c 'max_connections=300' -c 'shared_buffers=512MB' -c 'effective_cache_size=1GB'
 
   pgbouncer_config:
@@ -96,7 +96,7 @@ services:
     ports:
       - "6380:6379"
     volumes:
-      - /data/arabgt_rdb:/data
+      - ./data/redis:/data
     env_file:
       - core/.env
 
@@ -138,7 +138,7 @@ services:
     ports:
       - "3306:3306"
     volumes:
-      - /data/arabgt_mysqldb:/var/lib/mysql
+      - ./data/mysql:/var/lib/mysql
   
   nginx:
     image: nginx:latest

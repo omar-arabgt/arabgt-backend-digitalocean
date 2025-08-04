@@ -11,7 +11,6 @@ django-environ==0.11.2
 redis==5.0.1
 celery==5.3.6
 django-celery-beat==2.5.0
-psycopg2-binary==2.9.6
 beautifulsoup4==4.12.3
 openpyxl==3.1.5
 pillow==10.4.0
@@ -21,3 +20,4 @@ onesignal-python-api==2.0.2
 twilio==9.2.4
 phonenumbers==9.0.8
 sentry-sdk[django]==1.45.0
+psycopg2-binary==2.9.10

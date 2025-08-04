@@ -1,0 +1,1 @@
+/usr/lib/postgresql/13/bin/postgres "-c" "max_connections=300" "-c" "shared_buffers=512MB" "-c" "effective_cache_size=1GB"
