@@ -218,41 +218,41 @@ AUTHENTICATION_BACKENDS = (
     'social_core.backends.apple.AppleIdAuth',
 )
 
-SOCIALACCOUNT_PROVIDERS = {
-    'facebook': {
-        'SCOPE': ['email'],
-        'APP': {
-            'client_id': env("SOCIAL_AUTH_FACEBOOK_KEY"),
-            'secret': env("SOCIAL_AUTH_FACEBOOK_SECRET"),
-            'key': ''
-        },
+# SOCIALACCOUNT_PROVIDERS = {
+#     'facebook': {
+#         'SCOPE': ['email'],
+#         'APP': {
+#             'client_id': env("SOCIAL_AUTH_FACEBOOK_KEY"),
+#             'secret': env("SOCIAL_AUTH_FACEBOOK_SECRET"),
+#             'key': ''
+#         },
 
-        'AUTH_PARAMS': {'auth_type': 'reauthenticate'},
-        'METHOD': 'oauth2',
-        'VERIFIED_EMAIL': False,
-    },
-    'google': {
-        'SCOPE': [
-            'profile',
-            'email'
-        ],
-        'APP': {
-            'client_id': env("SOCIAL_AUTH_GOOGLE_OAUTH2_KEY"),
-            'secret': env("SOCIAL_AUTH_GOOGLE_OAUTH2_SECRET"),
-        },
-        'AUTH_PARAMS': {
-            'access_type': 'online',
-        }
-    },
-    'apple': {
-        'APP': {
-            'client_id': env("SOCIAL_AUTH_APPLE_CLIENT_ID"),
-            'secret': env("SOCIAL_AUTH_APPLE_CLIENT_SECRET"),
-            'key': env("SOCIAL_AUTH_APPLE_KEY_ID"),
-            'settings': {"certificate_key": env("SOCIAL_AUTH_APPLE_CERTIFICATE_KEY") },
-        }
-    }
-}
+#         'AUTH_PARAMS': {'auth_type': 'reauthenticate'},
+#         'METHOD': 'oauth2',
+#         'VERIFIED_EMAIL': False,
+#     },
+#     'google': {
+#         'SCOPE': [
+#             'profile',
+#             'email'
+#         ],
+#         'APP': {
+#             'client_id': env("SOCIAL_AUTH_GOOGLE_OAUTH2_KEY"),
+#             'secret': env("SOCIAL_AUTH_GOOGLE_OAUTH2_SECRET"),
+#         },
+#         'AUTH_PARAMS': {
+#             'access_type': 'online',
+#         }
+#     },
+#     'apple': {
+#         'APP': {
+#             'client_id': env("SOCIAL_AUTH_APPLE_CLIENT_ID"),
+#             'secret': env("SOCIAL_AUTH_APPLE_CLIENT_SECRET"),
+#             'key': env("SOCIAL_AUTH_APPLE_KEY_ID"),
+#             'settings': {"certificate_key": env("SOCIAL_AUTH_APPLE_CERTIFICATE_KEY") },
+#         }
+#     }
+# }
 
 SITE_ID = 1
 
@@ -372,24 +372,24 @@ APP_URL = env("APP_URL")
 SENTRY_DSN = env("SENTRY_DSN", default="")
 SENTRY_ENVIRONMENT = env("SENTRY_ENVIRONMENT", default="production")
 
-# Initialize Sentry
-if SENTRY_DSN:
-    sentry_sdk.init(
-        dsn=SENTRY_DSN,
-        integrations=[
-            DjangoIntegration(
-                transaction_style='url',
-                middleware_spans=True,
-                signals_spans=True,
-            ),
-            CeleryIntegration(),
-            RedisIntegration(),
-        ],
-        environment=SENTRY_ENVIRONMENT,
-        traces_sample_rate=0.1,  # 10% of transactions for performance monitoring
-        send_default_pii=False,  # Don't send personal data
-        debug=DEBUG,
-    )
+# Initialize Sentry (معطل)
+# if SENTRY_DSN:
+#     sentry_sdk.init(
+#         dsn=SENTRY_DSN,
+#         integrations=[
+#             DjangoIntegration(
+#                 transaction_style='url',
+#                 middleware_spans=True,
+#                 signals_spans=True,
+#             ),
+#             CeleryIntegration(),
+#             RedisIntegration(),
+#         ],
+#         environment=SENTRY_ENVIRONMENT,
+#         traces_sample_rate=0.1,  # 10% of transactions for performance monitoring
+#         send_default_pii=False,  # Don't send personal data
+#         debug=DEBUG,
+#     )
 
 # Logging Configuration
 LOGGING = {
